@@ -78,8 +78,8 @@ class TestResyApiClient:
 
             assert resp.book_token.value == "book_token_abc123"
 
-    async def test_book_get_primary(self, sample_book_response):
-        """book() tries GET first (CAPTCHA bypass) — succeeds on GET."""
+    async def test_book_post_primary(self, sample_book_response):
+        """book() tries POST first (standard method) — succeeds on POST."""
         with respx.mock:
             get_route = respx.get("https://api.resy.com/3/book").mock(
                 return_value=httpx.Response(200, json=sample_book_response)
@@ -96,42 +96,42 @@ class TestResyApiClient:
 
             assert resp.resy_token == "resy_conf_xyz789"
 
-            # GET was used (CAPTCHA bypass), POST was NOT called
-            assert get_route.called
-            assert not post_route.called
-
-            # Verify GET params include the booking data
-            request = get_route.calls[0].request
-            assert "book_token=book_token_abc123" in str(request.url)
-            assert "struct_payment_method" in str(request.url)
-
-    async def test_book_post_fallback(self, sample_book_response):
-        """book() falls back to POST when GET fails."""
-        with respx.mock:
-            get_route = respx.get("https://api.resy.com/3/book").mock(
-                return_value=httpx.Response(500, json={"message": "Server error"})
-            )
-            post_route = respx.post("https://api.resy.com/3/book").mock(
-                return_value=httpx.Response(200, json=sample_book_response)
-            )
-
-            async with ResyApiClient(auth_token="test_token") as client:
-                resp = await client.book(
-                    book_token="book_token_abc123",
-                    payment_method_id=67890,
-                )
-
-            assert resp.resy_token == "resy_conf_xyz789"
-
-            # GET was tried first, then POST fallback succeeded
-            assert get_route.called
+            # POST was used first, GET was NOT called
             assert post_route.called
+            assert not get_route.called
 
             # Verify POST body was form-encoded correctly
             request = post_route.calls[0].request
             body = request.content.decode()
             assert "book_token=book_token_abc123" in body
             assert "struct_payment_method" in body
+
+    async def test_book_get_fallback(self, sample_book_response):
+        """book() falls back to GET when POST fails."""
+        with respx.mock:
+            post_route = respx.post("https://api.resy.com/3/book").mock(
+                return_value=httpx.Response(500, json={"message": "Server error"})
+            )
+            get_route = respx.get("https://api.resy.com/3/book").mock(
+                return_value=httpx.Response(200, json=sample_book_response)
+            )
+
+            async with ResyApiClient(auth_token="test_token") as client:
+                resp = await client.book(
+                    book_token="book_token_abc123",
+                    payment_method_id=67890,
+                )
+
+            assert resp.resy_token == "resy_conf_xyz789"
+
+            # POST was tried first, then GET fallback succeeded
+            assert post_route.called
+            assert get_route.called
+
+            # Verify GET params include the booking data
+            request = get_route.calls[0].request
+            assert "book_token=book_token_abc123" in str(request.url)
+            assert "struct_payment_method" in str(request.url)
 
     async def test_auth_headers_set(self, sample_find_response):
         with respx.mock:

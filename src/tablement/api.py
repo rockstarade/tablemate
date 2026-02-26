@@ -285,6 +285,47 @@ class ResyApiClient:
             slots_list.extend(venue.slots)
         return slots_list
 
+    async def find_slots_direct(
+        self, venue_id: int, day: str, party_size: int, *, fast: bool = False
+    ) -> list[Slot]:
+        """find_slots() using the direct (no-proxy) client for minimal latency.
+
+        Falls back to the regular proxy client if direct isn't warmed yet.
+        Used during pre-drop polling where every millisecond counts.
+        """
+        use_client = self._direct_client if self._direct_client else self._client
+        assert use_client is not None
+        resp = await use_client.get(
+            "/4/find",
+            params={
+                "venue_id": venue_id,
+                "day": day,
+                "party_size": party_size,
+                "lat": "0",
+                "long": "0",
+            },
+        )
+        resp.raise_for_status()
+
+        if fast:
+            data = orjson.loads(resp.content)
+            venues = data.get("results", {}).get("venues", [])
+            if not venues:
+                return []
+            slots: list[Slot] = []
+            for venue in venues:
+                for s in venue.get("slots", []):
+                    slots.append(Slot.model_validate(s))
+            return slots
+
+        parsed = FindResponse.model_validate(resp.json())
+        if not parsed.results.venues:
+            return []
+        slots_list: list[Slot] = []
+        for venue in parsed.results.venues:
+            slots_list.extend(venue.slots)
+        return slots_list
+
     async def get_details(
         self, config_id: str, day: str, party_size: int
     ) -> DetailsResponse:
@@ -668,21 +709,48 @@ class ResyApiClient:
             else self._fingerprint.widget_headers()
         )
 
-        # Primary: GET (bypasses CAPTCHA validation)
+        # Primary: POST (standard Resy booking method)
+        # GET bypass was patched by Resy (returns 405 Method Not Allowed)
+        try:
+            resp = await self._client.post(
+                "/3/book",
+                data=params,
+                headers={**book_headers, "Content-Type": "application/x-www-form-urlencoded"},
+            )
+            resp.raise_for_status()
+            body = orjson.loads(resp.content)
+            logger.info("Book POST succeeded: HTTP %d, keys=%s", resp.status_code, list(body.keys()))
+            try:
+                return BookResponse.model_validate(body)
+            except Exception as parse_err:
+                # HTTP 200 + valid JSON = booking went through, even if our model can't parse it
+                logger.warning(
+                    "Book response parse issue (booking likely succeeded): %s. Body keys: %s",
+                    type(parse_err).__name__, list(body.keys()),
+                )
+                return BookResponse(resy_token=body.get("resy_token", "unknown"))
+        except Exception as post_err:
+            logger.warning(
+                "POST /3/book failed: %s (%s). Response: %s",
+                type(post_err).__name__, post_err,
+                getattr(getattr(post_err, 'response', None), 'text', 'no response')[:500],
+            )
+
+        # Fallback: GET (in case POST fails for unexpected reasons)
         try:
             resp = await self._client.get(
                 "/3/book", params=params, headers=book_headers,
             )
             resp.raise_for_status()
-            return BookResponse.model_validate(orjson.loads(resp.content))
-        except Exception:
-            logger.debug("GET /3/book failed, falling back to POST")
-
-        # Fallback: standard POST (in case Resy patches GET)
-        resp = await self._client.post(
-            "/3/book",
-            data=params,
-            headers={**book_headers, "Content-Type": "application/x-www-form-urlencoded"},
-        )
-        resp.raise_for_status()
-        return BookResponse.model_validate(orjson.loads(resp.content))
+            body = orjson.loads(resp.content)
+            logger.info("Book GET fallback succeeded: HTTP %d", resp.status_code)
+            try:
+                return BookResponse.model_validate(body)
+            except Exception:
+                return BookResponse(resy_token=body.get("resy_token", "unknown"))
+        except Exception as get_err:
+            logger.warning(
+                "GET /3/book fallback also failed: %s (%s)",
+                type(get_err).__name__, get_err,
+            )
+            raise

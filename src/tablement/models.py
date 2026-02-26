@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, datetime, time
 from typing import Any
 
-from pydantic import BaseModel, Field, PrivateAttr, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, SecretStr
 
 
 # --- Credential / Config Models ---
@@ -115,7 +115,8 @@ class DetailsResponse(BaseModel):
 
 
 class BookResponse(BaseModel):
-    resy_token: str
+    model_config = ConfigDict(extra="allow")
+    resy_token: str = ""
 
 
 # --- Snipe Result ---

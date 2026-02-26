@@ -573,7 +573,8 @@ async def _run_snipe(
             # (20-40ms) to avoid pattern detection. Slots will return empty
             # until the exact moment Resy releases them.
             _set_phase(SnipePhase.SNIPING, f"Pre-drop polling (T-{PRE_DROP_POLL_SECONDS}s)...")
-            await db.update_reservation(reservation_id, status="sniping")
+            # Non-blocking: status update is informational, don't block the snipe loop
+            asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
 
             # Create intel buffer to record EVERY poll response
             intel_buffer = SnipeIntelBuffer(
@@ -983,12 +984,16 @@ async def _snipe_loop(
             )
 
         try:
-            # Step 1: Find slots (single fast call in tight loop — faster than
-            # overlapping volleys for pre-drop polling since we're already
-            # hammering at 30ms intervals)
-            slots = await client.find_slots(
-                config.venue_id, day_str, config.party_size, fast=True,
-            )
+            # Step 1: Find slots — use direct client (19ms) for pre-drop polling
+            # instead of proxy (502ms). Falls back to proxy if direct isn't warmed.
+            if pre_drop_poll:
+                slots = await client.find_slots_direct(
+                    config.venue_id, day_str, config.party_size, fast=True,
+                )
+            else:
+                slots = await client.find_slots(
+                    config.venue_id, day_str, config.party_size, fast=True,
+                )
 
             # RECORD EVERY POLL — this is just a list.append(), ~0ms overhead
             if intel_buffer is not None:
