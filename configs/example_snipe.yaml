@@ -1,0 +1,31 @@
+# Tablement snipe configuration
+# Copy this file and fill in your values.
+
+venue_id: 12345              # Use 'tablement lookup <resy-url>' to find this
+venue_name: "Semma"          # Optional, for display only
+
+party_size: 2
+date: "2026-03-26"           # The date you want to dine (YYYY-MM-DD)
+
+# Priority-ordered time preferences. First match wins.
+# If 7:00 PM Dining Room is taken, tries 7:00 PM any type, then 7:30, etc.
+time_preferences:
+  - time: "19:00"
+    seating_type: "Dining Room"
+  - time: "19:00"            # Any seating type at 7:00 PM
+  - time: "19:30"
+  - time: "18:30"
+
+# When the restaurant releases reservations.
+# Check the restaurant's Resy page description, or use 'tablement lookup'.
+drop_time:
+  hour: 10                   # 10:00 AM
+  minute: 0
+  timezone: "America/New_York"
+  days_ahead: 30             # Reservations open 30 days before the date
+
+# Retry settings (defaults are usually fine)
+retry:
+  duration_seconds: 10.0     # Keep trying for 10 seconds after drop
+  interval_seconds: 0.0      # 0 = fastest possible (tight loop)
+  max_attempts: 200

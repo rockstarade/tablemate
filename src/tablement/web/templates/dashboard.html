@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .glass-light {
+            background: rgba(51, 65, 85, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .glow-amber {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245, 158, 11, 0.05);
+        }
+        .glow-green {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 60px rgba(34, 197, 94, 0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="dashboardApp()" x-init="init()">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🍽</span>
+                <a href="/app" class="text-xl font-bold text-white">Tablement</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="/admin" class="text-slate-400 hover:text-white text-sm">Admin</a>
+                <a href="/admin/vip" class="text-slate-400 hover:text-white text-sm">VIP</a>
+                <button @click="showSettings = true" class="text-slate-400 hover:text-white text-sm">
+                    Settings
+                </button>
+                <button @click="logout()" class="text-slate-400 hover:text-red-400 text-sm">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-16 max-w-5xl mx-auto px-6" x-cloak>
+
+        <!-- Setup Banner (show if Resy not linked) -->
+        <div x-show="!profile.resy_linked" class="mb-6 glass rounded-2xl border border-brand-500/30 p-6">
+            <h2 class="text-lg font-semibold text-white mb-2">Link your Resy account</h2>
+            <p class="text-slate-400 text-sm mb-4">Connect your Resy credentials to start booking reservations.</p>
+            <form @submit.prevent="linkResy()" class="flex gap-3">
+                <input type="email" x-model="resyEmail" placeholder="Resy email"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm">
+                <input type="password" x-model="resyPassword" placeholder="Resy password"
+                    class="flex-1 px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm">
+                <button type="submit" :disabled="linkingResy"
+                    class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm disabled:opacity-50">
+                    <span x-show="!linkingResy">Link</span>
+                    <span x-show="linkingResy">Linking...</span>
+                </button>
+            </form>
+            <p x-show="linkError" class="mt-2 text-red-400 text-sm" x-text="linkError"></p>
+        </div>
+
+        <!-- Header + New Reservation -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-white">Your Reservations</h1>
+                <p class="text-slate-400 text-sm mt-1" x-text="reservations.length + ' active'"></p>
+            </div>
+            <button @click="showNewReservation = true" :disabled="!profile.resy_linked"
+                class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                + New Reservation
+            </button>
+        </div>
+
+        <!-- Reservation Cards -->
+        <div x-show="reservations.length === 0" class="text-center py-16">
+            <div class="text-5xl mb-4">🍽</div>
+            <h3 class="text-xl font-semibold text-white mb-2">No reservations yet</h3>
+            <p class="text-slate-400">Create your first reservation to get started.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <template x-for="res in reservations" :key="res.id">
+                <div class="glass rounded-2xl border border-slate-700/50 p-5 relative"
+                     :class="{'glow-green border-emerald-500/30': res.status === 'confirmed', 'border-red-500/30': res.status === 'failed'}">
+
+                    <!-- Status Badge -->
+                    <div class="absolute top-4 right-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium"
+                            :class="{
+                                'bg-emerald-500/20 text-emerald-400': res.status === 'confirmed',
+                                'bg-red-500/20 text-red-400': res.status === 'failed',
+                                'bg-brand-500/20 text-brand-400': res.status === 'sniping',
+                                'bg-blue-500/20 text-blue-400': res.status === 'monitoring',
+                                'bg-slate-500/20 text-slate-400': res.status === 'scheduled' || res.status === 'pending',
+                                'bg-slate-600/20 text-slate-500': res.status === 'cancelled',
+                            }"
+                            x-text="res.status.charAt(0).toUpperCase() + res.status.slice(1)">
+                        </span>
+                    </div>
+
+                    <!-- Venue Info -->
+                    <h3 class="text-lg font-semibold text-white pr-24" x-text="res.venue_name"></h3>
+                    <div class="flex items-center gap-3 text-slate-400 text-sm mt-1">
+                        <span x-text="res.target_date"></span>
+                        <span>&bull;</span>
+                        <span x-text="res.party_size + ' guests'"></span>
+                        <span>&bull;</span>
+                        <span class="capitalize" x-text="res.mode"></span>
+                    </div>
+
+                    <!-- Time Preferences -->
+                    <div class="flex flex-wrap gap-2 mt-3" x-show="res.time_preferences">
+                        <template x-for="tp in (res.time_preferences || [])">
+                            <span class="px-2 py-0.5 rounded-lg bg-slate-700/50 text-slate-300 text-xs"
+                                x-text="tp.time + (tp.seating_type ? ' (' + tp.seating_type + ')' : '')">
+                            </span>
+                        </template>
+                    </div>
+
+                    <!-- Result Info -->
+                    <div x-show="res.status === 'confirmed'" class="mt-3 text-emerald-400 text-sm">
+                        ✓ Booked in <span x-text="(res.elapsed_seconds || 0).toFixed(2)"></span>s
+                        (<span x-text="res.attempts"></span> attempts)
+                    </div>
+                    <div x-show="res.status === 'failed'" class="mt-3 text-red-400 text-sm" x-text="res.error"></div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 flex gap-2" x-show="['scheduled','monitoring','sniping','pending'].includes(res.status)">
+                        <button @click="cancelReservation(res.id)"
+                            class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-all">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- New Reservation Modal -->
+        <div x-show="showNewReservation" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            @click.self="showNewReservation = false">
+            <div class="glass rounded-2xl border border-slate-700/50 p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-white">New Reservation</h2>
+                    <button @click="showNewReservation = false" class="text-slate-400 hover:text-white">✕</button>
+                </div>
+
+                <form @submit.prevent="createReservation()">
+                    <!-- Venue Search -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Restaurant</label>
+                        <div class="relative">
+                            <input type="text" x-model="newRes.venueQuery" @input.debounce.300ms="searchVenues()"
+                                placeholder="Search NYC restaurants..."
+                                class="w-full px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm">
+                            <!-- Search results dropdown -->
+                            <div x-show="venueResults.length > 0 && !newRes.venue_id"
+                                class="absolute z-10 w-full mt-1 glass-light rounded-xl border border-slate-600/50 shadow-xl overflow-hidden">
+                                <template x-for="v in venueResults">
+                                    <button type="button" @click="selectVenue(v)"
+                                        class="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/30 last:border-0">
+                                        <div class="font-medium text-white text-sm" x-text="v.name"></div>
+                                        <div class="text-slate-400 text-xs" x-text="[v.cuisine, v.neighborhood].filter(Boolean).join(' · ')"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <div x-show="newRes.venue_name" class="mt-2 flex items-center gap-2">
+                            <span class="text-brand-400 text-sm" x-text="newRes.venue_name"></span>
+                            <button type="button" @click="clearVenue()" class="text-slate-500 hover:text-red-400 text-xs">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Mode -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Booking Mode</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" @click="newRes.mode = 'snipe'"
+                                class="p-3 rounded-xl border text-left transition-all"
+                                :class="newRes.mode === 'snipe' ? 'border-brand-500 bg-brand-500/10' : 'border-slate-600/50 hover:border-slate-500'">
+                                <div class="font-medium text-sm" :class="newRes.mode === 'snipe' ? 'text-brand-400' : 'text-white'">⚡ Snipe</div>
+                                <div class="text-slate-400 text-xs mt-1">Book at drop time</div>
+                            </button>
+                            <button type="button" @click="newRes.mode = 'monitor'"
+                                class="p-3 rounded-xl border text-left transition-all"
+                                :class="newRes.mode === 'monitor' ? 'border-brand-500 bg-brand-500/10' : 'border-slate-600/50 hover:border-slate-500'">
+                                <div class="font-medium text-sm" :class="newRes.mode === 'monitor' ? 'text-brand-400' : 'text-white'">👁 Monitor</div>
+                                <div class="text-slate-400 text-xs mt-1">Watch for cancellations</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Date + Party Size -->
+                    <div class="grid grid-cols-2 gap-4 mb-5">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Date</label>
+                            <input type="date" x-model="newRes.date"
+                                class="w-full px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Party Size</label>
+                            <input type="number" x-model.number="newRes.party_size" min="1" max="20"
+                                class="w-full px-4 py-2.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                        </div>
+                    </div>
+
+                    <!-- Time Preferences -->
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Preferred Times</label>
+                        <template x-for="(tp, idx) in newRes.time_preferences" :key="idx">
+                            <div class="flex gap-2 mb-2">
+                                <input type="time" x-model="tp.time"
+                                    class="flex-1 px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                                <input type="text" x-model="tp.seating_type" placeholder="Seating type (optional)"
+                                    class="flex-1 px-4 py-2 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 text-sm">
+                                <button type="button" @click="newRes.time_preferences.splice(idx, 1)"
+                                    x-show="newRes.time_preferences.length > 1"
+                                    class="px-2 text-slate-500 hover:text-red-400">✕</button>
+                            </div>
+                        </template>
+                        <button type="button" @click="newRes.time_preferences.push({time: '', seating_type: ''})"
+                            class="text-brand-400 hover:text-brand-300 text-xs font-medium mt-1">
+                            + Add time preference
+                        </button>
+                    </div>
+
+                    <!-- Drop Time (snipe only) -->
+                    <div x-show="newRes.mode === 'snipe'" class="mb-5">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Drop Time</label>
+                        <div x-show="detectedPolicy" class="mb-2 text-emerald-400 text-xs">
+                            ✓ Auto-detected: <span x-text="detectedPolicy ? detectedPolicy.days_ahead + ' days ahead at ' + detectedPolicy.hour + ':' + String(detectedPolicy.minute).padStart(2,'0') : ''"></span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="text-xs text-slate-400">Hour</label>
+                                <input type="number" x-model.number="newRes.drop_time.hour" min="0" max="23"
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400">Minute</label>
+                                <input type="number" x-model.number="newRes.drop_time.minute" min="0" max="59"
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="text-xs text-slate-400">Days Ahead</label>
+                                <input type="number" x-model.number="newRes.drop_time.days_ahead" min="1"
+                                    class="w-full px-3 py-2 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 text-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dry Run -->
+                    <div class="mb-6 flex items-center gap-2">
+                        <input type="checkbox" x-model="newRes.dry_run" id="dryRun"
+                            class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500">
+                        <label for="dryRun" class="text-sm text-slate-400">Dry run (find slots but don't book)</label>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" :disabled="creating || !newRes.venue_id"
+                        class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold transition-all disabled:opacity-40">
+                        <span x-show="!creating">Create Reservation</span>
+                        <span x-show="creating">Creating...</span>
+                    </button>
+                    <p x-show="createError" class="mt-3 text-red-400 text-sm" x-text="createError"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div x-show="showSettings" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            @click.self="showSettings = false">
+            <div class="glass rounded-2xl border border-slate-700/50 p-8 w-full max-w-md">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-white">Settings</h2>
+                    <button @click="showSettings = false" class="text-slate-400 hover:text-white">✕</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-slate-300">Resy Account</h3>
+                        <p class="text-slate-400 text-xs mt-1" x-text="profile.resy_linked ? '✓ Linked (' + profile.resy_email + ')' : 'Not linked'"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-slate-300">Payment Method</h3>
+                        <p class="text-slate-400 text-xs mt-1" x-text="profile.stripe_linked ? '✓ Card on file' : 'Not set up'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+    function dashboardApp() {
+        return {
+            // Auth
+            token: localStorage.getItem('tablement_token') || '',
+
+            // Profile
+            profile: { resy_linked: false, resy_email: '', stripe_linked: false },
+
+            // Resy linking
+            resyEmail: '',
+            resyPassword: '',
+            linkingResy: false,
+            linkError: '',
+
+            // Reservations
+            reservations: [],
+
+            // New reservation form
+            showNewReservation: false,
+            newRes: {
+                venueQuery: '',
+                venue_id: null,
+                venue_name: '',
+                mode: 'snipe',
+                date: '',
+                party_size: 2,
+                time_preferences: [{ time: '19:00', seating_type: '' }],
+                drop_time: { hour: 0, minute: 0, second: 0, timezone: 'America/New_York', days_ahead: 30 },
+                dry_run: false,
+            },
+            venueResults: [],
+            detectedPolicy: null,
+            creating: false,
+            createError: '',
+
+            // Settings
+            showSettings: false,
+
+            // Helpers
+            headers() {
+                return {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.token,
+                };
+            },
+
+            async init() {
+                if (!this.token) {
+                    window.location.href = '/';
+                    return;
+                }
+                await this.loadProfile();
+                await this.loadReservations();
+
+                // Poll for updates every 5 seconds
+                setInterval(() => this.loadReservations(), 5000);
+            },
+
+            async loadProfile() {
+                try {
+                    const resp = await fetch('/api/auth/me', { headers: this.headers() });
+                    if (resp.status === 401) { this.logout(); return; }
+                    if (resp.ok) this.profile = await resp.json();
+                } catch (e) {
+                    console.error('Failed to load profile:', e);
+                }
+            },
+
+            async loadReservations() {
+                try {
+                    const resp = await fetch('/api/reservations/', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.reservations = data.reservations || [];
+                    }
+                } catch (e) {
+                    console.error('Failed to load reservations:', e);
+                }
+            },
+
+            async linkResy() {
+                this.linkError = '';
+                this.linkingResy = true;
+                try {
+                    const resp = await fetch('/api/auth/link-resy', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({ email: this.resyEmail, password: this.resyPassword }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link Resy');
+                    this.profile.resy_linked = true;
+                    this.profile.resy_email = this.resyEmail;
+                    this.resyPassword = '';
+                } catch (e) {
+                    this.linkError = e.message;
+                } finally {
+                    this.linkingResy = false;
+                }
+            },
+
+            async searchVenues() {
+                const q = this.newRes.venueQuery.trim();
+                if (q.length < 2) { this.venueResults = []; return; }
+                try {
+                    const resp = await fetch('/api/venue/search?query=' + encodeURIComponent(q));
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.venueResults = data.results || [];
+                    }
+                } catch (e) {
+                    console.error('Search failed:', e);
+                }
+            },
+
+            async selectVenue(v) {
+                this.newRes.venue_id = v.resy_id;
+                this.newRes.venue_name = v.name;
+                this.newRes.venueQuery = v.name;
+                this.venueResults = [];
+
+                // Detect policy
+                try {
+                    const resp = await fetch('/api/venue/select', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            resy_id: v.resy_id,
+                            name: v.name,
+                            url_slug: v.url_slug,
+                            location_slug: v.location_slug,
+                        }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.detected_policy) {
+                            this.detectedPolicy = data.detected_policy;
+                            this.newRes.drop_time.hour = data.detected_policy.hour;
+                            this.newRes.drop_time.minute = data.detected_policy.minute;
+                            this.newRes.drop_time.days_ahead = data.detected_policy.days_ahead;
+                        }
+                    }
+                } catch (e) {
+                    // Policy detection is best-effort
+                }
+            },
+
+            clearVenue() {
+                this.newRes.venue_id = null;
+                this.newRes.venue_name = '';
+                this.newRes.venueQuery = '';
+                this.detectedPolicy = null;
+            },
+
+            async createReservation() {
+                this.createError = '';
+                this.creating = true;
+                try {
+                    const body = {
+                        venue_id: this.newRes.venue_id,
+                        venue_name: this.newRes.venue_name,
+                        party_size: this.newRes.party_size,
+                        date: this.newRes.date,
+                        mode: this.newRes.mode,
+                        time_preferences: this.newRes.time_preferences.filter(tp => tp.time),
+                        dry_run: this.newRes.dry_run,
+                    };
+                    if (this.newRes.mode === 'snipe') {
+                        body.drop_time = this.newRes.drop_time;
+                    }
+
+                    const resp = await fetch('/api/reservations/', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify(body),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to create reservation');
+
+                    this.showNewReservation = false;
+                    this.resetNewRes();
+                    await this.loadReservations();
+                } catch (e) {
+                    this.createError = e.message;
+                } finally {
+                    this.creating = false;
+                }
+            },
+
+            async cancelReservation(id) {
+                if (!confirm('Cancel this reservation?')) return;
+                try {
+                    await fetch('/api/reservations/' + id + '/cancel', {
+                        method: 'POST',
+                        headers: this.headers(),
+                    });
+                    await this.loadReservations();
+                } catch (e) {
+                    console.error('Cancel failed:', e);
+                }
+            },
+
+            resetNewRes() {
+                this.newRes = {
+                    venueQuery: '',
+                    venue_id: null,
+                    venue_name: '',
+                    mode: 'snipe',
+                    date: '',
+                    party_size: 2,
+                    time_preferences: [{ time: '19:00', seating_type: '' }],
+                    drop_time: { hour: 0, minute: 0, second: 0, timezone: 'America/New_York', days_ahead: 30 },
+                    dry_run: false,
+                };
+                this.detectedPolicy = null;
+                this.createError = '';
+            },
+
+            logout() {
+                localStorage.removeItem('tablement_token');
+                localStorage.removeItem('tablement_refresh');
+                window.location.href = '/';
+            },
+        }
+    }
+    </script>
+</body>
+</html>

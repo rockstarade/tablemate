@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .glass-light {
+            background: rgba(51, 65, 85, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .glow-amber {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245, 158, 11, 0.05);
+        }
+        .glow-green {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.15), 0 0 60px rgba(34, 197, 94, 0.05);
+        }
+        .glow-red {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), 0 0 60px rgba(239, 68, 68, 0.05);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+        }
+    </style>
+</head>
+<body>
+
+<div x-data="app()" x-cloak class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+
+    <!-- Header -->
+    <div class="text-center mb-10">
+        <div class="inline-flex items-center gap-3 mb-3">
+            <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h1 class="text-4xl font-bold tracking-tight text-white">Tablement</h1>
+        </div>
+        <p class="text-lg text-amber-400/80 font-medium">Reservation Sniper</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="flex items-center justify-center gap-1 sm:gap-2 mb-10">
+        <template x-for="(label, i) in ['Sign In', 'Find', 'Configure', 'Snipe']" :key="i">
+            <div class="flex items-center">
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold transition-all duration-300"
+                         :class="step > i+1
+                             ? 'bg-emerald-500/20 text-emerald-400 ring-2 ring-emerald-500/40'
+                             : step === i+1
+                                 ? 'bg-amber-500/20 text-amber-400 ring-2 ring-amber-500/50 glow-amber'
+                                 : 'bg-slate-700/50 text-slate-500 ring-1 ring-slate-600/50'"
+                         x-text="step > i+1 ? '\u2713' : i+1"></div>
+                    <span class="text-sm font-medium hidden sm:inline transition-colors duration-300"
+                          :class="step === i+1 ? 'text-amber-400' : step > i+1 ? 'text-emerald-400/70' : 'text-slate-500'"
+                          x-text="label"></span>
+                </div>
+                <div x-show="i < 3" class="w-6 sm:w-10 h-0.5 mx-1 sm:mx-2 rounded-full transition-colors duration-300"
+                     :class="step > i+1 ? 'bg-emerald-500/40' : 'bg-slate-700'"></div>
+            </div>
+        </template>
+    </div>
+
+    <!-- Error Banner -->
+    <div x-show="error" x-transition class="glass border border-red-500/30 rounded-2xl p-4 mb-6 glow-red">
+        <p class="text-red-300 text-lg" x-text="error"></p>
+        <button @click="error = null" class="mt-2 text-red-400 hover:text-red-300 underline text-base transition-colors">Dismiss</button>
+    </div>
+
+    <!-- ==================== STEP 1: LOGIN ==================== -->
+    <div x-show="step === 1" x-transition>
+        <div class="glass rounded-2xl border border-slate-700/50 p-8">
+            <h2 class="text-2xl font-bold text-white mb-6">Sign in to Resy</h2>
+
+            <label class="block text-base font-medium text-slate-300 mb-2" for="email">Email</label>
+            <input id="email" type="email" x-model="email" autocomplete="email"
+                   @keydown.enter="password && doLogin()"
+                   class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                          placeholder-slate-500 mb-5
+                          focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+
+            <label class="block text-base font-medium text-slate-300 mb-2" for="password">Password</label>
+            <input id="password" type="password" x-model="password" autocomplete="current-password"
+                   @keydown.enter="email && doLogin()"
+                   class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                          placeholder-slate-500 mb-6
+                          focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+
+            <button @click="doLogin()" :disabled="loading || !email || !password"
+                    class="w-full p-5 text-xl font-bold text-slate-900 rounded-xl btn-primary
+                           disabled:opacity-30 disabled:cursor-not-allowed
+                           focus:ring-4 focus:ring-amber-500/30 outline-none transition-all min-h-[64px]">
+                <span x-show="!loading">Sign In</span>
+                <span x-show="loading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-6 w-6" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Signing in...
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 2: FIND RESTAURANT ==================== -->
+    <div x-show="step === 2" x-transition>
+        <!-- Logged in banner -->
+        <div class="glass-light border border-emerald-500/20 rounded-xl p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <p class="text-base text-emerald-300">
+                    <span class="text-emerald-500 mr-1">&#10003;</span>
+                    Signed in as <strong x-text="user?.first_name + ' ' + user?.last_name" class="text-white"></strong>
+                </p>
+                <button @click="step = 1; user = null; error = null"
+                        class="text-slate-400 hover:text-white text-sm transition-colors">Change</button>
+            </div>
+        </div>
+
+        <div class="glass rounded-2xl border border-slate-700/50 p-8">
+            <h2 class="text-2xl font-bold text-white mb-2">Find Your Restaurant</h2>
+            <p class="text-slate-400 text-base mb-6">Search NYC restaurants or paste a Resy URL</p>
+
+            <!-- Search Input with Dropdown -->
+            <div class="relative" @click.outside="dismissSearch()">
+                <div class="relative">
+                    <input type="text"
+                           x-model="searchQuery"
+                           @input="onSearchInput()"
+                           @keydown="onSearchKeydown($event)"
+                           @focus="searchResults.length > 0 && !venue && (searchOpen = true)"
+                           placeholder="Type a restaurant name or paste a Resy URL..."
+                           role="combobox"
+                           aria-autocomplete="list"
+                           :aria-expanded="searchOpen"
+                           aria-controls="search-results-listbox"
+                           :aria-activedescendant="highlightedIndex >= 0 ? 'search-result-' + highlightedIndex : null"
+                           class="w-full p-5 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl
+                                  text-white placeholder-slate-500 pr-12
+                                  focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50
+                                  outline-none transition">
+                    <!-- Loading spinner inside input -->
+                    <div x-show="searchLoading" class="absolute right-4 top-1/2 -translate-y-1/2">
+                        <svg class="animate-spin h-6 w-6 text-amber-400" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4" fill="none"/>
+                            <path class="opacity-75" fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                    </div>
+                    <!-- Search icon -->
+                    <div x-show="!searchLoading && !venue" class="absolute right-4 top-1/2 -translate-y-1/2">
+                        <svg class="h-6 w-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Dropdown Results -->
+                <ul x-show="searchOpen && searchResults.length > 0"
+                    x-transition:enter="transition ease-out duration-100"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    id="search-results-listbox"
+                    role="listbox"
+                    class="absolute z-20 w-full mt-2 glass border border-slate-600/50
+                           rounded-xl shadow-2xl overflow-hidden max-h-[400px] overflow-y-auto">
+                    <template x-for="(result, i) in searchResults" :key="result.resy_id">
+                        <li :id="'search-result-' + i"
+                            role="option"
+                            :aria-selected="i === highlightedIndex"
+                            @click="selectSearchResult(result)"
+                            @mouseenter="highlightedIndex = i"
+                            class="cursor-pointer transition-all min-h-[72px] flex items-center
+                                   px-5 py-4 border-b border-slate-700/30 last:border-b-0"
+                            :class="i === highlightedIndex ? 'bg-amber-500/10' : 'hover:bg-slate-700/30'">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-lg font-semibold text-white truncate"
+                                   x-text="result.name"></p>
+                                <p class="text-base text-slate-400 truncate">
+                                    <span x-show="result.cuisine" x-text="result.cuisine"></span>
+                                    <span x-show="result.cuisine && result.neighborhood" class="text-slate-600"> &middot; </span>
+                                    <span x-show="result.neighborhood" x-text="result.neighborhood"></span>
+                                    <span x-show="(result.cuisine || result.neighborhood) && result.locality" class="text-slate-600"> &middot; </span>
+                                    <span x-show="result.locality" x-text="result.locality + (result.region ? ', ' + result.region : '')"></span>
+                                </p>
+                            </div>
+                            <svg class="w-5 h-5 text-slate-500 ml-3 shrink-0" fill="none"
+                                 stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </li>
+                    </template>
+                </ul>
+
+                <!-- No results message -->
+                <div x-show="searchNoResults"
+                     class="absolute z-20 w-full mt-2 glass border border-slate-600/50
+                            rounded-xl shadow-2xl p-5 text-center">
+                    <p class="text-lg text-slate-400">No restaurants found</p>
+                    <p class="text-base text-slate-500 mt-1">Try a different name or paste a Resy URL</p>
+                </div>
+            </div>
+
+            <!-- URL Lookup Button -->
+            <button x-show="isResyUrl(searchQuery) && !venue"
+                    @click="venueUrl = searchQuery.trim(); doVenueLookup()"
+                    :disabled="loading"
+                    x-transition
+                    class="w-full mt-4 p-5 text-xl font-bold text-slate-900 rounded-xl btn-primary
+                           disabled:opacity-30 disabled:cursor-not-allowed
+                           focus:ring-4 focus:ring-amber-500/30 outline-none transition-all min-h-[64px]">
+                <span x-show="!loading">Look Up Restaurant</span>
+                <span x-show="loading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-6 w-6" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                stroke="currentColor" stroke-width="4" fill="none"/>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Looking up...
+                </span>
+            </button>
+
+            <!-- Venue Result -->
+            <div x-show="venue" x-transition class="mt-6 glass-light border border-emerald-500/20 rounded-xl p-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-white" x-text="venue?.venue_name || 'Restaurant'"></h3>
+                        <p class="text-sm text-slate-400 mt-1">Venue ID: <span class="text-slate-300" x-text="venue?.venue_id"></span></p>
+                    </div>
+                    <button @click="venue = null; searchQuery = ''; searchResults = []; venueUrl = '';"
+                            class="text-slate-500 hover:text-white text-sm transition-colors shrink-0 ml-4">Change</button>
+                </div>
+
+                <!-- Detected Policy -->
+                <template x-if="venue?.detected_policy">
+                    <div class="mt-4 glass border border-amber-500/20 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-base font-medium text-amber-300">Booking Policy Detected</span>
+                            <span class="px-2 py-0.5 text-xs font-medium rounded-full"
+                                  :class="venue.detected_policy.confidence === 'high'
+                                      ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30'
+                                      : venue.detected_policy.confidence === 'medium'
+                                          ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
+                                          : 'bg-slate-600/30 text-slate-400 ring-1 ring-slate-500/30'"
+                                  x-text="venue.detected_policy.confidence + ' confidence'"></span>
+                            <span class="px-2 py-0.5 text-xs font-medium bg-slate-600/30 text-slate-400 ring-1 ring-slate-500/30 rounded-full"
+                                  x-text="'via ' + venue.detected_policy.source"></span>
+                        </div>
+                        <p class="text-lg text-white">
+                            Opens <strong class="text-amber-400" x-text="venue.detected_policy.days_ahead"></strong> days ahead
+                            at <strong class="text-amber-400" x-text="String(venue.detected_policy.hour).padStart(2,'0') + ':' + String(venue.detected_policy.minute).padStart(2,'0')"></strong>
+                            <span class="text-slate-400" x-text="venue.detected_policy.timezone === 'America/New_York' ? 'ET' : venue.detected_policy.timezone === 'America/Los_Angeles' ? 'PT' : venue.detected_policy.timezone"></span>
+                        </p>
+                        <p x-show="venue.detected_policy.reasoning" class="text-sm text-slate-400 mt-1" x-text="venue.detected_policy.reasoning"></p>
+                    </div>
+                </template>
+
+                <template x-if="venue && !venue.detected_policy">
+                    <div class="mt-4 glass border border-amber-500/15 rounded-xl p-4">
+                        <p class="text-base text-amber-300/80">Could not auto-detect booking policy. You'll enter it manually on the next step.</p>
+                    </div>
+                </template>
+
+                <button @click="applyAndContinue()"
+                        class="w-full mt-5 p-5 text-xl font-bold text-slate-900 rounded-xl btn-primary
+                               focus:ring-4 focus:ring-amber-500/30 outline-none transition-all min-h-[64px]">
+                    Continue to Configure
+                </button>
+            </div>
+
+            <!-- Selecting spinner -->
+            <div x-show="loading && !isResyUrl(searchQuery) && !venue" x-transition
+                 class="mt-6 glass-light border border-slate-600/30 rounded-xl p-6 text-center">
+                <div class="flex items-center justify-center gap-3 text-slate-400">
+                    <svg class="animate-spin h-6 w-6 text-amber-400" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                stroke="currentColor" stroke-width="4" fill="none"/>
+                        <path class="opacity-75" fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    <span class="text-lg">Loading restaurant details...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 3: CONFIGURE ==================== -->
+    <div x-show="step === 3" x-transition>
+        <div class="glass rounded-2xl border border-slate-700/50 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Configure Snipe</h2>
+                    <p class="text-amber-400/80 text-base" x-text="venue?.venue_name"></p>
+                </div>
+                <button @click="step = 2" class="text-slate-400 hover:text-white text-sm transition-colors">Change restaurant</button>
+            </div>
+
+            <!-- Date -->
+            <label class="block text-base font-medium text-slate-300 mb-2">Reservation Date</label>
+            <input type="date" x-model="targetDate"
+                   class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white mb-6
+                          focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+
+            <!-- Party Size -->
+            <label class="block text-base font-medium text-slate-300 mb-2">Party Size</label>
+            <div class="flex items-center gap-4 mb-6">
+                <button @click="partySize = Math.max(1, partySize - 1)"
+                        class="w-16 h-16 text-2xl font-bold bg-slate-800/80 border border-slate-600/50 rounded-xl
+                               text-white hover:bg-slate-700/80 focus:ring-2 focus:ring-amber-500/50 outline-none transition">-</button>
+                <span class="text-3xl font-bold w-12 text-center tabular-nums text-white" x-text="partySize"></span>
+                <button @click="partySize = Math.min(20, partySize + 1)"
+                        class="w-16 h-16 text-2xl font-bold bg-slate-800/80 border border-slate-600/50 rounded-xl
+                               text-white hover:bg-slate-700/80 focus:ring-2 focus:ring-amber-500/50 outline-none transition">+</button>
+            </div>
+
+            <!-- Time Preferences -->
+            <label class="block text-base font-medium text-slate-300 mb-2">Time Preferences</label>
+            <p class="text-sm text-slate-500 mb-3">In priority order. First match wins.</p>
+            <template x-for="(pref, i) in timePreferences" :key="i">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-base font-bold text-slate-500 w-8 shrink-0" x-text="'#' + (i+1)"></span>
+                    <input type="time" x-model="pref.time"
+                           class="p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl flex-1 text-white
+                                  focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                    <input type="text" x-model="pref.seating_type" placeholder="Any seating"
+                           class="p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl flex-1 text-white
+                                  placeholder-slate-500
+                                  focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                    <button x-show="timePreferences.length > 1" @click="timePreferences.splice(i, 1)"
+                            class="w-14 h-14 text-xl text-red-400 bg-slate-800/80 border border-red-500/30 rounded-xl shrink-0
+                                   hover:bg-red-500/10 focus:ring-2 focus:ring-red-500/30 outline-none transition">&times;</button>
+                </div>
+            </template>
+            <button @click="timePreferences.push({ time: '19:30', seating_type: '' })"
+                    class="w-full p-4 text-lg border-2 border-dashed border-slate-600/50 rounded-xl
+                           text-amber-400 hover:bg-amber-500/5 hover:border-amber-500/30
+                           focus:ring-2 focus:ring-amber-500/30 outline-none transition mb-6">
+                + Add Another Time
+            </button>
+
+            <!-- Drop Time Policy -->
+            <div class="glass-light border border-slate-600/30 rounded-xl p-6 mb-6">
+                <h3 class="text-base font-medium text-white mb-4">Reservation Release Policy</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Drop Hour</label>
+                        <select x-model.number="dropTime.hour"
+                                class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                                       focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                            <option value="0">00:00</option><option value="1">01:00</option>
+                            <option value="2">02:00</option><option value="3">03:00</option>
+                            <option value="4">04:00</option><option value="5">05:00</option>
+                            <option value="6">06:00</option><option value="7">07:00</option>
+                            <option value="8">08:00</option><option value="9">09:00</option>
+                            <option value="10">10:00</option><option value="11">11:00</option>
+                            <option value="12">12:00</option><option value="13">13:00</option>
+                            <option value="14">14:00</option><option value="15">15:00</option>
+                            <option value="16">16:00</option><option value="17">17:00</option>
+                            <option value="18">18:00</option><option value="19">19:00</option>
+                            <option value="20">20:00</option><option value="21">21:00</option>
+                            <option value="22">22:00</option><option value="23">23:00</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Drop Minute</label>
+                        <select x-model.number="dropTime.minute"
+                                class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                                       focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                            <option value="0">:00</option>
+                            <option value="15">:15</option>
+                            <option value="30">:30</option>
+                            <option value="45">:45</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Days Ahead</label>
+                        <input type="number" x-model.number="dropTime.days_ahead" min="1" max="90"
+                               class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                                      focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-slate-400 mb-1">Timezone</label>
+                        <select x-model="dropTime.timezone"
+                                class="w-full p-4 text-lg bg-slate-800/80 border border-slate-600/50 rounded-xl text-white
+                                       focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 outline-none transition">
+                            <option value="America/New_York">Eastern</option>
+                            <option value="America/Chicago">Central</option>
+                            <option value="America/Denver">Mountain</option>
+                            <option value="America/Los_Angeles">Pacific</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dry Run Toggle -->
+            <label class="flex items-center gap-4 mb-6 cursor-pointer select-none">
+                <button @click="dryRun = !dryRun" role="switch" :aria-checked="dryRun"
+                        class="relative w-14 h-8 rounded-full transition-colors focus:ring-2 focus:ring-amber-500/30 outline-none"
+                        :class="dryRun ? 'bg-amber-500' : 'bg-slate-600'">
+                    <div class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform shadow"
+                         :class="dryRun ? 'translate-x-6' : ''"></div>
+                </button>
+                <span class="text-lg text-slate-300">Dry Run <span class="text-slate-500">(find slot but don't book)</span></span>
+            </label>
+
+            <!-- Start Button -->
+            <button @click="startSnipe()"
+                    :disabled="loading || !targetDate || timePreferences.length === 0"
+                    class="w-full p-5 text-xl font-bold rounded-xl text-white transition-all min-h-[64px]
+                           focus:ring-4 outline-none disabled:opacity-30 disabled:cursor-not-allowed"
+                    :class="dryRun
+                        ? 'btn-primary text-slate-900'
+                        : 'btn-danger'">
+                <span x-show="!loading" x-text="dryRun ? 'Start Dry Run' : 'Start Snipe'"></span>
+                <span x-show="loading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-6 w-6" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Starting...
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== STEP 4: EXECUTE ==================== -->
+    <div x-show="step === 4" x-transition>
+
+        <!-- Countdown / Active Phase -->
+        <div x-show="snipePhase !== 'done'" class="glass rounded-2xl border border-slate-700/50 p-8 text-center">
+            <h2 class="text-2xl font-bold text-white mb-2" x-text="phaseLabel()"></h2>
+            <p class="text-base text-amber-400/70 mb-6" x-text="venue?.venue_name"></p>
+
+            <!-- Countdown Timer -->
+            <div x-show="secondsRemaining !== null && secondsRemaining > 0" class="mb-8">
+                <div class="text-7xl font-mono font-bold tabular-nums text-amber-400"
+                     x-text="formatCountdown(secondsRemaining)"></div>
+                <p class="text-lg text-slate-400 mt-2">until reservations drop</p>
+            </div>
+
+            <!-- Phase Steps -->
+            <div class="flex items-center justify-center gap-3 mb-8">
+                <template x-for="(p, i) in ['waiting', 'authenticating', 'warming', 'sniping']" :key="p">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full transition-all duration-300"
+                             :class="snipePhase === p
+                                 ? (p === 'sniping' ? 'bg-red-500 animate-pulse ring-4 ring-red-500/20' : 'bg-amber-500 animate-pulse ring-4 ring-amber-500/20')
+                                 : phaseOrder(snipePhase) > phaseOrder(p) ? 'bg-emerald-500' : 'bg-slate-600'"></div>
+                        <span x-show="i < 3" class="w-6 h-0.5 rounded-full transition-colors duration-300"
+                              :class="phaseOrder(snipePhase) > phaseOrder(p) ? 'bg-emerald-500/40' : 'bg-slate-700'"></span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Sniping Stats -->
+            <div x-show="snipePhase === 'sniping'" class="text-lg text-slate-300">
+                <p>Attempt <strong class="tabular-nums text-white" x-text="attempt"></strong></p>
+                <p x-show="slotsFound > 0" class="text-emerald-400 mt-1">
+                    Found <strong x-text="slotsFound"></strong> slots
+                </p>
+            </div>
+
+            <p class="text-base text-slate-400 mt-4" x-text="message"></p>
+
+            <button @click="cancelSnipe()"
+                    class="mt-8 px-8 p-4 text-lg border border-red-500/30 text-red-400 rounded-xl
+                           hover:bg-red-500/10 focus:ring-2 focus:ring-red-500/30 outline-none transition min-h-[56px]">
+                Cancel
+            </button>
+        </div>
+
+        <!-- Result -->
+        <div x-show="snipePhase === 'done' && result" x-transition>
+
+            <!-- Success -->
+            <div x-show="result?.success && !result?.error?.includes('DRY RUN')"
+                 class="glass border-2 border-emerald-500/40 rounded-2xl p-8 text-center glow-green">
+                <div class="text-5xl font-bold text-emerald-400 mb-3">Booked!</div>
+                <p class="text-2xl text-white" x-text="result?.slot_time"></p>
+                <p class="text-lg text-slate-300 mt-1" x-text="result?.slot_type"></p>
+                <div class="mt-4 text-base text-slate-400">
+                    <p>Booked in <strong class="text-emerald-400" x-text="result?.elapsed_seconds?.toFixed(3) + 's'"></strong>
+                       after <strong class="text-white" x-text="result?.attempts"></strong> attempts</p>
+                    <p x-show="result?.resy_token" class="mt-1 text-sm text-slate-500"
+                       x-text="'Confirmation: ' + result?.resy_token"></p>
+                </div>
+            </div>
+
+            <!-- Dry Run -->
+            <div x-show="result?.success && result?.error?.includes('DRY RUN')"
+                 class="glass border-2 border-amber-500/40 rounded-2xl p-8 text-center glow-amber">
+                <div class="text-4xl font-bold text-amber-400 mb-3">Dry Run Complete</div>
+                <p class="text-2xl text-white">Would have booked: <span class="text-amber-400" x-text="result?.slot_time"></span></p>
+                <p class="text-lg text-slate-300 mt-1" x-text="result?.slot_type"></p>
+                <p class="text-base text-slate-400 mt-3">
+                    Found in <strong class="text-amber-400" x-text="result?.elapsed_seconds?.toFixed(3) + 's'"></strong>
+                    after <strong class="text-white" x-text="result?.attempts"></strong> attempts
+                </p>
+            </div>
+
+            <!-- Failure -->
+            <div x-show="!result?.success"
+                 class="glass border-2 border-red-500/40 rounded-2xl p-8 text-center glow-red">
+                <div class="text-4xl font-bold text-red-400 mb-3">Snipe Failed</div>
+                <p class="text-xl text-white" x-text="result?.error"></p>
+                <p class="text-base text-slate-400 mt-3">
+                    <strong class="text-white" x-text="result?.attempts"></strong> attempts in
+                    <strong class="text-white" x-text="result?.elapsed_seconds?.toFixed(3) + 's'"></strong>
+                </p>
+            </div>
+
+            <button @click="resetForNew()"
+                    class="w-full mt-6 p-5 text-xl font-bold text-slate-900 rounded-xl btn-primary
+                           focus:ring-4 focus:ring-amber-500/30 outline-none transition-all min-h-[64px]">
+                Set Up Another Snipe
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function app() {
+    return {
+        step: 1,
+        loading: false,
+        error: null,
+
+        // Step 1
+        email: '',
+        password: '',
+        user: null,
+
+        // Step 2
+        venueUrl: '',
+        venue: null,
+        searchQuery: '',
+        searchResults: [],
+        searchLoading: false,
+        searchOpen: false,
+        searchNoResults: false,
+        highlightedIndex: -1,
+        _searchTimer: null,
+
+        // Step 3
+        partySize: 2,
+        targetDate: '',
+        timePreferences: [{ time: '19:00', seating_type: '' }],
+        dropTime: { hour: 10, minute: 0, second: 0, timezone: 'America/New_York', days_ahead: 30 },
+        dryRun: false,
+
+        // Step 4
+        snipePhase: 'idle',
+        secondsRemaining: null,
+        attempt: 0,
+        slotsFound: 0,
+        message: '',
+        result: null,
+        evtSource: null,
+
+        async init() {
+            // Check if already logged in (page reload)
+            try {
+                const resp = await fetch('/api/auth/status');
+                const data = await resp.json();
+                if (data.logged_in) {
+                    this.user = data;
+                    this.step = 2;
+                }
+            } catch (e) {}
+
+            // Check if snipe is running
+            try {
+                const resp = await fetch('/api/snipe/status');
+                const data = await resp.json();
+                if (data.phase && data.phase !== 'idle') {
+                    this.snipePhase = data.phase;
+                    this.attempt = data.attempt;
+                    this.message = data.message;
+                    if (data.result) this.result = data.result;
+                    if (data.drop_datetime_iso) {
+                        this._startCountdownFrom(data.drop_datetime_iso);
+                    }
+                    if (data.phase !== 'done') this.connectSSE();
+                    this.step = 4;
+                }
+            } catch (e) {}
+        },
+
+        async doLogin() {
+            this.loading = true;
+            this.error = null;
+            try {
+                const resp = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: this.email, password: this.password }),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Login failed');
+                }
+                this.user = await resp.json();
+                this.step = 2;
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // --- Search ---
+
+        isResyUrl(text) {
+            return /resy\.com\/cities\//.test((text || '').trim());
+        },
+
+        onSearchInput() {
+            const val = this.searchQuery.trim();
+            this.venue = null;
+            this.highlightedIndex = -1;
+            this.searchNoResults = false;
+
+            // If it looks like a Resy URL, don't search
+            if (this.isResyUrl(val)) {
+                this.searchResults = [];
+                this.searchOpen = false;
+                this.venueUrl = val;
+                return;
+            }
+
+            this.venueUrl = '';
+
+            if (val.length < 2) {
+                this.searchResults = [];
+                this.searchOpen = false;
+                return;
+            }
+
+            // Debounce 300ms
+            clearTimeout(this._searchTimer);
+            this._searchTimer = setTimeout(() => this.doSearch(val), 300);
+        },
+
+        async doSearch(query) {
+            if (query !== this.searchQuery.trim()) return;
+            this.searchLoading = true;
+            this.searchNoResults = false;
+            try {
+                const resp = await fetch(`/api/venue/search?query=${encodeURIComponent(query)}&limit=5`);
+                if (!resp.ok) return;
+                const data = await resp.json();
+                // Only update if query hasn't changed
+                if (query === this.searchQuery.trim()) {
+                    this.searchResults = data.results;
+                    this.searchOpen = this.searchResults.length > 0;
+                    this.searchNoResults = this.searchResults.length === 0;
+                }
+            } catch (e) {
+                this.searchResults = [];
+                this.searchOpen = false;
+            } finally {
+                this.searchLoading = false;
+            }
+        },
+
+        async selectSearchResult(result) {
+            this.searchQuery = result.name;
+            this.searchResults = [];
+            this.searchOpen = false;
+            this.searchNoResults = false;
+            this.highlightedIndex = -1;
+            this.loading = true;
+            this.error = null;
+
+            try {
+                const resp = await fetch('/api/venue/select', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resy_id: result.resy_id,
+                        name: result.name,
+                        url_slug: result.url_slug,
+                        location_slug: result.location_slug,
+                    }),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Selection failed');
+                }
+                this.venue = await resp.json();
+                if (this.venue.detected_policy) {
+                    this.dropTime = {
+                        hour: this.venue.detected_policy.hour,
+                        minute: this.venue.detected_policy.minute,
+                        second: 0,
+                        timezone: this.venue.detected_policy.timezone,
+                        days_ahead: this.venue.detected_policy.days_ahead,
+                    };
+                }
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        onSearchKeydown(event) {
+            if (!this.searchOpen || this.searchResults.length === 0) {
+                if (event.key === 'Enter' && this.isResyUrl(this.searchQuery)) {
+                    this.venueUrl = this.searchQuery.trim();
+                    this.doVenueLookup();
+                    event.preventDefault();
+                }
+                return;
+            }
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    this.highlightedIndex = Math.min(this.highlightedIndex + 1, this.searchResults.length - 1);
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    this.highlightedIndex = Math.max(this.highlightedIndex - 1, -1);
+                    break;
+                case 'Enter':
+                    event.preventDefault();
+                    if (this.highlightedIndex >= 0) {
+                        this.selectSearchResult(this.searchResults[this.highlightedIndex]);
+                    }
+                    break;
+                case 'Escape':
+                    this.searchOpen = false;
+                    this.highlightedIndex = -1;
+                    break;
+            }
+        },
+
+        dismissSearch() {
+            setTimeout(() => {
+                this.searchOpen = false;
+                this.searchNoResults = false;
+                this.highlightedIndex = -1;
+            }, 200);
+        },
+
+        async doVenueLookup() {
+            if (!this.venueUrl) return;
+            this.loading = true;
+            this.error = null;
+            this.venue = null;
+            this.searchOpen = false;
+            this.searchNoResults = false;
+            try {
+                const resp = await fetch('/api/venue/lookup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: this.venueUrl }),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Lookup failed');
+                }
+                this.venue = await resp.json();
+                // Auto-populate date and party size from URL params
+                if (this.venue.url_date) this.targetDate = this.venue.url_date;
+                if (this.venue.url_seats) this.partySize = this.venue.url_seats;
+                if (this.venue.detected_policy) {
+                    this.dropTime = {
+                        hour: this.venue.detected_policy.hour,
+                        minute: this.venue.detected_policy.minute,
+                        second: 0,
+                        timezone: this.venue.detected_policy.timezone,
+                        days_ahead: this.venue.detected_policy.days_ahead,
+                    };
+                }
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        applyAndContinue() {
+            // Only set default date if not already populated from URL
+            if (!this.targetDate) {
+                const d = new Date();
+                d.setDate(d.getDate() + this.dropTime.days_ahead);
+                this.targetDate = d.toISOString().split('T')[0];
+            }
+            this.step = 3;
+        },
+
+        async startSnipe() {
+            this.loading = true;
+            this.error = null;
+            try {
+                const body = {
+                    venue_id: this.venue.venue_id,
+                    venue_name: this.venue.venue_name,
+                    party_size: this.partySize,
+                    date: this.targetDate,
+                    time_preferences: this.timePreferences.map(p => ({
+                        time: p.time,
+                        seating_type: p.seating_type || null,
+                    })),
+                    drop_time: this.dropTime,
+                    dry_run: this.dryRun,
+                };
+                const resp = await fetch('/api/snipe/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Failed to start snipe');
+                }
+                const data = await resp.json();
+                this._startCountdownFrom(data.drop_datetime_iso);
+                this.snipePhase = 'waiting';
+                this.result = null;
+                this.attempt = 0;
+                this.slotsFound = 0;
+                this.connectSSE();
+                this.step = 4;
+            } catch (e) {
+                this.error = e.message;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        _startCountdownFrom(isoStr) {
+            const dropTime = new Date(isoStr);
+            if (this._countdownInterval) clearInterval(this._countdownInterval);
+            this._countdownInterval = setInterval(() => {
+                const now = new Date();
+                const rem = (dropTime - now) / 1000;
+                this.secondsRemaining = Math.max(0, rem);
+                if (rem <= 0 && this._countdownInterval) {
+                    clearInterval(this._countdownInterval);
+                }
+            }, 200);
+        },
+
+        connectSSE() {
+            if (this.evtSource) this.evtSource.close();
+            this.evtSource = new EventSource('/api/snipe/events');
+
+            this.evtSource.addEventListener('snipe_phase', (e) => {
+                const data = JSON.parse(e.data);
+                this.snipePhase = data.phase;
+                this.message = data.message;
+                if (data.attempt !== undefined) this.attempt = data.attempt;
+            });
+
+            this.evtSource.addEventListener('countdown_tick', (e) => {
+                const data = JSON.parse(e.data);
+                this.secondsRemaining = data.seconds_remaining;
+            });
+
+            this.evtSource.addEventListener('snipe_attempt', (e) => {
+                const data = JSON.parse(e.data);
+                this.attempt = data.attempt;
+                this.slotsFound = data.slots_found;
+                this.message = data.message;
+            });
+
+            this.evtSource.addEventListener('snipe_result', (e) => {
+                const data = JSON.parse(e.data);
+                this.result = data;
+                this.snipePhase = 'done';
+                this.secondsRemaining = null;
+                if (this._countdownInterval) clearInterval(this._countdownInterval);
+                this.evtSource.close();
+            });
+        },
+
+        async cancelSnipe() {
+            await fetch('/api/snipe/cancel', { method: 'POST' });
+            if (this.evtSource) this.evtSource.close();
+            if (this._countdownInterval) clearInterval(this._countdownInterval);
+            this.snipePhase = 'done';
+            this.secondsRemaining = null;
+            this.result = { success: false, error: 'Cancelled by user', attempts: this.attempt, elapsed_seconds: 0 };
+        },
+
+        resetForNew() {
+            this.snipePhase = 'idle';
+            this.secondsRemaining = null;
+            this.attempt = 0;
+            this.slotsFound = 0;
+            this.message = '';
+            this.result = null;
+            this.step = 3;
+        },
+
+        formatCountdown(seconds) {
+            if (seconds === null || seconds === undefined) return '--:--:--';
+            const s = Math.max(0, Math.floor(seconds));
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = s % 60;
+            return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+        },
+
+        phaseLabel() {
+            const labels = {
+                idle: 'Preparing...',
+                waiting: 'Waiting for Drop Time',
+                authenticating: 'Authenticating...',
+                warming: 'Warming Connection...',
+                sniping: 'SNIPING!',
+                done: 'Complete',
+            };
+            return labels[this.snipePhase] || this.snipePhase;
+        },
+
+        phaseOrder(p) {
+            return { idle: 0, waiting: 1, authenticating: 2, warming: 3, sniping: 4, done: 5 }[p] || 0;
+        },
+    };
+}
+</script>
+
+</body>
+</html>

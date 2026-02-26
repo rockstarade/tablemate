@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        body {
+            background: #0f172a;
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="adminApp()" x-init="init()">
+
+    <!-- Login Gate -->
+    <div x-show="!authenticated" x-cloak class="min-h-screen flex items-center justify-center">
+        <div class="glass rounded-2xl border border-slate-700/50 p-8 w-full max-w-sm">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-2xl">🍽</span>
+                <span class="text-xl font-bold text-white">Tablement Admin</span>
+            </div>
+            <form @submit.prevent="login()">
+                <input type="password" x-model="password" placeholder="Admin password"
+                    x-ref="passwordInput"
+                    class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 mb-4"
+                    required autofocus>
+                <button type="submit" :disabled="!password"
+                    class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold transition-all disabled:opacity-50 text-sm">
+                    Sign In
+                </button>
+                <p x-show="loginError" class="mt-3 text-red-400 text-sm" x-text="loginError"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div x-show="authenticated" x-cloak>
+
+        <!-- Navigation -->
+        <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🍽</span>
+                    <span class="text-xl font-bold text-white">Tablement</span>
+                    <span class="px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-xs font-medium">ADMIN</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/admin/vip" class="px-2.5 py-1 rounded-md bg-brand-500/20 text-brand-400 text-xs font-medium hover:bg-brand-500/30 transition-colors">VIP Control</a>
+                    <a href="/app" class="text-slate-400 hover:text-white text-sm">Dashboard</a>
+                    <button @click="refresh()" class="text-slate-400 hover:text-white text-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" :class="{ 'animate-spin': refreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                    <span class="text-slate-500 text-xs tabular-nums" x-text="lastRefresh"></span>
+                    <button @click="logout()" class="text-slate-400 hover:text-red-400 text-sm">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tabs -->
+        <div class="fixed top-[65px] inset-x-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-6 flex gap-1">
+                <template x-for="tab in ['overview', 'users', 'reservations']">
+                    <button @click="activeTab = tab"
+                        class="px-4 py-3 text-sm font-medium transition-colors border-b-2 capitalize"
+                        :class="activeTab === tab
+                            ? 'text-brand-400 border-brand-400'
+                            : 'text-slate-400 border-transparent hover:text-slate-200'"
+                        x-text="tab">
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <main class="pt-32 pb-16 max-w-7xl mx-auto px-6">
+
+            <!-- ═══════════ Overview Tab ═══════════ -->
+            <div x-show="activeTab === 'overview'">
+
+                <!-- Stat Cards -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Users</div>
+                        <div class="text-3xl font-bold text-white tabular-nums" x-text="stats.users ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Reservations</div>
+                        <div class="text-3xl font-bold text-white tabular-nums" x-text="stats.reservations?.total ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Active Jobs</div>
+                        <div class="text-3xl font-bold text-brand-400 tabular-nums" x-text="stats.jobs?.active_in_memory ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Scheduled</div>
+                        <div class="text-3xl font-bold text-blue-400 tabular-nums" x-text="stats.jobs?.scheduled ?? '—'"></div>
+                    </div>
+                </div>
+
+                <!-- Status Breakdown -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Reservations by Status</h3>
+                        <div class="space-y-3">
+                            <template x-for="(count, status) in (stats.reservations?.by_status || {})">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full"
+                                            :class="{
+                                                'bg-emerald-400': status === 'confirmed',
+                                                'bg-red-400': status === 'failed',
+                                                'bg-brand-400': status === 'sniping',
+                                                'bg-blue-400': status === 'monitoring',
+                                                'bg-slate-400': status === 'scheduled' || status === 'pending',
+                                                'bg-slate-600': status === 'cancelled',
+                                            }"></span>
+                                        <span class="text-sm text-slate-300 capitalize" x-text="status"></span>
+                                    </div>
+                                    <span class="text-sm font-medium text-white tabular-nums" x-text="count"></span>
+                                </div>
+                            </template>
+                            <div x-show="!Object.keys(stats.reservations?.by_status || {}).length" class="text-slate-500 text-sm">
+                                No reservations yet
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Proxy Status</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Mode</span>
+                                <span class="text-white capitalize" x-text="stats.proxy?.mode || 'none'"></span>
+                            </div>
+                            <div class="flex justify-between" x-show="stats.proxy?.provider">
+                                <span class="text-slate-400">Provider</span>
+                                <span class="text-white capitalize" x-text="stats.proxy?.provider"></span>
+                            </div>
+                            <div class="flex justify-between" x-show="stats.proxy?.active_sessions !== undefined">
+                                <span class="text-slate-400">Active Sessions</span>
+                                <span class="text-white tabular-nums" x-text="stats.proxy?.active_sessions"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Server Time</span>
+                                <span class="text-white text-xs tabular-nums" x-text="stats.server_time ? new Date(stats.server_time).toLocaleString() : '—'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="glass rounded-xl border border-slate-700/50 p-5">
+                    <h3 class="text-sm font-medium text-slate-300 mb-3">Quick Actions</h3>
+                    <div class="flex gap-3">
+                        <a href="/" target="_blank" class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-sm transition-colors">
+                            Open Landing Page
+                        </a>
+                        <a href="/app" target="_blank" class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-sm transition-colors">
+                            Open Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════ Users Tab ═══════════ -->
+            <div x-show="activeTab === 'users'">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-white">
+                        Users
+                        <span class="text-slate-400 text-sm font-normal" x-text="'(' + users.length + ')'"></span>
+                    </h2>
+                </div>
+
+                <div x-show="users.length === 0" class="text-center py-12">
+                    <p class="text-slate-400">No users yet.</p>
+                </div>
+
+                <div class="glass rounded-xl border border-slate-700/50 overflow-hidden" x-show="users.length > 0">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700/50">
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">User ID</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">Resy</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">Stripe</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase tracking-wide">Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="user in users" :key="user.id">
+                                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30 transition-colors">
+                                    <td class="px-5 py-3">
+                                        <div class="text-sm text-white font-mono" x-text="user.id.substring(0, 8) + '...'"></div>
+                                    </td>
+                                    <td class="px-5 py-3">
+                                        <template x-if="user.resy_linked">
+                                            <div>
+                                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">Linked</span>
+                                                <span class="text-slate-400 text-xs ml-2" x-text="user.resy_email"></span>
+                                            </div>
+                                        </template>
+                                        <template x-if="!user.resy_linked">
+                                            <span class="px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-500 text-xs">Not linked</span>
+                                        </template>
+                                    </td>
+                                    <td class="px-5 py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs"
+                                            :class="user.stripe_linked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-600/20 text-slate-500'"
+                                            x-text="user.stripe_linked ? 'Active' : 'None'"></span>
+                                    </td>
+                                    <td class="px-5 py-3 text-slate-400 text-sm" x-text="formatDate(user.created_at)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ═══════════ Reservations Tab ═══════════ -->
+            <div x-show="activeTab === 'reservations'">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-white">
+                        Reservations
+                        <span class="text-slate-400 text-sm font-normal" x-text="'(' + reservations.length + ')'"></span>
+                    </h2>
+                    <!-- Filter -->
+                    <div class="flex gap-2">
+                        <template x-for="filter in ['all', 'active', 'confirmed', 'failed']">
+                            <button @click="resFilter = filter"
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize"
+                                :class="resFilter === filter
+                                    ? 'bg-brand-500/20 text-brand-400'
+                                    : 'bg-slate-700/30 text-slate-400 hover:text-white'"
+                                x-text="filter">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <div x-show="filteredReservations().length === 0" class="text-center py-12">
+                    <p class="text-slate-400">No reservations match the filter.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="res in filteredReservations()" :key="res.id">
+                        <div class="glass rounded-xl border border-slate-700/50 p-5 relative"
+                             :class="{
+                                 'border-emerald-500/30': res.status === 'confirmed',
+                                 'border-red-500/30': res.status === 'failed',
+                                 'border-brand-500/30': res.status === 'sniping',
+                                 'border-blue-500/30': res.status === 'monitoring',
+                             }">
+
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-base font-semibold text-white" x-text="res.venue_name"></h3>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                                            :class="{
+                                                'bg-emerald-500/20 text-emerald-400': res.status === 'confirmed',
+                                                'bg-red-500/20 text-red-400': res.status === 'failed',
+                                                'bg-brand-500/20 text-brand-400': res.status === 'sniping',
+                                                'bg-blue-500/20 text-blue-400': res.status === 'monitoring',
+                                                'bg-slate-500/20 text-slate-400': res.status === 'scheduled' || res.status === 'pending',
+                                                'bg-slate-600/20 text-slate-500': res.status === 'cancelled',
+                                            }"
+                                            x-text="res.status">
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium capitalize"
+                                            :class="res.mode === 'snipe' ? 'bg-purple-500/20 text-purple-400' : 'bg-cyan-500/20 text-cyan-400'"
+                                            x-text="res.mode">
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 text-sm text-slate-400">
+                                        <span x-text="res.target_date"></span>
+                                        <span x-text="res.party_size + ' guests'"></span>
+                                        <span class="font-mono text-xs text-slate-500" x-text="'user: ' + res.user_id.substring(0, 8) + '...'"></span>
+                                        <span class="text-xs" x-text="formatDate(res.created_at)"></span>
+                                    </div>
+
+                                    <!-- Result info -->
+                                    <div x-show="res.status === 'confirmed'" class="mt-2 text-emerald-400 text-xs">
+                                        Booked in <span x-text="(res.elapsed_seconds || 0).toFixed(2)"></span>s
+                                        (<span x-text="res.attempts"></span> attempts)
+                                        <span x-show="res.resy_token" class="text-slate-500 ml-2">token: <span x-text="res.resy_token"></span></span>
+                                    </div>
+                                    <div x-show="res.status === 'failed'" class="mt-2 text-red-400 text-xs" x-text="res.error"></div>
+
+                                    <!-- Time preferences -->
+                                    <div class="flex flex-wrap gap-1 mt-2" x-show="res.time_preferences?.length">
+                                        <template x-for="tp in (res.time_preferences || [])">
+                                            <span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-400 text-xs"
+                                                x-text="tp.time + (tp.seating_type ? ' (' + tp.seating_type + ')' : '')">
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Admin actions -->
+                                <div class="flex gap-2 ml-4" x-show="['scheduled','monitoring','sniping','pending'].includes(res.status)">
+                                    <button @click="cancelReservation(res.id)"
+                                        class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+    function adminApp() {
+        return {
+            // Auth
+            password: '',
+            adminToken: localStorage.getItem('tablement_admin_token') || '',
+            authenticated: false,
+            loginError: '',
+
+            // State
+            activeTab: 'overview',
+            stats: {},
+            users: [],
+            reservations: [],
+            resFilter: 'all',
+            refreshing: false,
+            lastRefresh: '',
+            _refreshInterval: null,
+
+            headers() {
+                return {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': this.adminToken,
+                };
+            },
+
+            async init() {
+                if (this.adminToken) {
+                    // Verify stored token
+                    try {
+                        const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                        if (resp.ok) {
+                            this.authenticated = true;
+                            this.stats = await resp.json();
+                            this.lastRefresh = new Date().toLocaleTimeString();
+                            await this.loadAll();
+                            // Auto-refresh every 10s
+                            this._refreshInterval = setInterval(() => this.refresh(), 10000);
+                            return;
+                        }
+                    } catch (e) {}
+                    // Token invalid
+                    this.adminToken = '';
+                    localStorage.removeItem('tablement_admin_token');
+                }
+            },
+
+            async login() {
+                this.loginError = '';
+                this.adminToken = this.password;
+                try {
+                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    if (!resp.ok) {
+                        const data = await resp.json().catch(() => ({}));
+                        throw new Error(data.detail || 'Invalid password');
+                    }
+                    localStorage.setItem('tablement_admin_token', this.adminToken);
+                    this.authenticated = true;
+                    this.stats = await resp.json();
+                    this.lastRefresh = new Date().toLocaleTimeString();
+                    await this.loadAll();
+                    this._refreshInterval = setInterval(() => this.refresh(), 10000);
+                } catch (e) {
+                    this.loginError = e.message;
+                    this.adminToken = '';
+                }
+            },
+
+            logout() {
+                this.authenticated = false;
+                this.adminToken = '';
+                this.password = '';
+                localStorage.removeItem('tablement_admin_token');
+                if (this._refreshInterval) clearInterval(this._refreshInterval);
+            },
+
+            async refresh() {
+                this.refreshing = true;
+                try {
+                    await this.loadAll();
+                    this.lastRefresh = new Date().toLocaleTimeString();
+                } finally {
+                    this.refreshing = false;
+                }
+            },
+
+            async loadAll() {
+                await Promise.all([
+                    this.loadStats(),
+                    this.loadUsers(),
+                    this.loadReservations(),
+                ]);
+            },
+
+            async loadStats() {
+                try {
+                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    if (resp.ok) this.stats = await resp.json();
+                } catch (e) {}
+            },
+
+            async loadUsers() {
+                try {
+                    const resp = await fetch('/api/admin/users', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.users = data.users || [];
+                    }
+                } catch (e) {}
+            },
+
+            async loadReservations() {
+                try {
+                    const resp = await fetch('/api/admin/reservations', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.reservations = data.reservations || [];
+                    }
+                } catch (e) {}
+            },
+
+            filteredReservations() {
+                if (this.resFilter === 'all') return this.reservations;
+                if (this.resFilter === 'active') {
+                    return this.reservations.filter(r =>
+                        ['pending', 'scheduled', 'monitoring', 'sniping'].includes(r.status)
+                    );
+                }
+                return this.reservations.filter(r => r.status === this.resFilter);
+            },
+
+            async cancelReservation(id) {
+                if (!confirm('Force-cancel this reservation?')) return;
+                try {
+                    const resp = await fetch('/api/admin/reservations/' + id + '/cancel', {
+                        method: 'POST',
+                        headers: this.headers(),
+                    });
+                    if (resp.ok) {
+                        await this.loadReservations();
+                        await this.loadStats();
+                    }
+                } catch (e) {
+                    console.error('Cancel failed:', e);
+                }
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                try {
+                    return new Date(dateStr).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                    });
+                } catch {
+                    return dateStr;
+                }
+            },
+        }
+    }
+    </script>
+</body>
+</html>

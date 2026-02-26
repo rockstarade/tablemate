@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — Get Impossible Reservations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .glow-amber {
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2), 0 0 80px rgba(245, 158, 11, 0.08);
+        }
+
+        /* Phone input — hide spinner arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* OTP digit boxes */
+        .otp-digit {
+            width: 52px;
+            height: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            caret-color: #f59e0b;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .otp-digit:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+        }
+        .otp-digit.filled {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.06);
+        }
+
+        /* Smooth slide transitions */
+        .slide-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="landingApp()">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🍽</span>
+                <span class="text-xl font-bold text-white">Tablement</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin/vip" class="text-slate-500 hover:text-slate-300 text-xs transition-colors">Admin</a>
+                <template x-if="!showAuth">
+                    <button @click="showAuth = true; authStep = 'phone'; $nextTick(() => $refs.phoneInput && $refs.phoneInput.focus())"
+                        class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold transition-all text-sm">
+                        Get Started
+                    </button>
+                </template>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="pt-32 pb-20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+                Get the reservation<br>
+                <span class="text-brand-400">everyone wants.</span>
+            </h1>
+            <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+                Tablement books NYC's most competitive restaurant reservations the instant they become available.
+                Set it, forget it, dine.
+            </p>
+
+            <!-- Auth or CTA -->
+            <div x-show="!showAuth" class="flex justify-center">
+                <button @click="showAuth = true; authStep = 'phone'; $nextTick(() => $refs.phoneInput && $refs.phoneInput.focus())"
+                    class="px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-lg transition-all glow-amber">
+                    Start Booking →
+                </button>
+            </div>
+
+            <!-- Phone Auth Flow -->
+            <div x-show="showAuth" x-cloak class="max-w-md mx-auto">
+                <div class="glass rounded-2xl border border-slate-700/50 p-8">
+
+                    <!-- Step 1: Phone Number -->
+                    <div x-show="authStep === 'phone'" class="slide-enter">
+                        <h2 class="text-xl font-semibold text-white mb-1">Sign in with your phone</h2>
+                        <p class="text-slate-400 text-sm mb-8">We'll text you a verification code.</p>
+
+                        <form @submit.prevent="sendOtp()">
+                            <!-- Phone input with grayed +1 prefix -->
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="flex items-center px-4 py-3 rounded-xl bg-slate-800/40 border border-slate-600/30">
+                                    <span class="text-slate-500 text-lg font-medium select-none">+1</span>
+                                </div>
+                                <div class="flex-1 relative">
+                                    <input
+                                        type="tel"
+                                        x-ref="phoneInput"
+                                        x-model="phoneDisplay"
+                                        @input="formatPhoneInput($event)"
+                                        @keydown="phoneKeydown($event)"
+                                        placeholder="(555) 123-4567"
+                                        maxlength="14"
+                                        inputmode="numeric"
+                                        autocomplete="tel-national"
+                                        class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white text-lg tracking-wide placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                                        required>
+                                </div>
+                            </div>
+
+                            <button type="submit" :disabled="loading || phoneDigits.length !== 10"
+                                class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                                :class="phoneDigits.length === 10
+                                    ? 'bg-brand-500 hover:bg-brand-400 text-slate-900'
+                                    : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'">
+                                <span x-show="!loading">Send Code</span>
+                                <span x-show="loading" class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                                    </svg>
+                                    Sending...
+                                </span>
+                            </button>
+                        </form>
+                        <p x-show="error" x-transition class="mt-4 text-red-400 text-sm" x-text="error"></p>
+                    </div>
+
+                    <!-- Step 2: OTP Verification (6 digit boxes) -->
+                    <div x-show="authStep === 'otp'" class="slide-enter">
+                        <h2 class="text-xl font-semibold text-white mb-1">Enter verification code</h2>
+                        <p class="text-slate-400 text-sm mb-8">
+                            Sent to <span class="text-slate-300">+1 <span x-text="phoneDisplay"></span></span>
+                        </p>
+
+                        <!-- 6 OTP digit boxes -->
+                        <div class="flex justify-center gap-3 mb-6" @paste.prevent="handleOtpPaste($event)">
+                            <template x-for="(digit, i) in otpDigits" :key="i">
+                                <input
+                                    type="text"
+                                    inputmode="numeric"
+                                    maxlength="1"
+                                    :x-ref="'otp' + i"
+                                    :value="digit"
+                                    @input="handleOtpInput($event, i)"
+                                    @keydown="handleOtpKeydown($event, i)"
+                                    @focus="$event.target.select()"
+                                    class="otp-digit rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none"
+                                    :class="{ 'filled': digit !== '' }">
+                            </template>
+                        </div>
+
+                        <!-- Auto-submits when all 6 filled, but also show manual button -->
+                        <button @click="verifyOtp()" :disabled="loading || otpDigits.join('').length !== 6"
+                            class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                            :class="otpDigits.join('').length === 6
+                                ? 'bg-brand-500 hover:bg-brand-400 text-slate-900'
+                                : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'">
+                            <span x-show="!loading">Verify</span>
+                            <span x-show="loading" class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                                </svg>
+                                Verifying...
+                            </span>
+                        </button>
+
+                        <div class="mt-5 flex items-center justify-between">
+                            <button @click="authStep = 'phone'; error = ''" class="text-slate-400 hover:text-white text-sm transition-colors">
+                                ← Change number
+                            </button>
+                            <button @click="resendOtp()" :disabled="resendCooldown > 0" class="text-sm transition-colors"
+                                :class="resendCooldown > 0 ? 'text-slate-600 cursor-not-allowed' : 'text-brand-400 hover:text-brand-300'">
+                                <span x-show="resendCooldown > 0" x-text="'Resend in ' + resendCooldown + 's'"></span>
+                                <span x-show="resendCooldown === 0">Resend code</span>
+                            </button>
+                        </div>
+
+                        <p x-show="error" x-transition class="mt-4 text-red-400 text-sm" x-text="error"></p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="max-w-5xl mx-auto px-6 mt-24 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass rounded-2xl border border-slate-700/50 p-6">
+                <div class="text-3xl mb-3">⚡</div>
+                <h3 class="text-lg font-semibold text-white mb-2">Snipe Mode</h3>
+                <p class="text-slate-400 text-sm">Books the instant reservations drop. Sub-millisecond precision timing beats everyone else to the table.</p>
+            </div>
+            <div class="glass rounded-2xl border border-slate-700/50 p-6">
+                <div class="text-3xl mb-3">👁</div>
+                <h3 class="text-lg font-semibold text-white mb-2">Monitor Mode</h3>
+                <p class="text-slate-400 text-sm">Watches for cancellations 24/7. The moment a table opens up, we grab it before anyone else can.</p>
+            </div>
+            <div class="glass rounded-2xl border border-slate-700/50 p-6">
+                <div class="text-3xl mb-3">💳</div>
+                <h3 class="text-lg font-semibold text-white mb-2">Pay on Success</h3>
+                <p class="text-slate-400 text-sm">Only charged when we confirm your reservation. No booking, no charge. Simple.</p>
+            </div>
+        </div>
+
+        <!-- How it works -->
+        <div class="max-w-4xl mx-auto px-6 mt-24 text-center">
+            <h2 class="text-3xl font-bold text-white mb-12">How it works</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="w-10 h-10 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg font-bold mx-auto mb-3">1</div>
+                    <h4 class="font-semibold text-white mb-1">Sign In</h4>
+                    <p class="text-slate-400 text-sm">Quick phone verification. No passwords.</p>
+                </div>
+                <div>
+                    <div class="w-10 h-10 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg font-bold mx-auto mb-3">2</div>
+                    <h4 class="font-semibold text-white mb-1">Link Resy</h4>
+                    <p class="text-slate-400 text-sm">Connect your Resy account. Encrypted and secure.</p>
+                </div>
+                <div>
+                    <div class="w-10 h-10 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg font-bold mx-auto mb-3">3</div>
+                    <h4 class="font-semibold text-white mb-1">Choose a Restaurant</h4>
+                    <p class="text-slate-400 text-sm">Search NYC restaurants. We detect the booking policy automatically.</p>
+                </div>
+                <div>
+                    <div class="w-10 h-10 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center text-lg font-bold mx-auto mb-3">4</div>
+                    <h4 class="font-semibold text-white mb-1">We Handle the Rest</h4>
+                    <p class="text-slate-400 text-sm">Sit back. We'll notify you when your table is confirmed.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
+        <p>Tablement &mdash; NYC restaurant reservations, automated.</p>
+    </footer>
+
+    <script>
+    function landingApp() {
+        return {
+            showAuth: false,
+            authStep: 'phone',    // 'phone' | 'otp'
+            phoneDisplay: '',     // formatted: (555) 123-4567
+            phoneDigits: '',      // raw digits: 5551234567
+            otpDigits: ['', '', '', '', '', ''],
+            loading: false,
+            error: '',
+            resendCooldown: 0,
+            _resendTimer: null,
+
+            // ─── Phone formatting ───────────────────────────────
+            formatPhoneInput(e) {
+                // Strip non-digits
+                let raw = e.target.value.replace(/\D/g, '');
+                // Limit to 10 digits
+                if (raw.length > 10) raw = raw.slice(0, 10);
+                this.phoneDigits = raw;
+
+                // Format as (XXX) XXX-XXXX
+                let formatted = '';
+                if (raw.length > 0) formatted += '(' + raw.slice(0, 3);
+                if (raw.length >= 3) formatted += ') ';
+                else if (raw.length > 0) formatted += '';
+                if (raw.length > 3) formatted += raw.slice(3, 6);
+                if (raw.length > 6) formatted += '-' + raw.slice(6);
+
+                this.phoneDisplay = formatted;
+
+                // Update the actual input value
+                this.$nextTick(() => { e.target.value = this.phoneDisplay; });
+            },
+
+            phoneKeydown(e) {
+                // Allow: backspace, delete, tab, escape, enter, arrow keys
+                const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+                                 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (allowed.includes(e.key)) return;
+
+                // Allow Ctrl/Cmd+A, C, V, X
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+
+                // Block non-digits
+                if (!/^\d$/.test(e.key)) {
+                    e.preventDefault();
+                }
+            },
+
+            getE164Phone() {
+                return '+1' + this.phoneDigits;
+            },
+
+            // ─── OTP digit boxes ────────────────────────────────
+            handleOtpInput(e, idx) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length === 0) {
+                    this.otpDigits[idx] = '';
+                    return;
+                }
+
+                // Take only last character (in case of rapid typing)
+                this.otpDigits[idx] = val.slice(-1);
+                e.target.value = this.otpDigits[idx];
+
+                // Auto-advance to next box
+                if (idx < 5) {
+                    this.$nextTick(() => {
+                        const next = this.$refs['otp' + (idx + 1)];
+                        if (next) next.focus();
+                    });
+                }
+
+                // Auto-submit when all 6 filled
+                if (this.otpDigits.every(d => d !== '')) {
+                    this.$nextTick(() => this.verifyOtp());
+                }
+            },
+
+            handleOtpKeydown(e, idx) {
+                // Backspace: clear current and move back
+                if (e.key === 'Backspace') {
+                    if (this.otpDigits[idx] === '' && idx > 0) {
+                        this.$nextTick(() => {
+                            const prev = this.$refs['otp' + (idx - 1)];
+                            if (prev) {
+                                prev.focus();
+                                this.otpDigits[idx - 1] = '';
+                                prev.value = '';
+                            }
+                        });
+                    } else {
+                        this.otpDigits[idx] = '';
+                        e.target.value = '';
+                    }
+                    e.preventDefault();
+                    return;
+                }
+
+                // Left arrow: move to previous
+                if (e.key === 'ArrowLeft' && idx > 0) {
+                    this.$refs['otp' + (idx - 1)]?.focus();
+                    e.preventDefault();
+                    return;
+                }
+
+                // Right arrow: move to next
+                if (e.key === 'ArrowRight' && idx < 5) {
+                    this.$refs['otp' + (idx + 1)]?.focus();
+                    e.preventDefault();
+                    return;
+                }
+
+                // Block non-digits (except tab, etc.)
+                if (!/^\d$/.test(e.key) && !['Tab', 'Escape', 'Enter'].includes(e.key)
+                    && !(e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                }
+            },
+
+            handleOtpPaste(e) {
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                for (let i = 0; i < 6; i++) {
+                    this.otpDigits[i] = pasted[i] || '';
+                }
+                // Update DOM and focus last filled
+                this.$nextTick(() => {
+                    for (let i = 0; i < 6; i++) {
+                        const el = this.$refs['otp' + i];
+                        if (el) el.value = this.otpDigits[i];
+                    }
+                    const lastFilled = Math.min(pasted.length, 5);
+                    this.$refs['otp' + lastFilled]?.focus();
+
+                    // Auto-submit if full code pasted
+                    if (pasted.length === 6) this.verifyOtp();
+                });
+            },
+
+            // ─── API calls ──────────────────────────────────────
+            async sendOtp() {
+                this.error = '';
+                this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/send-otp', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ phone: this.getE164Phone() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to send code');
+                    this.authStep = 'otp';
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.startResendCooldown();
+                    // Focus first OTP box
+                    this.$nextTick(() => {
+                        const first = this.$refs['otp0'];
+                        if (first) first.focus();
+                    });
+                } catch (e) {
+                    this.error = e.message;
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async verifyOtp() {
+                const code = this.otpDigits.join('');
+                if (code.length !== 6) return;
+
+                this.error = '';
+                this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/verify-otp', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            phone: this.getE164Phone(),
+                            code: code,
+                        }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Invalid code');
+
+                    // Store tokens
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_refresh', data.refresh_token);
+
+                    // Redirect to dashboard
+                    window.location.href = '/app';
+                } catch (e) {
+                    this.error = e.message;
+                    // Clear OTP and refocus first box
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.$nextTick(() => {
+                        for (let i = 0; i < 6; i++) {
+                            const el = this.$refs['otp' + i];
+                            if (el) el.value = '';
+                        }
+                        this.$refs['otp0']?.focus();
+                    });
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async resendOtp() {
+                if (this.resendCooldown > 0) return;
+                await this.sendOtp();
+            },
+
+            startResendCooldown() {
+                this.resendCooldown = 30;
+                if (this._resendTimer) clearInterval(this._resendTimer);
+                this._resendTimer = setInterval(() => {
+                    this.resendCooldown--;
+                    if (this.resendCooldown <= 0) clearInterval(this._resendTimer);
+                }, 1000);
+            },
+
+            init() {
+                // If already logged in, redirect to dashboard
+                if (localStorage.getItem('tablement_token')) {
+                    window.location.href = '/app';
+                }
+            }
+        }
+    }
+    </script>
+</body>
+</html>

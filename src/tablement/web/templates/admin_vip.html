@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — VIP Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+        body { background: #0f172a; min-height: 100vh; }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .log-line { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 0.75rem; line-height: 1.5; }
+        .pulse { animation: pulse-glow 2s ease-in-out infinite; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+            50% { box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.3); }
+        }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="vipApp()" x-init="init()">
+
+    <!-- Login Gate -->
+    <div x-show="!authenticated" x-cloak class="min-h-screen flex items-center justify-center">
+        <div class="glass rounded-2xl border border-slate-700/50 p-8 w-full max-w-sm">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-2xl">&#x1F3AF;</span>
+                <span class="text-xl font-bold text-white">VIP Control</span>
+                <span class="px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400 text-xs font-medium">ADMIN</span>
+            </div>
+            <form @submit.prevent="login()">
+                <input type="password" x-model="password" placeholder="Admin password"
+                    class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 mb-4"
+                    required autofocus>
+                <button type="submit" :disabled="!password"
+                    class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold transition-all disabled:opacity-50 text-sm">
+                    Sign In
+                </button>
+                <p x-show="loginError" class="mt-3 text-red-400 text-sm" x-text="loginError"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIP Dashboard -->
+    <div x-show="authenticated" x-cloak>
+
+        <!-- Navigation -->
+        <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+            <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">&#x1F3AF;</span>
+                    <span class="text-lg font-bold text-white">Tablement</span>
+                    <span class="px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400 text-xs font-medium">VIP CONTROL</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/admin" class="text-slate-400 hover:text-white text-xs">Admin Stats</a>
+                    <a href="/app" class="text-slate-400 hover:text-white text-xs">User Dashboard</a>
+                    <button @click="logout()" class="text-slate-400 hover:text-red-400 text-xs">Sign Out</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Tabs -->
+        <div class="fixed top-[53px] inset-x-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
+            <div class="max-w-7xl mx-auto px-6 flex gap-1 overflow-x-auto">
+                <template x-for="tab in tabs">
+                    <button @click="activeTab = tab.id"
+                        class="px-4 py-2.5 text-xs font-medium transition-colors border-b-2 whitespace-nowrap"
+                        :class="activeTab === tab.id
+                            ? 'text-brand-400 border-brand-400'
+                            : 'text-slate-400 border-transparent hover:text-slate-200'"
+                        x-text="tab.label">
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <main class="pt-28 pb-16 max-w-7xl mx-auto px-6">
+
+            <!-- ==================== SNIPE LAUNCHER ==================== -->
+            <div x-show="activeTab === 'snipe'" class="space-y-6">
+                <h2 class="text-xl font-bold text-white">Snipe Launcher</h2>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Config Form -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6 space-y-5">
+
+                        <!-- Account selector -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-medium text-slate-400">Resy Account</label>
+                                <button @click="activeTab = 'auth'; showAddAccount = true" class="text-xs text-brand-400 hover:text-brand-300">+ Add Account</button>
+                            </div>
+                            <select x-model="snipe.user_id" @change="snipe.user_id && loadUserInfo()"
+                                class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                <option value="">Select account...</option>
+                                <template x-for="u in resyUsers" :key="u.id">
+                                    <option :value="u.id" x-text="u.resy_email + ' (' + u.id.substring(0,8) + '...)'"></option>
+                                </template>
+                            </select>
+                            <p x-show="resyUsers.length === 0" class="mt-1.5 text-xs text-slate-500">No accounts linked. <button @click="activeTab = 'auth'; showAddAccount = true" class="text-brand-400 hover:text-brand-300">Add one first</button></p>
+                        </div>
+
+                        <!-- Venue search -->
+                        <div class="relative">
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Restaurant</label>
+                            <input type="text" x-model="snipe.venue_query" @input.debounce.300ms="searchVenue()"
+                                @focus="venueDropdownOpen = venueResults.length > 0" @click.away="venueDropdownOpen = false"
+                                @keydown.enter.prevent="venueResults.length && selectVenue(venueResults[0])"
+                                @keydown.escape="venueDropdownOpen = false"
+                                placeholder="Search by name..."
+                                class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            <div x-show="snipe.venue_name" class="mt-1 text-xs text-brand-400" x-text="'Selected: ' + snipe.venue_name + ' (ID: ' + snipe.venue_id + ')'"></div>
+
+                            <!-- Dropdown -->
+                            <div x-show="venueDropdownOpen && venueResults.length" x-cloak
+                                class="absolute z-50 mt-1 w-full rounded-lg bg-slate-800 border border-slate-600/50 shadow-xl max-h-48 overflow-y-auto">
+                                <template x-for="v in venueResults" :key="v.resy_id">
+                                    <button @mousedown.prevent="selectVenue(v)"
+                                        class="w-full text-left px-3 py-2 hover:bg-slate-700/50 transition-colors">
+                                        <div class="text-sm text-white" x-text="v.name"></div>
+                                        <div class="text-xs text-slate-400" x-text="v.neighborhood + (v.locality ? ', ' + v.locality : '')"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Mode -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Mode</label>
+                            <div class="flex gap-2">
+                                <button @click="snipe.mode = 'snipe'"
+                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+                                    :class="snipe.mode === 'snipe' ? 'bg-brand-500/20 text-brand-400 border border-brand-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
+                                    Snipe (timed drop)
+                                </button>
+                                <button @click="snipe.mode = 'monitor'"
+                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+                                    :class="snipe.mode === 'monitor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
+                                    Monitor (poll)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Date + Party -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
+                                <input type="date" x-model="snipe.date"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1.5">Party Size</label>
+                                <input type="number" x-model.number="snipe.party_size" min="1" max="20"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+
+                        <!-- Time preferences -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <label class="block text-xs font-medium text-slate-400">Time Preferences (priority order)</label>
+                                <span x-show="seatingTypesLoading" class="text-xs text-slate-500 flex items-center gap-1">
+                                    <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    detecting seating types...
+                                </span>
+                                <span x-show="venueSeatingTypes.length > 1 && !seatingTypesLoading" class="text-xs text-emerald-400">
+                                    <span x-text="venueSeatingTypes.length + ' seating types available'"></span>
+                                </span>
+                                <span x-show="venueSeatingTypes.length === 1 && !seatingTypesLoading" class="text-xs text-slate-500">
+                                    <span x-text="'Only: ' + venueSeatingTypes[0]"></span>
+                                </span>
+                            </div>
+                            <div class="space-y-2">
+                                <template x-for="(tp, idx) in snipe.time_preferences" :key="idx">
+                                    <div class="flex gap-2 items-center">
+                                        <input type="time" x-model="tp.time"
+                                            class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                        <!-- Smart seating type: dropdown if types detected, text input as fallback -->
+                                        <template x-if="venueSeatingTypes.length > 0">
+                                            <select x-model="tp.seating_type"
+                                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                                <option value="">Any seating type</option>
+                                                <template x-for="st in venueSeatingTypes" :key="st">
+                                                    <option :value="st" x-text="st"></option>
+                                                </template>
+                                            </select>
+                                        </template>
+                                        <template x-if="venueSeatingTypes.length === 0">
+                                            <input type="text" x-model="tp.seating_type" placeholder="Seating type (optional)"
+                                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                                        </template>
+                                        <button @click="snipe.time_preferences.splice(idx, 1)" class="text-red-400 hover:text-red-300 p-1"
+                                            x-show="snipe.time_preferences.length > 1">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="flex items-center gap-3 mt-2">
+                                <button @click="snipe.time_preferences.push({time: '19:00', seating_type: ''})"
+                                    class="text-xs text-brand-400 hover:text-brand-300">+ Add time</button>
+                                <span class="text-slate-600">|</span>
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <span class="text-xs text-slate-500">&plusmn;</span>
+                                    <select x-model.number="snipe.window_minutes"
+                                        class="px-1.5 py-0.5 rounded bg-slate-800/60 border border-slate-600/50 text-white text-xs focus:outline-none focus:border-brand-500">
+                                        <option value="0">Exact time only</option>
+                                        <option value="15">15 min</option>
+                                        <option value="30">30 min</option>
+                                        <option value="60">60 min</option>
+                                    </select>
+                                    <span class="text-xs text-slate-500">window</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Drop time (snipe only) -->
+                        <div x-show="snipe.mode === 'snipe'" class="border-t border-slate-700/50 pt-4">
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Drop Time Config</label>
+                            <div x-show="snipe.detected_policy" class="mb-2 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                <div class="text-xs text-emerald-400">
+                                    Detected: releases <span x-text="snipe.detected_policy?.days_ahead"></span> days ahead at
+                                    <span x-text="formatDropTime(snipe.detected_policy?.hour, snipe.detected_policy?.minute)"></span>
+                                    <span x-text="snipe.detected_policy?.timezone"></span>
+                                    (<span x-text="snipe.detected_policy?.source"></span>, <span x-text="snipe.detected_policy?.confidence"></span>)
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Drop Time</label>
+                                    <input type="time" :value="String(snipe.drop_time.hour).padStart(2,'0') + ':' + String(snipe.drop_time.minute).padStart(2,'0')"
+                                        @change="let [h,m] = $event.target.value.split(':').map(Number); snipe.drop_time.hour = h; snipe.drop_time.minute = m;"
+                                        class="w-full px-2 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                    <div class="mt-1 text-[10px] text-slate-500" x-text="formatDropTime(snipe.drop_time.hour, snipe.drop_time.minute)"></div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Days Ahead</label>
+                                    <input type="number" x-model.number="snipe.drop_time.days_ahead" min="1" max="90"
+                                        class="w-full px-2 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                    <div class="mt-1 text-[10px] text-slate-500">How far ahead the venue releases</div>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-500 mb-1">Timezone</label>
+                                    <select x-model="snipe.drop_time.timezone"
+                                        class="w-full px-2 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                        <option>America/New_York</option>
+                                        <option>America/Chicago</option>
+                                        <option>America/Los_Angeles</option>
+                                        <option>UTC</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Proxy override -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Proxy</label>
+                            <select x-model="snipe.proxy_override"
+                                class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                <option value="">Residential — IPRoyal (default)</option>
+                                <option value="dedicated">Dedicated Server</option>
+                                <option value="direct">Direct (no proxy)</option>
+                            </select>
+                        </div>
+
+                        <!-- Slot Conflict Check -->
+                        <div x-show="snipe.venue_id && snipe.date" class="border-t border-slate-700/50 pt-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-medium text-slate-400">Slot Conflicts</label>
+                                <button @click="checkSlotConflicts()" :disabled="slotConflicts.checking"
+                                    class="text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50">
+                                    <span x-show="!slotConflicts.checking">Check conflicts</span>
+                                    <span x-show="slotConflicts.checking" class="flex items-center gap-1">
+                                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Checking...
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- No conflicts -->
+                            <div x-show="slotConflicts.checked && slotConflicts.conflicts.length === 0"
+                                class="px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                                <span class="text-xs text-emerald-400">No conflicts — no other users targeting this slot.</span>
+                            </div>
+                            <!-- Has conflicts -->
+                            <div x-show="slotConflicts.checked && slotConflicts.conflicts.length > 0"
+                                class="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                                <div class="text-xs text-red-400 font-medium mb-1">
+                                    <span x-text="slotConflicts.conflicts.length"></span> conflicting claim<span x-show="slotConflicts.conflicts.length > 1">s</span> detected!
+                                </div>
+                                <div class="space-y-1">
+                                    <template x-for="c in slotConflicts.conflicts" :key="c.id">
+                                        <div class="text-xs text-red-300/80">
+                                            User <span class="font-mono" x-text="c.user_id?.substring(0, 8) + '...'"></span>
+                                            wants <span class="text-white" x-text="c.preferred_time"></span>
+                                            <span class="text-slate-500" x-text="c.seating_type ? '(' + c.seating_type + ')' : ''"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <!-- Not checked yet -->
+                            <div x-show="!slotConflicts.checked && !slotConflicts.checking"
+                                class="px-3 py-2 rounded-lg bg-slate-800/40 border border-slate-700/30">
+                                <span class="text-xs text-slate-500">Click "Check conflicts" to see if other users are targeting the same slot.</span>
+                            </div>
+                        </div>
+
+                        <!-- Dry run + Fire -->
+                        <div class="flex items-center gap-4 pt-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="snipe.dry_run"
+                                    class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500">
+                                <span class="text-sm text-slate-300">Dry Run</span>
+                                <span class="text-xs text-slate-500">(skip final book)</span>
+                            </label>
+                            <div class="flex-1"></div>
+                            <button @click="fireSnipe()"
+                                :disabled="!snipe.venue_id || !snipe.user_id || !snipe.date || snipeFiring"
+                                class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-30"
+                                :class="snipe.dry_run ? 'bg-blue-500 hover:bg-blue-400 text-white' : 'bg-brand-500 hover:bg-brand-400 text-slate-900'">
+                                <span x-show="!snipeFiring" x-text="snipe.dry_run ? 'DRY RUN' : 'FIRE'"></span>
+                                <span x-show="snipeFiring" class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    Running...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Log -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6 flex flex-col" style="min-height: 500px;">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-slate-300">Live Log</h3>
+                            <div class="flex items-center gap-2">
+                                <div x-show="snipeActive" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                <span x-show="snipeActive" class="text-xs text-emerald-400">Connected</span>
+                                <button @click="snipeLogs = []" class="text-xs text-slate-500 hover:text-slate-300">Clear</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 rounded-lg bg-slate-900/80 border border-slate-700/30 p-3 overflow-y-auto" id="logContainer">
+                            <div x-show="snipeLogs.length === 0" class="text-slate-500 text-xs">Waiting for snipe launch...</div>
+                            <template x-for="(log, idx) in snipeLogs" :key="idx">
+                                <div class="log-line" :class="{
+                                    'text-emerald-400': log.type === 'success',
+                                    'text-red-400': log.type === 'error',
+                                    'text-brand-400': log.type === 'phase',
+                                    'text-blue-400': log.type === 'attempt',
+                                    'text-slate-400': log.type === 'info',
+                                    'text-slate-500': log.type === 'tick',
+                                }">
+                                    <span class="text-slate-600" x-text="log.time"></span>
+                                    <span x-text="log.message"></span>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- Result banner -->
+                        <div x-show="snipeResult" class="mt-3 rounded-lg p-3"
+                            :class="snipeResult?.dry_run ? 'bg-blue-500/10 border border-blue-500/30' : (snipeResult?.success ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30')">
+                            <div class="text-sm font-medium"
+                                :class="snipeResult?.dry_run ? 'text-blue-400' : (snipeResult?.success ? 'text-emerald-400' : 'text-red-400')"
+                                x-text="snipeResult?.dry_run ? 'DRY RUN — Slot Found (booking skipped)' : (snipeResult?.success ? 'BOOKED!' : 'FAILED')"></div>
+                            <div class="text-xs text-slate-400 mt-1">
+                                <span x-text="(snipeResult?.attempts || 0) + ' attempts'"></span> &middot;
+                                <span x-text="(snipeResult?.elapsed_seconds || 0).toFixed(3) + 's'"></span>
+                                <span x-show="snipeResult?.slot_time" class="text-slate-300 ml-2" x-text="'Slot: ' + snipeResult?.slot_time"></span>
+                                <span x-show="snipeResult?.slot_type" class="text-slate-500 ml-1" x-text="'(' + snipeResult?.slot_type + ')'"></span>
+                                <span x-show="snipeResult?.error && !snipeResult?.dry_run" class="text-red-400 ml-2" x-text="snipeResult?.error"></span>
+                                <span x-show="snipeResult?.resy_token" class="text-emerald-400 ml-2" x-text="'Token: ' + snipeResult?.resy_token"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PROXY CONTROL ==================== -->
+            <div x-show="activeTab === 'proxy'" class="space-y-6">
+                <h2 class="text-xl font-bold text-white">Proxy Control</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Current Status -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Current Configuration</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Active Type</span>
+                                <span class="font-medium capitalize" :class="{
+                                    'text-emerald-400': proxyStatus.proxy_type === 'residential',
+                                    'text-blue-400': proxyStatus.proxy_type === 'dedicated',
+                                    'text-slate-400': proxyStatus.proxy_type === 'direct',
+                                }" x-text="proxyStatus.proxy_type || '—'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Mode</span>
+                                <span class="text-white" x-text="proxyStatus.mode || '—'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Provider</span>
+                                <span class="text-white capitalize" x-text="proxyStatus.provider || '—'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Active Sessions</span>
+                                <span class="text-white tabular-nums" x-text="proxyStatus.active_sessions ?? '—'"></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Dedicated Configured</span>
+                                <span x-text="proxyStatus.dedicated_configured ? 'Yes' : 'No'"
+                                    :class="proxyStatus.dedicated_configured ? 'text-emerald-400' : 'text-slate-500'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Switch Type -->
+                        <div class="mt-5 pt-4 border-t border-slate-700/50">
+                            <label class="block text-xs font-medium text-slate-400 mb-2">Switch Proxy Type</label>
+                            <div class="flex gap-2">
+                                <template x-for="t in ['residential', 'dedicated', 'direct']">
+                                    <button @click="switchProxyType(t)"
+                                        class="flex-1 py-2 rounded-lg text-xs font-medium transition-colors capitalize"
+                                        :class="proxyStatus.proxy_type === t
+                                            ? 'bg-brand-500/20 text-brand-400 border border-brand-500/50'
+                                            : 'bg-slate-700/30 text-slate-400 border border-slate-600/30 hover:text-white'"
+                                        x-text="t">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Rotate -->
+                        <div class="mt-4">
+                            <button @click="rotateProxy()" class="w-full py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs transition-colors">
+                                Force Rotate Session (New IP)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Connectivity Test -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Connectivity Test</h3>
+                        <div class="space-y-3">
+                            <template x-for="t in ['residential', 'dedicated', 'direct']">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-slate-300 capitalize" x-text="t"></span>
+                                    <div class="flex items-center gap-3">
+                                        <span x-show="proxyTests[t]?.success" class="text-xs text-emerald-400 tabular-nums"
+                                            x-text="proxyTests[t]?.latency_ms + 'ms'"></span>
+                                        <span x-show="proxyTests[t]?.success" class="text-xs text-slate-500"
+                                            x-text="proxyTests[t]?.ip"></span>
+                                        <span x-show="proxyTests[t]?.error" class="text-xs text-red-400"
+                                            x-text="proxyTests[t]?.error?.substring(0, 40)"></span>
+                                        <button @click="testProxy(t)" :disabled="proxyTesting === t"
+                                            class="px-3 py-1 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-xs text-slate-300 transition-colors disabled:opacity-50">
+                                            <span x-show="proxyTesting !== t">Test</span>
+                                            <span x-show="proxyTesting === t" class="animate-pulse">Testing...</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== TOKEN & AUTH ==================== -->
+            <div x-show="activeTab === 'auth'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Token & Auth Manager</h2>
+                    <button @click="showAddAccount = true"
+                        class="px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 text-sm font-medium transition-colors border border-brand-500/30">
+                        + Add Account
+                    </button>
+                </div>
+
+                <!-- Add Account Form -->
+                <div x-show="showAddAccount" x-cloak class="glass rounded-xl border border-brand-500/30 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-white">Add Resy Account</h3>
+                        <button type="button" @click="showAddAccount = false; addAccountError = ''; addAccountSuccess = ''; otpStep = 'phone'" class="text-slate-500 hover:text-slate-300 text-xs">Close</button>
+                    </div>
+
+                    <!-- Method tabs -->
+                    <div class="flex gap-1 mb-4 p-0.5 rounded-lg bg-slate-800/60">
+                        <button @click="addMethod = 'resy'" class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            :class="addMethod === 'resy' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'">
+                            Resy Login
+                        </button>
+                        <button @click="addMethod = 'phone'" class="flex-1 py-1.5 rounded-md text-xs font-medium transition-colors"
+                            :class="addMethod === 'phone' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-slate-200'">
+                            Phone Signup
+                        </button>
+                    </div>
+
+                    <!-- Method 1: Direct Resy Login -->
+                    <form x-show="addMethod === 'resy'" @submit.prevent="addResyAccount()" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resy Email</label>
+                                <input type="email" x-model="newAccount.email" placeholder="you@email.com" required
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resy Password</label>
+                                <input type="password" x-model="newAccount.password" placeholder="Password" required
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        <button type="submit" :disabled="addingAccount || !newAccount.email || !newAccount.password"
+                            class="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50">
+                            <span x-show="!addingAccount">Verify & Add</span>
+                            <span x-show="addingAccount" class="flex items-center gap-2">
+                                <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                Verifying...
+                            </span>
+                        </button>
+                    </form>
+
+                    <!-- Method 2: Phone Signup -->
+                    <div x-show="addMethod === 'phone'" class="space-y-3">
+                        <!-- Step 1: Phone number -->
+                        <div x-show="otpStep === 'phone'">
+                            <label class="block text-xs text-slate-400 mb-1">Phone Number</label>
+                            <div class="flex gap-2">
+                                <input type="tel" x-model="otpPhone" placeholder="+1 (555) 123-4567"
+                                    class="flex-1 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                                <button @click="sendOtp()" :disabled="!otpPhone || otpSending"
+                                    class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50 whitespace-nowrap">
+                                    <span x-show="!otpSending">Send Code</span>
+                                    <span x-show="otpSending" class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Sending...
+                                    </span>
+                                </button>
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">Include country code (e.g. +1 for US)</p>
+                        </div>
+
+                        <!-- Step 2: OTP code -->
+                        <div x-show="otpStep === 'code'">
+                            <p class="text-xs text-slate-400 mb-2">Code sent to <span class="text-white" x-text="otpPhone"></span></p>
+                            <label class="block text-xs text-slate-400 mb-1">Verification Code</label>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="otpCode" placeholder="123456" maxlength="6"
+                                    class="w-40 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500 tracking-widest text-center font-mono">
+                                <button @click="verifyOtp()" :disabled="otpCode.length !== 6 || otpVerifying"
+                                    class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50">
+                                    <span x-show="!otpVerifying">Verify</span>
+                                    <span x-show="otpVerifying" class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                        Verifying...
+                                    </span>
+                                </button>
+                            </div>
+                            <button @click="otpStep = 'phone'" class="mt-2 text-xs text-slate-500 hover:text-slate-300">Change number</button>
+                        </div>
+
+                        <!-- Step 3: Link Resy credentials -->
+                        <div x-show="otpStep === 'link'">
+                            <div class="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-3">
+                                <p class="text-xs text-emerald-400">Phone verified! Now link a Resy account.</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Resy Email</label>
+                                    <input type="email" x-model="otpResyEmail" placeholder="you@email.com"
+                                        class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Resy Password</label>
+                                    <input type="password" x-model="otpResyPassword" placeholder="Password"
+                                        class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                                </div>
+                            </div>
+                            <button @click="linkResyAfterOtp()" :disabled="!otpResyEmail || !otpResyPassword || otpLinking"
+                                class="mt-3 px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50">
+                                <span x-show="!otpLinking">Link Resy Account</span>
+                                <span x-show="otpLinking" class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    Linking...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Shared error / success -->
+                    <p x-show="addAccountError" class="mt-3 text-red-400 text-sm" x-text="addAccountError"></p>
+                    <div x-show="addAccountSuccess" class="mt-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                        <p class="text-emerald-400 text-sm" x-text="addAccountSuccess"></p>
+                    </div>
+                </div>
+
+                <div x-show="resyUsers.length === 0 && !showAddAccount" class="text-center py-12">
+                    <p class="text-slate-400 mb-3">No Resy accounts linked yet.</p>
+                    <button @click="showAddAccount = true" class="text-brand-400 hover:text-brand-300 text-sm">+ Add your first account</button>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="u in resyUsers" :key="u.id">
+                        <div class="glass rounded-xl border border-slate-700/50 p-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-sm font-medium text-white" x-text="u.resy_email"></div>
+                                    <div class="text-xs text-slate-500 font-mono" x-text="u.id"></div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div x-show="authTests[u.id]?.success" class="text-right">
+                                        <div class="text-xs text-emerald-400" x-text="authTests[u.id]?.first_name + ' ' + authTests[u.id]?.last_name"></div>
+                                        <div class="text-xs text-slate-500" x-text="authTests[u.id]?.latency_ms + 'ms | ' + (authTests[u.id]?.payment_methods?.length || 0) + ' payment methods'"></div>
+                                    </div>
+                                    <div x-show="authTests[u.id]?.error" class="text-right">
+                                        <div class="text-xs text-red-400" x-text="authTests[u.id]?.error?.substring(0, 50)"></div>
+                                    </div>
+                                    <button @click="testAuth(u.id)" :disabled="authTesting === u.id"
+                                        class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-xs text-slate-300 transition-colors disabled:opacity-50">
+                                        <span x-show="authTesting !== u.id">Test Auth</span>
+                                        <span x-show="authTesting === u.id" class="animate-pulse">Testing...</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Payment methods detail -->
+                            <div x-show="authTests[u.id]?.payment_methods?.length" class="mt-3 pt-3 border-t border-slate-700/30">
+                                <div class="text-xs text-slate-400 mb-1">Payment Methods:</div>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="pm in (authTests[u.id]?.payment_methods || [])">
+                                        <span class="px-2 py-0.5 rounded bg-slate-700/50 text-xs"
+                                            :class="pm.is_default ? 'text-brand-400' : 'text-slate-400'"
+                                            x-text="pm.display + (pm.is_default ? ' (default)' : '')">
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- ==================== LIVE OPS ==================== -->
+            <div x-show="activeTab === 'ops'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Live Ops Dashboard</h2>
+                    <button @click="killAll()" class="px-4 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium transition-colors border border-red-500/30">
+                        KILL ALL JOBS
+                    </button>
+                </div>
+
+                <!-- Health -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="glass rounded-xl border border-slate-700/50 p-4">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Resy Latency</div>
+                        <div class="text-2xl font-bold tabular-nums" :class="(health.resy_latency_ms || 0) < 300 ? 'text-emerald-400' : 'text-brand-400'"
+                            x-text="health.resy_latency_ms ? health.resy_latency_ms + 'ms' : '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-4">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">NTP Offset</div>
+                        <div class="text-2xl font-bold tabular-nums"
+                            :class="Math.abs(health.ntp_offset_ms || 0) < 100 ? 'text-emerald-400' : 'text-brand-400'"
+                            x-text="health.ntp_offset_ms !== null && health.ntp_offset_ms !== undefined ? health.ntp_offset_ms + 'ms' : '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-4">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Active Jobs</div>
+                        <div class="text-2xl font-bold text-white tabular-nums" x-text="health.active_jobs ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-4">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Proxy Type</div>
+                        <div class="text-2xl font-bold capitalize" :class="{
+                            'text-emerald-400': health.proxy?.proxy_type === 'residential',
+                            'text-blue-400': health.proxy?.proxy_type === 'dedicated',
+                            'text-slate-400': health.proxy?.proxy_type === 'direct',
+                        }" x-text="health.proxy?.proxy_type || '—'"></div>
+                    </div>
+                </div>
+
+                <!-- Recent Results -->
+                <div class="glass rounded-xl border border-slate-700/50 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-slate-300">Recent Results</h3>
+                        <button @click="loadRecentResults()" class="text-xs text-slate-400 hover:text-white">Refresh</button>
+                    </div>
+                    <div x-show="recentResults.length === 0" class="text-slate-500 text-sm">No completed snipes yet.</div>
+                    <div class="space-y-2">
+                        <template x-for="r in recentResults" :key="r.id">
+                            <div class="flex items-center gap-4 py-2 border-b border-slate-700/30 last:border-0">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0"
+                                    :class="{
+                                        'bg-emerald-400': r.status === 'confirmed',
+                                        'bg-red-400': r.status === 'failed',
+                                        'bg-slate-500': r.status === 'cancelled',
+                                    }"></span>
+                                <span class="text-sm text-white flex-1 truncate" x-text="r.venue_name"></span>
+                                <span class="text-xs text-slate-400" x-text="r.target_date"></span>
+                                <span class="text-xs text-slate-400 capitalize" x-text="r.mode"></span>
+                                <span class="text-xs tabular-nums"
+                                    :class="r.status === 'confirmed' ? 'text-emerald-400' : 'text-red-400'"
+                                    x-text="r.elapsed_seconds ? r.elapsed_seconds.toFixed(2) + 's' : '—'"></span>
+                                <span class="text-xs text-slate-500 tabular-nums" x-text="r.attempts + ' att'"></span>
+                                <span x-show="r.error" class="text-xs text-red-400 truncate max-w-[120px]" x-text="r.error"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== RESTAURANT INTEL ==================== -->
+            <div x-show="activeTab === 'intel'" class="space-y-6">
+                <h2 class="text-xl font-bold text-white">Restaurant Intelligence</h2>
+
+                <div class="glass rounded-xl border border-slate-700/50 p-6">
+                    <!-- Search by name -->
+                    <div class="relative">
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Search Restaurant</label>
+                        <input type="text" x-model="intel.query" @input.debounce.300ms="searchIntel()"
+                            @focus="intelDropdownOpen = intelResults.length > 0" @click.away="intelDropdownOpen = false"
+                            @keydown.enter.prevent="intelResults.length && selectIntelVenue(intelResults[0])"
+                            @keydown.escape="intelDropdownOpen = false"
+                            placeholder="Search by name..."
+                            class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+
+                        <!-- Dropdown -->
+                        <div x-show="intelDropdownOpen && intelResults.length" x-cloak
+                            class="absolute z-50 mt-1 w-full rounded-lg bg-slate-800 border border-slate-600/50 shadow-xl max-h-60 overflow-y-auto">
+                            <template x-for="v in intelResults" :key="v.resy_id">
+                                <button @mousedown.prevent="selectIntelVenue(v)"
+                                    class="w-full text-left px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/30 last:border-0">
+                                    <div class="text-sm text-white" x-text="v.name"></div>
+                                    <div class="text-xs text-slate-400" x-text="[v.cuisine, v.neighborhood, v.locality].filter(Boolean).join(' · ')"></div>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Loading indicator -->
+                    <div x-show="intel.loading" class="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        Detecting booking policy...
+                    </div>
+
+                    <!-- Or paste URL -->
+                    <div class="mt-4 pt-4 border-t border-slate-700/50">
+                        <label class="block text-xs font-medium text-slate-500 mb-1.5">Or paste Resy URL</label>
+                        <div class="flex gap-3">
+                            <input type="text" x-model="intel.url" placeholder="https://resy.com/cities/ny/restaurant-name"
+                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-xs placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            <button @click="lookupUrl()" :disabled="!intel.url || intel.loading"
+                                class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs font-medium transition-all disabled:opacity-50">
+                                Lookup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="intel.result" class="glass rounded-xl border border-slate-700/50 p-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-white" x-text="intel.result?.venue_name"></h3>
+                            <div class="text-sm text-slate-400 mt-1">Venue ID: <span class="text-white font-mono" x-text="intel.result?.venue_id"></span></div>
+                        </div>
+                        <button @click="quickSnipe()" class="px-4 py-2 rounded-lg bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 text-sm font-medium transition-colors border border-brand-500/30">
+                            Quick Snipe &rarr;
+                        </button>
+                    </div>
+
+                    <div x-show="intel.result?.detected_policy" class="mt-4 p-4 rounded-lg bg-slate-800/60 border border-slate-700/30">
+                        <h4 class="text-xs font-medium text-slate-400 mb-2">Detected Booking Policy</h4>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span class="text-slate-400">Days Ahead:</span>
+                                <span class="text-white ml-2" x-text="intel.result?.detected_policy?.days_ahead"></span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400">Drop Time:</span>
+                                <span class="text-white ml-2" x-text="String(intel.result?.detected_policy?.hour || 0).padStart(2,'0') + ':' + String(intel.result?.detected_policy?.minute || 0).padStart(2,'0')"></span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400">Timezone:</span>
+                                <span class="text-white ml-2" x-text="intel.result?.detected_policy?.timezone"></span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400">Source:</span>
+                                <span class="ml-2" :class="intel.result?.detected_policy?.confidence === 'high' ? 'text-emerald-400' : 'text-brand-400'"
+                                    x-text="intel.result?.detected_policy?.source + ' (' + intel.result?.detected_policy?.confidence + ')'"></span>
+                            </div>
+                        </div>
+                        <div x-show="intel.result?.detected_policy?.reasoning" class="mt-2 text-xs text-slate-500" x-text="intel.result?.detected_policy?.reasoning"></div>
+                    </div>
+                    <div x-show="!intel.result?.detected_policy" class="mt-4 p-3 rounded-lg bg-slate-800/60 text-xs text-slate-500">
+                        No booking policy detected. You'll need to configure drop time manually.
+                    </div>
+
+                    <!-- Track for Drop Intel -->
+                    <div x-show="intel.result?.detected_policy" class="mt-3 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-slate-400">Monitoring Tier:</label>
+                            <select x-model="intel.pollTier"
+                                class="flex-1 bg-slate-800/50 text-white text-xs rounded px-2 py-1 border border-slate-600/50">
+                                <option value="aggressive">Aggressive (1 req/s 24/7)</option>
+                                <option value="passive">Passive (drop window only)</option>
+                            </select>
+                        </div>
+                        <button @click="trackForDropIntel()"
+                            class="w-full py-2 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-xs font-medium transition-colors border border-purple-500/30">
+                            Track Drop Timing Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== DROP INTELLIGENCE ==================== -->
+            <div x-show="activeTab === 'drops'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Drop Intelligence</h2>
+                    <button @click="loadDropIntel()" class="text-xs text-slate-400 hover:text-white">Refresh</button>
+                </div>
+
+                <!-- Tracked Venues -->
+                <div class="glass rounded-xl border border-slate-700/50 p-6">
+                    <h3 class="text-sm font-medium text-slate-300 mb-4">Tracked Restaurants</h3>
+                    <div x-show="dropIntel.venues.length === 0" class="text-slate-500 text-sm">
+                        No restaurants tracked yet. Use the Intel tab to search and track a restaurant.
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="v in dropIntel.venues" :key="v.venue_id">
+                            <div class="flex items-center gap-4 py-2.5 px-3 rounded-lg bg-slate-800/40 border border-slate-700/30">
+                                <span class="w-2 h-2 rounded-full flex-shrink-0"
+                                    :class="v.active ? 'bg-emerald-400' : 'bg-slate-600'"></span>
+                                <span class="text-sm text-white flex-1 truncate" x-text="v.venue_name"></span>
+                                <span class="text-xs text-slate-400 tabular-nums" x-text="formatDropTime(v.drop_hour, v.drop_minute)"></span>
+                                <span class="text-xs text-slate-500" x-text="v.days_ahead + 'd ahead'"></span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                    :class="v.poll_tier === 'aggressive' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-slate-600/20 text-slate-400 border border-slate-600/30'"
+                                    x-text="v.poll_tier === 'aggressive' ? '1/s' : 'passive'"></span>
+                                <button @click="toggleTracking(v)"
+                                    class="px-2 py-1 rounded text-xs transition-colors"
+                                    :class="v.active ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'"
+                                    x-text="v.active ? 'Stop' : 'Resume'">
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Drop Timing Summary -->
+                <div class="glass rounded-xl border border-slate-700/50 p-6">
+                    <h3 class="text-sm font-medium text-slate-300 mb-4">Drop Timing Patterns</h3>
+                    <div x-show="dropIntel.summaries.length === 0" class="text-slate-500 text-sm">
+                        No drop data collected yet. Data will appear after the next scheduled drop.
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="s in dropIntel.summaries" :key="s.venue_id">
+                            <div class="p-4 rounded-lg bg-slate-800/40 border border-slate-700/30">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-white" x-text="s.venue_name"></span>
+                                    <span class="text-xs text-slate-500" x-text="s.observation_count + ' observations'"></span>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                                    <div>
+                                        <div class="text-slate-500 uppercase tracking-wide mb-0.5">Avg Offset</div>
+                                        <div class="text-lg font-bold tabular-nums"
+                                            :class="Math.abs(s.avg_offset_ms) < 500 ? 'text-emerald-400' : 'text-brand-400'"
+                                            x-text="(s.avg_offset_ms > 0 ? '+' : '') + s.avg_offset_ms + 'ms'"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500 uppercase tracking-wide mb-0.5">Median</div>
+                                        <div class="text-lg font-bold tabular-nums text-blue-400"
+                                            x-text="(s.median_offset_ms > 0 ? '+' : '') + s.median_offset_ms + 'ms'"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500 uppercase tracking-wide mb-0.5">Range</div>
+                                        <div class="text-sm font-medium text-slate-300 tabular-nums"
+                                            x-text="s.min_offset_ms + ' to ' + s.max_offset_ms + 'ms'"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-500 uppercase tracking-wide mb-0.5">Avg Slots</div>
+                                        <div class="text-lg font-bold text-white tabular-nums"
+                                            x-text="s.avg_slots"></div>
+                                    </div>
+                                </div>
+                                <div x-show="s.slot_types?.length" class="mt-2 flex gap-1">
+                                    <template x-for="t in s.slot_types">
+                                        <span class="px-2 py-0.5 rounded bg-slate-700/50 text-xs text-slate-400" x-text="t"></span>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Recent Drop Observations -->
+                <div class="glass rounded-xl border border-slate-700/50 p-6">
+                    <h3 class="text-sm font-medium text-slate-300 mb-4">Recent Drop Observations</h3>
+                    <div x-show="dropIntel.observations.length === 0" class="text-slate-500 text-sm">
+                        No observations yet.
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table x-show="dropIntel.observations.length > 0" class="w-full text-xs">
+                            <thead>
+                                <tr class="text-left text-slate-500 border-b border-slate-700/30">
+                                    <th class="py-2 pr-3">Restaurant</th>
+                                    <th class="py-2 pr-3">Date</th>
+                                    <th class="py-2 pr-3">Offset</th>
+                                    <th class="py-2 pr-3">Slots</th>
+                                    <th class="py-2 pr-3">Poll #</th>
+                                    <th class="py-2">Detected At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="o in dropIntel.observations" :key="o.id">
+                                    <tr class="border-b border-slate-700/20">
+                                        <td class="py-2 pr-3 text-white" x-text="o.venue_name"></td>
+                                        <td class="py-2 pr-3 text-slate-400" x-text="o.target_date"></td>
+                                        <td class="py-2 pr-3 tabular-nums font-medium"
+                                            :class="Math.abs(o.offset_ms) < 500 ? 'text-emerald-400' : 'text-brand-400'"
+                                            x-text="(o.offset_ms > 0 ? '+' : '') + o.offset_ms + 'ms'"></td>
+                                        <td class="py-2 pr-3 text-white tabular-nums" x-text="o.slots_found"></td>
+                                        <td class="py-2 pr-3 text-slate-400 tabular-nums" x-text="o.poll_attempt"></td>
+                                        <td class="py-2 text-slate-500" x-text="new Date(o.actual_drop_at).toLocaleString()"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+    function vipApp() {
+        return {
+            // Auth
+            password: '',
+            adminToken: localStorage.getItem('tablement_admin_token') || '',
+            authenticated: false,
+            loginError: '',
+
+            // Navigation
+            tabs: [
+                { id: 'snipe', label: 'Snipe Launcher' },
+                { id: 'proxy', label: 'Proxy Control' },
+                { id: 'auth', label: 'Token & Auth' },
+                { id: 'ops', label: 'Live Ops' },
+                { id: 'intel', label: 'Restaurant Intel' },
+                { id: 'drops', label: 'Drop Intel' },
+            ],
+            activeTab: 'snipe',
+
+            // Resy users (for impersonation)
+            resyUsers: [],
+
+            // Snipe launcher
+            snipe: {
+                user_id: '',
+                venue_query: '',
+                venue_id: null,
+                venue_name: '',
+                mode: 'snipe',
+                date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                party_size: 2,
+                time_preferences: [{ time: '19:00', seating_type: '' }],
+                window_minutes: 30,
+                drop_time: { hour: 10, minute: 0, timezone: 'America/New_York', days_ahead: 30 },
+                proxy_override: '',
+                dry_run: true,
+                detected_policy: null,
+            },
+            venueResults: [],
+            venueDropdownOpen: false,
+            venueSeatingTypes: [],  // Available seating types for selected venue
+            seatingTypesLoading: false,
+            snipeFiring: false,
+            snipeActive: false,
+            snipeLogs: [],
+            snipeResult: null,
+            snipeEventSource: null,
+
+            // Proxy
+            proxyStatus: {},
+            proxyTests: {},
+            proxyTesting: null,
+
+            // Auth tests
+            authTests: {},
+            authTesting: null,
+
+            // Add account
+            showAddAccount: false,
+            addingAccount: false,
+            addAccountError: '',
+            addAccountSuccess: '',
+            newAccount: { email: '', password: '' },
+            addMethod: 'resy',
+
+            // Phone OTP flow
+            otpStep: 'phone',  // 'phone' | 'code' | 'link'
+            otpPhone: '',
+            otpCode: '',
+            otpSending: false,
+            otpVerifying: false,
+            otpLinking: false,
+            otpAccessToken: '',
+            otpUserId: '',
+            otpResyEmail: '',
+            otpResyPassword: '',
+
+            // Ops
+            health: {},
+            recentResults: [],
+
+            // Intel
+            intel: { query: '', url: '', loading: false, result: null, pollTier: 'aggressive' },
+            intelResults: [],
+            intelDropdownOpen: false,
+
+            // Drop Intelligence
+            dropIntel: { venues: [], summaries: [], observations: [] },
+
+            // Slot Conflicts
+            slotConflicts: { conflicts: [], checking: false, checked: false },
+
+            headers() {
+                return { 'Content-Type': 'application/json', 'X-Admin-Token': this.adminToken };
+            },
+
+            formatDropTime(hour, minute) {
+                if (hour === null || hour === undefined) return '';
+                const h = hour % 12 || 12;
+                const ampm = hour < 12 ? 'AM' : 'PM';
+                const m = String(minute || 0).padStart(2, '0');
+                if (hour === 0 && (minute || 0) === 0) return '12:00 AM (midnight)';
+                if (hour === 12 && (minute || 0) === 0) return '12:00 PM (noon)';
+                return m === '00' ? `${h} ${ampm}` : `${h}:${m} ${ampm}`;
+            },
+
+            async init() {
+                if (this.adminToken) {
+                    try {
+                        const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                        if (resp.ok) {
+                            this.authenticated = true;
+                            await this.loadInitial();
+                            return;
+                        }
+                    } catch (e) {}
+                    this.adminToken = '';
+                    localStorage.removeItem('tablement_admin_token');
+                }
+            },
+
+            async login() {
+                this.loginError = '';
+                this.adminToken = this.password;
+                try {
+                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    if (!resp.ok) throw new Error('Invalid password');
+                    localStorage.setItem('tablement_admin_token', this.adminToken);
+                    this.authenticated = true;
+                    await this.loadInitial();
+                } catch (e) {
+                    this.loginError = e.message;
+                    this.adminToken = '';
+                }
+            },
+
+            logout() {
+                this.authenticated = false;
+                this.adminToken = '';
+                this.password = '';
+                localStorage.removeItem('tablement_admin_token');
+                if (this.snipeEventSource) this.snipeEventSource.close();
+            },
+
+            async loadInitial() {
+                await Promise.all([
+                    this.loadResyUsers(),
+                    this.loadProxyStatus(),
+                    this.loadHealth(),
+                    this.loadRecentResults(),
+                    this.loadDropIntel(),
+                ]);
+            },
+
+            // ----- Resy Users -----
+            async loadResyUsers() {
+                try {
+                    const resp = await fetch('/api/admin/vip/users-with-resy', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.resyUsers = data.users || [];
+                    }
+                } catch (e) {}
+            },
+
+            // ----- Venue Search -----
+            async searchVenue() {
+                const q = this.snipe.venue_query.trim();
+                if (q.length < 2) { this.venueResults = []; this.venueDropdownOpen = false; return; }
+                try {
+                    const resp = await fetch('/api/venue/search?query=' + encodeURIComponent(q) + '&limit=8');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.venueResults = data.results || [];
+                        this.venueDropdownOpen = this.venueResults.length > 0;
+                    }
+                } catch (e) {}
+            },
+
+            async selectVenue(v) {
+                this.snipe.venue_id = v.resy_id;
+                this.snipe.venue_name = v.name;
+                this.snipe.venue_query = v.name;
+                this.venueResults = [];
+                this.venueDropdownOpen = false;
+                this.venueSeatingTypes = [];
+
+                // Fetch policy + seating types in parallel
+                const policyPromise = fetch('/api/venue/select', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resy_id: v.resy_id,
+                        name: v.name,
+                        url_slug: v.url_slug,
+                        location_slug: v.location_slug,
+                    }),
+                });
+
+                this.seatingTypesLoading = true;
+                const seatingPromise = fetch('/api/admin/vip/seating-types', {
+                    method: 'POST',
+                    headers: this.headers(),
+                    body: JSON.stringify({
+                        venue_id: v.resy_id,
+                        party_size: this.snipe.party_size,
+                        date: this.snipe.date,
+                    }),
+                });
+
+                // Handle policy response
+                try {
+                    const resp = await policyPromise;
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.detected_policy) {
+                            this.snipe.detected_policy = data.detected_policy;
+                            this.snipe.drop_time.hour = data.detected_policy.hour;
+                            this.snipe.drop_time.minute = data.detected_policy.minute;
+                            this.snipe.drop_time.days_ahead = data.detected_policy.days_ahead;
+                            this.snipe.drop_time.timezone = data.detected_policy.timezone;
+                        }
+                    }
+                } catch (e) {}
+
+                // Handle seating types response
+                try {
+                    const resp = await seatingPromise;
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.venueSeatingTypes = data.seating_types || [];
+                        // If venue only has one seating type, auto-fill it
+                        if (this.venueSeatingTypes.length === 1) {
+                            for (const tp of this.snipe.time_preferences) {
+                                if (!tp.seating_type) tp.seating_type = this.venueSeatingTypes[0];
+                            }
+                        }
+                    }
+                } catch (e) {}
+                this.seatingTypesLoading = false;
+            },
+
+            // ----- Fire Snipe -----
+            async fireSnipe() {
+                this.snipeFiring = true;
+                this.snipeLogs = [];
+                this.snipeResult = null;
+
+                // Auto-check conflicts before firing
+                if (this.snipe.venue_id && this.snipe.date) {
+                    await this.checkSlotConflicts();
+                    if (this.slotConflicts.conflicts.length > 0) {
+                        const proceed = confirm(
+                            this.slotConflicts.conflicts.length + ' other user(s) are targeting the same time window. Fire anyway?'
+                        );
+                        if (!proceed) {
+                            this.snipeFiring = false;
+                            return;
+                        }
+                    }
+                }
+
+                const payload = {
+                    user_id: this.snipe.user_id,
+                    venue_id: this.snipe.venue_id,
+                    venue_name: this.snipe.venue_name,
+                    party_size: this.snipe.party_size,
+                    date: this.snipe.date,
+                    mode: this.snipe.mode,
+                    time_preferences: this.snipe.time_preferences.filter(tp => tp.time),
+                    window_minutes: this.snipe.window_minutes,
+                    dry_run: this.snipe.dry_run,
+                    proxy_override: this.snipe.proxy_override || undefined,
+                };
+
+                if (this.snipe.mode === 'snipe') {
+                    payload.drop_time = this.snipe.drop_time;
+                }
+
+                this.addLog('info', 'Launching ' + this.snipe.mode + (this.snipe.dry_run ? ' (DRY RUN)' : '') + '...');
+
+                try {
+                    const resp = await fetch('/api/admin/vip/snipe', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        this.addLog('error', 'Launch failed: ' + (err.detail || resp.statusText));
+                        this.snipeFiring = false;
+                        return;
+                    }
+
+                    const data = await resp.json();
+                    this.addLog('phase', 'Job created: ' + data.reservation_id);
+
+                    // Register slot claim for conflict tracking
+                    try {
+                        const firstPref = this.snipe.time_preferences[0];
+                        await fetch('/api/admin/vip/claims/create', {
+                            method: 'POST',
+                            headers: this.headers(),
+                            body: JSON.stringify({
+                                user_id: this.snipe.user_id,
+                                venue_id: this.snipe.venue_id,
+                                target_date: this.snipe.date,
+                                preferred_time: firstPref?.time || '19:00',
+                                seating_type: firstPref?.seating_type || '',
+                                window_minutes: this.snipe.window_minutes,
+                                reservation_id: data.reservation_id,
+                            }),
+                        });
+                    } catch (e) {
+                        // Non-critical — don't block the snipe
+                        console.warn('Slot claim creation failed:', e);
+                    }
+
+                    // Connect SSE
+                    this.connectSSE(data.reservation_id);
+
+                } catch (e) {
+                    this.addLog('error', 'Error: ' + e.message);
+                    this.snipeFiring = false;
+                }
+            },
+
+            connectSSE(reservationId) {
+                if (this.snipeEventSource) this.snipeEventSource.close();
+
+                const url = '/api/admin/vip/snipe/' + reservationId + '/events?token=' + encodeURIComponent(this.adminToken);
+                // SSE needs the admin token — pass via custom EventSource with fetch
+                // Since EventSource doesn't support custom headers, we'll poll via fetch-based SSE
+                this.snipeActive = true;
+
+                const es = new EventSource(url);
+                this.snipeEventSource = es;
+
+                // Patch: add admin token header workaround
+                // EventSource doesn't support custom headers, so the endpoint reads from query param
+                // Actually let's use a simpler approach - we'll poll
+
+                es.addEventListener('snipe_phase', (e) => {
+                    const d = JSON.parse(e.data);
+                    this.addLog('phase', '[' + d.phase + '] ' + d.message);
+                });
+
+                es.addEventListener('snipe_attempt', (e) => {
+                    const d = JSON.parse(e.data);
+                    this.addLog('attempt', d.message);
+                });
+
+                es.addEventListener('countdown_tick', (e) => {
+                    const d = JSON.parse(e.data);
+                    const secs = Math.round(d.seconds_remaining);
+                    if (secs % 5 === 0 || secs <= 10) {
+                        this.addLog('tick', 'T-' + secs + 's (' + d.phase + ')');
+                    }
+                });
+
+                es.addEventListener('snipe_result', (e) => {
+                    const d = JSON.parse(e.data);
+                    this.snipeResult = d;
+                    if (d.dry_run) {
+                        const slotInfo = d.slot_time ? (' — ' + d.slot_time + (d.slot_type ? ' (' + d.slot_type + ')' : '')) : '';
+                        this.addLog('phase', 'DRY RUN complete — slot found, booking NOT attempted' + slotInfo);
+                    } else if (d.success) {
+                        this.addLog('success', 'BOOKED! Token: ' + d.resy_token);
+                    } else {
+                        this.addLog('error', 'FAILED: ' + (d.error || 'Unknown'));
+                    }
+                    this.snipeFiring = false;
+                    this.snipeActive = false;
+                    es.close();
+                });
+
+                es.onerror = () => {
+                    this.addLog('error', 'SSE connection lost');
+                    this.snipeActive = false;
+                    this.snipeFiring = false;
+                    es.close();
+                };
+
+                // Auto-scroll
+                this.$nextTick(() => {
+                    const c = document.getElementById('logContainer');
+                    if (c) c.scrollTop = c.scrollHeight;
+                });
+            },
+
+            addLog(type, message) {
+                const now = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                this.snipeLogs.push({ type, message, time: now });
+                this.$nextTick(() => {
+                    const c = document.getElementById('logContainer');
+                    if (c) c.scrollTop = c.scrollHeight;
+                });
+            },
+
+            // ----- Proxy -----
+            async loadProxyStatus() {
+                try {
+                    const resp = await fetch('/api/admin/vip/proxy-status', { headers: this.headers() });
+                    if (resp.ok) this.proxyStatus = await resp.json();
+                } catch (e) {}
+            },
+
+            async testProxy(type) {
+                this.proxyTesting = type;
+                try {
+                    const resp = await fetch('/api/admin/vip/test-proxy', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ proxy_type: type }),
+                    });
+                    if (resp.ok) this.proxyTests[type] = await resp.json();
+                } catch (e) {
+                    this.proxyTests[type] = { error: e.message };
+                }
+                this.proxyTesting = null;
+            },
+
+            async switchProxyType(type) {
+                try {
+                    await fetch('/api/admin/vip/proxy-config', {
+                        method: 'PATCH', headers: this.headers(),
+                        body: JSON.stringify({ proxy_type: type }),
+                    });
+                    await this.loadProxyStatus();
+                } catch (e) {}
+            },
+
+            async rotateProxy() {
+                try {
+                    const resp = await fetch('/api/admin/vip/rotate-proxy', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ user_id: 'admin-test' }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        alert('Proxy rotated! New URL: ' + (data.new_proxy_url_masked || 'none'));
+                    }
+                } catch (e) {}
+            },
+
+            // ----- Auth Testing -----
+            async testAuth(userId) {
+                this.authTesting = userId;
+                try {
+                    const resp = await fetch('/api/admin/vip/test-auth', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ user_id: userId }),
+                    });
+                    if (resp.ok) this.authTests[userId] = await resp.json();
+                } catch (e) {
+                    this.authTests[userId] = { error: e.message };
+                }
+                this.authTesting = null;
+            },
+
+            // ----- Add Account -----
+            async addResyAccount() {
+                this.addingAccount = true;
+                this.addAccountError = '';
+                this.addAccountSuccess = '';
+                try {
+                    const resp = await fetch('/api/admin/vip/add-resy-account', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ email: this.newAccount.email, password: this.newAccount.password }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        this.addAccountError = data.detail || 'Failed to add account';
+                    } else {
+                        this.addAccountSuccess = `Added ${data.resy_email} (${data.first_name} ${data.last_name}) — ${data.payment_methods?.length || 0} payment methods`;
+                        this.newAccount = { email: '', password: '' };
+                        await this.loadResyUsers();
+                        setTimeout(() => { this.showAddAccount = false; this.addAccountSuccess = ''; }, 3000);
+                    }
+                } catch (e) {
+                    this.addAccountError = 'Error: ' + e.message;
+                }
+                this.addingAccount = false;
+            },
+
+            // ----- Phone OTP Flow -----
+            formatPhone(raw) {
+                // Strip everything except digits and leading +
+                let cleaned = raw.replace(/[^\d+]/g, '');
+                if (!cleaned.startsWith('+')) cleaned = '+1' + cleaned;
+                return cleaned;
+            },
+
+            async sendOtp() {
+                this.otpSending = true;
+                this.addAccountError = '';
+                const phone = this.formatPhone(this.otpPhone);
+                try {
+                    const resp = await fetch('/api/auth/send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        this.addAccountError = data.detail || 'Failed to send code';
+                    } else {
+                        this.otpPhone = phone;
+                        this.otpStep = 'code';
+                    }
+                } catch (e) {
+                    this.addAccountError = 'Error: ' + e.message;
+                }
+                this.otpSending = false;
+            },
+
+            async verifyOtp() {
+                this.otpVerifying = true;
+                this.addAccountError = '';
+                try {
+                    const resp = await fetch('/api/auth/verify-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: this.otpPhone, code: this.otpCode }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        this.addAccountError = data.detail || 'Verification failed';
+                    } else {
+                        this.otpAccessToken = data.access_token;
+                        this.otpUserId = data.user_id;
+                        this.otpStep = 'link';
+                    }
+                } catch (e) {
+                    this.addAccountError = 'Error: ' + e.message;
+                }
+                this.otpVerifying = false;
+            },
+
+            async linkResyAfterOtp() {
+                this.otpLinking = true;
+                this.addAccountError = '';
+                try {
+                    const resp = await fetch('/api/auth/link-resy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.otpAccessToken,
+                        },
+                        body: JSON.stringify({ email: this.otpResyEmail, password: this.otpResyPassword }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) {
+                        this.addAccountError = data.detail || 'Failed to link Resy';
+                    } else {
+                        this.addAccountSuccess = `Linked ${this.otpResyEmail} (${data.resy_first_name || ''} ${data.resy_last_name || ''})`;
+                        // Reset OTP state
+                        this.otpStep = 'phone';
+                        this.otpPhone = '';
+                        this.otpCode = '';
+                        this.otpResyEmail = '';
+                        this.otpResyPassword = '';
+                        this.otpAccessToken = '';
+                        this.otpUserId = '';
+                        await this.loadResyUsers();
+                        setTimeout(() => { this.showAddAccount = false; this.addAccountSuccess = ''; }, 3000);
+                    }
+                } catch (e) {
+                    this.addAccountError = 'Error: ' + e.message;
+                }
+                this.otpLinking = false;
+            },
+
+            // ----- Ops -----
+            async loadHealth() {
+                try {
+                    const resp = await fetch('/api/admin/vip/health', { headers: this.headers() });
+                    if (resp.ok) this.health = await resp.json();
+                } catch (e) {}
+            },
+
+            async loadRecentResults() {
+                try {
+                    const resp = await fetch('/api/admin/vip/recent-results?limit=20', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.recentResults = data.results || [];
+                    }
+                } catch (e) {}
+            },
+
+            async killAll() {
+                if (!confirm('KILL ALL active jobs? This cannot be undone.')) return;
+                try {
+                    const resp = await fetch('/api/admin/vip/kill-all', {
+                        method: 'POST', headers: this.headers(),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        alert('Killed ' + data.jobs_cancelled + ' jobs, cleared ' + data.scheduled_cleared + ' scheduled.');
+                        await this.loadHealth();
+                        await this.loadRecentResults();
+                    }
+                } catch (e) {}
+            },
+
+            // ----- Intel -----
+            async searchIntel() {
+                const q = this.intel.query.trim();
+                if (q.length < 2) { this.intelResults = []; this.intelDropdownOpen = false; return; }
+                try {
+                    const resp = await fetch('/api/venue/search?query=' + encodeURIComponent(q) + '&limit=8');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.intelResults = data.results || [];
+                        this.intelDropdownOpen = this.intelResults.length > 0;
+                    }
+                } catch (e) {}
+            },
+
+            async selectIntelVenue(v) {
+                this.intel.query = v.name;
+                this.intel.result = null;
+                this.intel.loading = true;
+                this.intelResults = [];
+                this.intelDropdownOpen = false;
+
+                try {
+                    const resp = await fetch('/api/venue/select', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            resy_id: v.resy_id,
+                            name: v.name,
+                            url_slug: v.url_slug,
+                            location_slug: v.location_slug,
+                        }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.intel.result = {
+                            venue_id: data.venue_id,
+                            venue_name: data.venue_name || v.name,
+                            detected_policy: data.detected_policy,
+                            cuisine: v.cuisine,
+                            neighborhood: v.neighborhood,
+                            locality: v.locality,
+                        };
+                    }
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+                this.intel.loading = false;
+            },
+
+            async lookupUrl() {
+                this.intel.loading = true;
+                this.intel.result = null;
+                try {
+                    const resp = await fetch('/api/admin/vip/lookup-url', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ url: this.intel.url }),
+                    });
+                    if (resp.ok) this.intel.result = await resp.json();
+                    else {
+                        const err = await resp.json().catch(() => ({}));
+                        alert('Lookup failed: ' + (err.detail || resp.statusText));
+                    }
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+                this.intel.loading = false;
+            },
+
+            quickSnipe() {
+                if (!this.intel.result) return;
+                this.snipe.venue_id = this.intel.result.venue_id;
+                this.snipe.venue_name = this.intel.result.venue_name;
+                this.snipe.venue_query = this.intel.result.venue_name;
+                if (this.intel.result.detected_policy) {
+                    const p = this.intel.result.detected_policy;
+                    this.snipe.detected_policy = p;
+                    this.snipe.drop_time.hour = p.hour;
+                    this.snipe.drop_time.minute = p.minute;
+                    this.snipe.drop_time.days_ahead = p.days_ahead;
+                    this.snipe.drop_time.timezone = p.timezone;
+                }
+                this.activeTab = 'snipe';
+            },
+
+            // ----- Drop Intelligence -----
+            async loadDropIntel() {
+                try {
+                    const [venuesResp, summaryResp, obsResp] = await Promise.all([
+                        fetch('/api/admin/vip/drop-intel/venues', { headers: this.headers() }),
+                        fetch('/api/admin/vip/drop-intel/summary', { headers: this.headers() }),
+                        fetch('/api/admin/vip/drop-intel/observations?limit=30', { headers: this.headers() }),
+                    ]);
+                    if (venuesResp.ok) {
+                        const d = await venuesResp.json();
+                        this.dropIntel.venues = d.venues || [];
+                    }
+                    if (summaryResp.ok) {
+                        const d = await summaryResp.json();
+                        this.dropIntel.summaries = d.summaries || [];
+                    }
+                    if (obsResp.ok) {
+                        const d = await obsResp.json();
+                        this.dropIntel.observations = d.observations || [];
+                    }
+                } catch (e) {
+                    console.warn('Failed to load drop intel:', e);
+                }
+            },
+
+            async trackForDropIntel() {
+                if (!this.intel.result) return;
+                const r = this.intel.result;
+                const p = r.detected_policy;
+                if (!p) {
+                    alert('No booking policy detected — cannot track without drop timing info.');
+                    return;
+                }
+                try {
+                    const resp = await fetch('/api/admin/vip/drop-intel/track', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({
+                            venue_id: r.venue_id,
+                            venue_name: r.venue_name,
+                            drop_hour: p.hour,
+                            drop_minute: p.minute || 0,
+                            drop_timezone: p.timezone || 'America/New_York',
+                            days_ahead: p.days_ahead,
+                            party_size: this.snipe.party_size || 2,
+                            active: true,
+                            poll_tier: this.intel.pollTier || 'passive',
+                        }),
+                    });
+                    if (resp.ok) {
+                        alert('Now tracking ' + r.venue_name + ' for drop intelligence!');
+                        await this.loadDropIntel();
+                    } else {
+                        const err = await resp.json().catch(() => ({}));
+                        alert('Failed to track: ' + (err.detail || resp.statusText));
+                    }
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            },
+
+            async toggleTracking(v) {
+                try {
+                    if (v.active) {
+                        // Stop tracking
+                        const resp = await fetch('/api/admin/vip/drop-intel/untrack', {
+                            method: 'POST',
+                            headers: this.headers(),
+                            body: JSON.stringify({ venue_id: v.venue_id }),
+                        });
+                        if (resp.ok) v.active = false;
+                    } else {
+                        // Resume tracking
+                        const resp = await fetch('/api/admin/vip/drop-intel/track', {
+                            method: 'POST',
+                            headers: this.headers(),
+                            body: JSON.stringify({
+                                venue_id: v.venue_id,
+                                venue_name: v.venue_name,
+                                drop_hour: v.drop_hour,
+                                drop_minute: v.drop_minute,
+                                drop_timezone: v.drop_timezone,
+                                days_ahead: v.days_ahead,
+                                party_size: v.party_size || 2,
+                                active: true,
+                            }),
+                        });
+                        if (resp.ok) v.active = true;
+                    }
+                } catch (e) {
+                    console.warn('Toggle tracking failed:', e);
+                }
+            },
+
+            // ----- Slot Conflict Checking -----
+            async checkSlotConflicts() {
+                if (!this.snipe.venue_id || !this.snipe.date) return;
+                this.slotConflicts.checking = true;
+                this.slotConflicts.conflicts = [];
+                this.slotConflicts.checked = false;
+
+                const firstTime = this.snipe.time_preferences[0]?.time;
+                try {
+                    const resp = await fetch('/api/admin/vip/claims/check', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({
+                            venue_id: this.snipe.venue_id,
+                            target_date: this.snipe.date,
+                            preferred_time: firstTime || null,
+                            window_minutes: this.snipe.window_minutes,
+                        }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.slotConflicts.conflicts = data.conflicts || [];
+                        this.slotConflicts.checked = true;
+                    }
+                } catch (e) {
+                    console.warn('Conflict check failed:', e);
+                }
+                this.slotConflicts.checking = false;
+            },
+        }
+    }
+    </script>
+</body>
+</html>
