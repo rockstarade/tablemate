@@ -78,7 +78,7 @@ source .venv/bin/activate
 # Install tablement
 echo "[4/7] Installing tablement..."
 pip install --upgrade pip setuptools wheel -q
-pip install -e ".[dev]" -q 2>/dev/null || pip install -e . -q
+pip install -e ".[web,dev]" -q 2>/dev/null || pip install -e ".[web]" -q
 
 # Verify install
 echo "[5/7] Verifying installation..."
