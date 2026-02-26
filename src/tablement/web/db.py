@@ -329,3 +329,30 @@ async def update_slot_claim(claim_id: str, **fields) -> dict | None:
         .execute()
     )
     return resp.data[0] if resp.data else None
+
+
+# ---------------------------------------------------------------------------
+# Curated Restaurants — browse grid
+# ---------------------------------------------------------------------------
+
+
+async def list_curated_restaurants(active_only: bool = True) -> list[dict]:
+    """List curated restaurants for the browse grid, ordered by sort_order."""
+    q = get_service_client().table("curated_restaurants").select("*")
+    if active_only:
+        q = q.eq("is_active", True)
+    resp = await q.order("sort_order").execute()
+    return resp.data
+
+
+async def get_curated_restaurant(venue_id: int) -> dict | None:
+    """Get a single curated restaurant by venue_id."""
+    resp = (
+        await get_service_client()
+        .table("curated_restaurants")
+        .select("*")
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+    rows = resp.data
+    return rows[0] if rows else None

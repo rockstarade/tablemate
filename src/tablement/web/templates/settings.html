@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeInUp 0.4s ease-out; }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .toast-enter { animation: slideInRight 0.3s ease-out; }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="settingsApp()" x-init="init()">
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-cloak class="fixed top-6 right-6 z-[100] max-w-sm toast-enter">
+        <div class="glass rounded-xl border border-slate-700/50 px-5 py-3.5 flex items-center gap-3 shadow-2xl">
+            <span class="text-lg" x-text="toast.icon"></span>
+            <p class="text-sm text-slate-200" x-text="toast.message"></p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/browse" class="flex items-center gap-2">
+                    <span class="text-2xl">🍽</span>
+                    <span class="text-xl font-bold text-white">Tablement</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="/browse" class="text-slate-400 hover:text-white text-sm transition-colors">Home</a>
+                <a href="/reservations" class="text-slate-400 hover:text-white text-sm transition-colors">My Reservations</a>
+                <a href="/settings" class="text-white font-medium text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </a>
+                <button @click="signOut()" class="text-slate-500 hover:text-slate-300 text-sm transition-colors">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-20 fade-in">
+        <div class="max-w-2xl mx-auto px-6">
+            <h1 class="text-3xl font-bold text-white mb-8">Settings</h1>
+
+            <!-- Resy Account -->
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Resy Account</h2>
+
+                <div x-show="resyLinked" class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="text-white font-medium text-sm">Connected</span>
+                        </div>
+                        <p class="text-slate-400 text-sm" x-text="resyEmail || 'Resy account linked'"></p>
+                    </div>
+                    <button @click="showRelink = !showRelink"
+                        class="px-4 py-2 rounded-xl border border-slate-600/50 text-slate-400 text-sm hover:text-white hover:border-slate-500 transition-all">
+                        Re-link
+                    </button>
+                </div>
+
+                <div x-show="!resyLinked" class="text-center py-4">
+                    <div class="text-3xl mb-2">🔗</div>
+                    <p class="text-slate-400 text-sm mb-4">Link your Resy account to start booking.</p>
+                    <button @click="showRelink = true"
+                        class="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all">
+                        Link Resy Account
+                    </button>
+                </div>
+
+                <!-- Re-link form -->
+                <div x-show="showRelink" x-cloak class="mt-5 pt-5 border-t border-slate-700/30">
+                    <form @submit.prevent="relinkResy()">
+                        <input type="email" x-model="newResyEmail" placeholder="Resy email"
+                            class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm mb-3">
+                        <input type="password" x-model="newResyPassword" placeholder="Resy password"
+                            class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm mb-4">
+                        <div class="flex gap-3">
+                            <button type="submit" :disabled="relinkLoading || !newResyEmail || !newResyPassword"
+                                class="flex-1 py-3 rounded-xl font-semibold text-sm transition-all"
+                                :class="newResyEmail && newResyPassword ? 'bg-brand-500 hover:bg-brand-400 text-slate-900' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'">
+                                <span x-show="!relinkLoading">Save</span>
+                                <span x-show="relinkLoading" class="flex items-center justify-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                                </span>
+                            </button>
+                            <button type="button" @click="showRelink = false"
+                                class="px-4 py-3 rounded-xl border border-slate-600/50 text-slate-400 text-sm hover:text-white transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                        <p x-show="relinkError" x-cloak class="mt-3 text-red-400 text-sm" x-text="relinkError"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account -->
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Account</h2>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-white font-medium text-sm">Signed in</p>
+                        <p class="text-slate-400 text-sm" x-text="userPhone || 'Phone authentication'"></p>
+                    </div>
+                    <button @click="signOut()"
+                        class="px-4 py-2 rounded-xl border border-red-500/30 text-red-400 text-sm hover:bg-red-500/10 transition-colors">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin link -->
+            <div class="text-center mt-8">
+                <a href="/admin/vip" class="text-slate-600 hover:text-slate-400 text-xs transition-colors">Admin Panel</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile bottom nav -->
+    <nav class="fixed bottom-0 inset-x-0 z-50 glass border-t border-slate-700/50 sm:hidden">
+        <div class="flex items-center justify-around py-3">
+            <a href="/browse" class="flex flex-col items-center gap-1 text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="/reservations" class="flex flex-col items-center gap-1 text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-[10px] font-medium">Reservations</span>
+            </a>
+            <a href="/settings" class="flex flex-col items-center gap-1 text-brand-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="text-[10px] font-medium">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+    function settingsApp() {
+        return {
+            token: localStorage.getItem('tablement_token'),
+            resyLinked: false,
+            resyEmail: '',
+            userPhone: '',
+            showRelink: false,
+            newResyEmail: '',
+            newResyPassword: '',
+            relinkLoading: false,
+            relinkError: '',
+            toast: { show: false, message: '', icon: '' },
+
+            async init() {
+                if (!this.token) {
+                    window.location.href = '/';
+                    return;
+                }
+                await this.loadProfile();
+            },
+
+            async loadProfile() {
+                try {
+                    const resp = await fetch('/api/auth/me', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (resp.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    const data = await resp.json();
+                    this.resyLinked = data.resy_linked || false;
+                    this.resyEmail = data.resy_email || '';
+                } catch (e) {
+                    console.error('Failed to load profile:', e);
+                }
+            },
+
+            async relinkResy() {
+                this.relinkLoading = true;
+                this.relinkError = '';
+                try {
+                    const resp = await fetch('/api/auth/link-resy', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token,
+                        },
+                        body: JSON.stringify({ email: this.newResyEmail, password: this.newResyPassword }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link');
+
+                    this.resyLinked = true;
+                    this.resyEmail = this.newResyEmail;
+                    this.showRelink = false;
+                    this.newResyEmail = '';
+                    this.newResyPassword = '';
+                    this.showToast('Resy account linked!', '✅');
+                } catch (e) {
+                    this.relinkError = e.message;
+                } finally {
+                    this.relinkLoading = false;
+                }
+            },
+
+            showToast(message, icon = '✅') {
+                this.toast = { show: true, message, icon };
+                setTimeout(() => { this.toast.show = false; }, 2500);
+            },
+
+            signOut() {
+                localStorage.removeItem('tablement_token');
+                localStorage.removeItem('tablement_refresh');
+                window.location.href = '/';
+            },
+        }
+    }
+    </script>
+</body>
+</html>

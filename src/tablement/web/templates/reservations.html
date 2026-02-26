@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablement — My Reservations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
+                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
+                            600: '#d97706', 700: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeInUp 0.4s ease-out; }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, rgba(51,65,85,0.3) 25%, rgba(51,65,85,0.6) 50%, rgba(51,65,85,0.3) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+            border-radius: 0.75rem;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
+
+        /* Toast */
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .toast-enter { animation: slideInRight 0.3s ease-out; }
+    </style>
+</head>
+<body class="text-slate-200 antialiased" x-data="reservationsApp()" x-init="init()">
+
+    <!-- Toast -->
+    <div x-show="toast.show" x-cloak class="fixed top-6 right-6 z-[100] max-w-sm toast-enter">
+        <div class="glass rounded-xl border border-slate-700/50 px-5 py-3.5 flex items-center gap-3 shadow-2xl">
+            <span class="text-lg" x-text="toast.icon"></span>
+            <p class="text-sm text-slate-200" x-text="toast.message"></p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <a href="/browse" class="flex items-center gap-2">
+                    <span class="text-2xl">🍽</span>
+                    <span class="text-xl font-bold text-white">Tablement</span>
+                </a>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="/browse" class="text-slate-400 hover:text-white text-sm transition-colors">Home</a>
+                <a href="/reservations" class="text-white font-medium text-sm">My Reservations</a>
+                <a href="/settings" class="text-slate-400 hover:text-white text-sm transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </a>
+                <button @click="signOut()" class="text-slate-500 hover:text-slate-300 text-sm transition-colors">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-20 fade-in">
+        <div class="max-w-3xl mx-auto px-6">
+            <h1 class="text-3xl font-bold text-white mb-8">My Reservations</h1>
+
+            <!-- Filter tabs -->
+            <div class="flex gap-1 mb-8 bg-slate-800/40 rounded-xl p-1 w-fit">
+                <template x-for="tab in ['all', 'active', 'confirmed', 'failed']" :key="tab">
+                    <button @click="filter = tab"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize"
+                        :class="filter === tab ? 'bg-brand-500 text-slate-900' : 'text-slate-400 hover:text-white'">
+                        <span x-text="tab"></span>
+                        <span x-show="tab !== 'all'" class="ml-1 text-xs opacity-70"
+                            x-text="'(' + filteredReservations(tab).length + ')'"></span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- Loading -->
+            <div x-show="loading">
+                <template x-for="i in 3">
+                    <div class="skeleton h-28 w-full mb-4"></div>
+                </template>
+            </div>
+
+            <!-- Reservation cards -->
+            <div x-show="!loading" x-cloak class="space-y-4">
+                <template x-for="r in filteredReservations(filter)" :key="r.id">
+                    <div class="glass rounded-2xl border border-slate-700/30 p-6 transition-all hover:border-slate-600/50">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-white" x-text="r.venue_name"></h3>
+                                    <span class="status-badge px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                        :class="statusClass(r.status)"
+                                        x-text="statusLabel(r.status)"></span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                        <span x-text="formatDate(r.target_date)"></span>
+                                    </span>
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <span x-text="'Party of ' + r.party_size"></span>
+                                    </span>
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span x-text="r.mode === 'snipe' ? 'Snipe' : 'Monitor'" class="capitalize"></span>
+                                    </span>
+                                </div>
+
+                                <!-- Time preferences -->
+                                <div x-show="r.time_preferences && r.time_preferences.length > 0" class="flex gap-2 mt-3">
+                                    <template x-for="tp in (r.time_preferences || [])" :key="tp.time">
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-800/60 text-xs text-slate-400"
+                                            x-text="formatTime(tp.time)"></span>
+                                    </template>
+                                </div>
+
+                                <!-- SSE live status for active reservations -->
+                                <div x-show="r._live" class="mt-3 flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-brand-400 pulse-dot"></span>
+                                    <span class="text-brand-400 text-xs font-medium" x-text="r._liveMessage || 'Live'"></span>
+                                </div>
+
+                                <!-- Error message -->
+                                <div x-show="r.error && r.status === 'failed'" class="mt-3">
+                                    <p class="text-red-400/80 text-xs" x-text="r.error"></p>
+                                </div>
+
+                                <!-- Attempts & timing -->
+                                <div x-show="r.attempts > 0" class="mt-2 text-xs text-slate-500">
+                                    <span x-text="r.attempts + ' attempts'"></span>
+                                    <span x-show="r.elapsed_seconds" x-text="' · ' + r.elapsed_seconds.toFixed(1) + 's'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex flex-col gap-2">
+                                <button x-show="['scheduled', 'monitoring', 'sniping'].includes(r.status)"
+                                    @click="cancelReservation(r.id)"
+                                    class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition-colors">
+                                    Cancel
+                                </button>
+                                <a x-show="r.status === 'confirmed'"
+                                    :href="`/restaurant/${r.venue_id}`"
+                                    class="px-3 py-1.5 rounded-lg border border-brand-500/30 text-brand-400 text-xs hover:bg-brand-500/10 transition-colors text-center">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Empty state -->
+            <div x-show="!loading && reservations.length === 0" x-cloak class="text-center py-20">
+                <div class="text-5xl mb-4">📋</div>
+                <h3 class="text-xl font-semibold text-white mb-2">No reservations yet</h3>
+                <p class="text-slate-400 mb-6">Browse restaurants and set up your first snipe.</p>
+                <a href="/browse"
+                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all">
+                    Browse Restaurants
+                </a>
+            </div>
+
+            <!-- Empty filtered state -->
+            <div x-show="!loading && reservations.length > 0 && filteredReservations(filter).length === 0" x-cloak class="text-center py-12">
+                <p class="text-slate-400 text-sm">No <span x-text="filter"></span> reservations.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mobile bottom nav -->
+    <nav class="fixed bottom-0 inset-x-0 z-50 glass border-t border-slate-700/50 sm:hidden">
+        <div class="flex items-center justify-around py-3">
+            <a href="/browse" class="flex flex-col items-center gap-1 text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="/reservations" class="flex flex-col items-center gap-1 text-brand-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-[10px] font-medium">Reservations</span>
+            </a>
+            <a href="/settings" class="flex flex-col items-center gap-1 text-slate-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="text-[10px] font-medium">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+    function reservationsApp() {
+        return {
+            reservations: [],
+            loading: true,
+            filter: 'all',
+            token: localStorage.getItem('tablement_token'),
+            eventSources: {},
+            toast: { show: false, message: '', icon: '' },
+
+            async init() {
+                if (!this.token) {
+                    window.location.href = '/';
+                    return;
+                }
+                await this.loadReservations();
+            },
+
+            async loadReservations() {
+                try {
+                    const resp = await fetch('/api/reservations/', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (resp.status === 401) {
+                        window.location.href = '/';
+                        return;
+                    }
+                    const data = await resp.json();
+                    this.reservations = (data.reservations || []).map(r => ({
+                        ...r,
+                        _live: false,
+                        _liveMessage: '',
+                    }));
+
+                    // Connect SSE for active reservations
+                    this.reservations.forEach(r => {
+                        if (['scheduled', 'monitoring', 'sniping'].includes(r.status)) {
+                            this.connectSSE(r);
+                        }
+                    });
+                } catch (e) {
+                    console.error('Failed to load reservations:', e);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            connectSSE(reservation) {
+                const id = reservation.id;
+                if (this.eventSources[id]) return;
+
+                const url = `/api/reservations/${id}/events`;
+                const es = new EventSource(url);
+                this.eventSources[id] = es;
+                reservation._live = true;
+
+                es.addEventListener('snipe_phase', (e) => {
+                    const data = JSON.parse(e.data);
+                    reservation._liveMessage = data.message || data.phase;
+                    reservation.status = this.mapPhaseToStatus(data.phase);
+                });
+
+                es.addEventListener('snipe_attempt', (e) => {
+                    const data = JSON.parse(e.data);
+                    reservation._liveMessage = data.message;
+                    reservation.attempts = data.attempt;
+                });
+
+                es.addEventListener('countdown_tick', (e) => {
+                    const data = JSON.parse(e.data);
+                    const secs = Math.ceil(data.seconds_remaining);
+                    const mins = Math.floor(secs / 60);
+                    const s = secs % 60;
+                    reservation._liveMessage = `T-${mins}:${String(s).padStart(2, '0')}`;
+                });
+
+                es.addEventListener('snipe_result', (e) => {
+                    const data = JSON.parse(e.data);
+                    reservation._live = false;
+                    if (data.success) {
+                        reservation.status = 'confirmed';
+                        reservation._liveMessage = '';
+                        this.showToast('Reservation confirmed!', '🎉');
+                    } else {
+                        reservation.status = data.dry_run ? 'dry_run' : 'failed';
+                        reservation.error = data.error;
+                        reservation._liveMessage = '';
+                    }
+                    es.close();
+                    delete this.eventSources[id];
+                });
+
+                es.onerror = () => {
+                    reservation._live = false;
+                    es.close();
+                    delete this.eventSources[id];
+                };
+            },
+
+            mapPhaseToStatus(phase) {
+                const map = {
+                    'waiting': 'scheduled',
+                    'authenticating': 'scheduled',
+                    'warming': 'scheduled',
+                    'sniping': 'sniping',
+                    'monitoring': 'monitoring',
+                    'done': 'completed',
+                };
+                return map[phase] || phase;
+            },
+
+            filteredReservations(tab) {
+                if (tab === 'all') return this.reservations;
+                if (tab === 'active') return this.reservations.filter(r =>
+                    ['scheduled', 'monitoring', 'sniping'].includes(r.status));
+                if (tab === 'confirmed') return this.reservations.filter(r => r.status === 'confirmed');
+                if (tab === 'failed') return this.reservations.filter(r =>
+                    ['failed', 'cancelled'].includes(r.status));
+                return this.reservations;
+            },
+
+            async cancelReservation(id) {
+                try {
+                    const resp = await fetch(`/api/reservations/${id}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (resp.ok) {
+                        const r = this.reservations.find(r => r.id === id);
+                        if (r) {
+                            r.status = 'cancelled';
+                            r._live = false;
+                        }
+                        this.showToast('Reservation cancelled', '✅');
+                    }
+                } catch (e) {
+                    console.error('Cancel failed:', e);
+                }
+            },
+
+            statusClass(status) {
+                const map = {
+                    'scheduled': 'bg-blue-500/20 text-blue-400',
+                    'monitoring': 'bg-purple-500/20 text-purple-400',
+                    'sniping': 'bg-brand-500/20 text-brand-400',
+                    'confirmed': 'bg-emerald-500/20 text-emerald-400',
+                    'failed': 'bg-red-500/20 text-red-400',
+                    'cancelled': 'bg-slate-500/20 text-slate-400',
+                    'dry_run': 'bg-cyan-500/20 text-cyan-400',
+                };
+                return map[status] || 'bg-slate-500/20 text-slate-400';
+            },
+
+            statusLabel(status) {
+                const map = {
+                    'scheduled': 'Scheduled',
+                    'monitoring': 'Monitoring',
+                    'sniping': 'Sniping',
+                    'confirmed': 'Confirmed',
+                    'failed': 'Failed',
+                    'cancelled': 'Cancelled',
+                    'dry_run': 'Dry Run',
+                };
+                return map[status] || status;
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            },
+
+            formatTime(timeStr) {
+                if (!timeStr) return '';
+                const [h, m] = timeStr.split(':').map(Number);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+            },
+
+            showToast(message, icon = '✅') {
+                this.toast = { show: true, message, icon };
+                setTimeout(() => { this.toast.show = false; }, 2500);
+            },
+
+            signOut() {
+                // Close all SSE connections
+                Object.values(this.eventSources).forEach(es => es.close());
+                localStorage.removeItem('tablement_token');
+                localStorage.removeItem('tablement_refresh');
+                window.location.href = '/';
+            },
+        }
+    }
+    </script>
+</body>
+</html>

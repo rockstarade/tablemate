@@ -75,6 +75,21 @@
 </head>
 <body class="text-slate-200 antialiased" x-data="landingApp()">
 
+    <!-- Toast notification -->
+    <div x-show="toastMsg" x-cloak
+        class="fixed top-6 right-6 z-[100] max-w-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-8"
+        x-transition:enter-end="opacity-1 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-1 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-8">
+        <div class="glass rounded-xl border border-slate-700/50 px-5 py-3.5 flex items-center gap-3 shadow-2xl">
+            <span class="text-lg">📱</span>
+            <p class="text-sm text-slate-200" x-text="toastMsg"></p>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -283,6 +298,7 @@
             error: '',
             resendCooldown: 0,
             _resendTimer: null,
+            toastMsg: '',
 
             // ─── Phone formatting ───────────────────────────────
             formatPhoneInput(e) {
@@ -426,6 +442,10 @@
                     this.authStep = 'otp';
                     this.otpDigits = ['', '', '', '', '', ''];
                     this.startResendCooldown();
+
+                    // Toast: "A text was sent to +1 (XXX) XXX-XXXX"
+                    this.toastMsg = `A text was sent to +1 ${this.phoneDisplay}`;
+                    setTimeout(() => { this.toastMsg = ''; }, 3000);
                     // Focus first OTP box
                     this.$nextTick(() => {
                         const first = this.$refs['otp0'];
@@ -460,8 +480,8 @@
                     localStorage.setItem('tablement_token', data.access_token);
                     localStorage.setItem('tablement_refresh', data.refresh_token);
 
-                    // Redirect to dashboard
-                    window.location.href = '/app';
+                    // Redirect to browse page
+                    window.location.href = '/browse';
                 } catch (e) {
                     this.error = e.message;
                     // Clear OTP and refocus first box
@@ -493,9 +513,9 @@
             },
 
             init() {
-                // If already logged in, redirect to dashboard
+                // If already logged in, redirect to browse
                 if (localStorage.getItem('tablement_token')) {
-                    window.location.href = '/app';
+                    window.location.href = '/browse';
                 }
             }
         }

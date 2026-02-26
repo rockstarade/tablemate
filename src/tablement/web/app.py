@@ -90,13 +90,15 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title="Tablement", lifespan=lifespan)
 
-    from tablement.web.routes import admin, auth, policy, reservations, venue
+    from tablement.web.routes import admin, auth, curated, policy, reservations, slots, venue
 
     app.include_router(auth.router, prefix="/api/auth")
     app.include_router(venue.router, prefix="/api/venue")
     app.include_router(policy.router, prefix="/api/policy")
     app.include_router(reservations.router, prefix="/api/reservations")
     app.include_router(admin.router, prefix="/api/admin")
+    app.include_router(curated.router, prefix="/api/curated")
+    app.include_router(slots.router, prefix="/api/slots")
 
     # Payment routes (optional — only if stripe is configured)
     try:
@@ -127,5 +129,23 @@ def create_app() -> FastAPI:
     @app.get("/admin/vip")
     async def admin_vip_page(request: Request):
         return templates.TemplateResponse("admin_vip.html", {"request": request})
+
+    # --- Consumer-facing pages ---
+
+    @app.get("/browse")
+    async def browse_page(request: Request):
+        return templates.TemplateResponse("browse.html", {"request": request})
+
+    @app.get("/restaurant/{venue_id}")
+    async def restaurant_page(request: Request, venue_id: int):
+        return templates.TemplateResponse("restaurant.html", {"request": request, "venue_id": venue_id})
+
+    @app.get("/reservations")
+    async def reservations_page(request: Request):
+        return templates.TemplateResponse("reservations.html", {"request": request})
+
+    @app.get("/settings")
+    async def settings_page(request: Request):
+        return templates.TemplateResponse("settings.html", {"request": request})
 
     return app
