@@ -278,9 +278,9 @@
                             <label class="block text-xs font-medium text-slate-400 mb-1.5">Proxy</label>
                             <select x-model="snipe.proxy_override"
                                 class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
-                                <option value="">Residential — IPRoyal (default)</option>
-                                <option value="dedicated">Dedicated Server</option>
-                                <option value="direct">Direct (no proxy)</option>
+                                <option value="direct">Direct from EC2 — fastest, 5-15ms (default)</option>
+                                <option value="">Residential Proxy — IPRoyal</option>
+                                <option value="dedicated">Dedicated Server Proxy</option>
                             </select>
                         </div>
 
@@ -977,7 +977,7 @@
                 time_preferences: [{ time: '19:00', seating_type: '' }],
                 window_minutes: 30,
                 drop_time: { hour: 10, minute: 0, timezone: 'America/New_York', days_ahead: 30 },
-                proxy_override: '',
+                proxy_override: 'direct',
                 dry_run: true,
                 detected_policy: null,
             },
