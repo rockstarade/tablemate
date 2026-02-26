@@ -49,8 +49,8 @@ router = APIRouter()
 # Pre-drop polling: start hammering find_slots() this many seconds BEFORE drop
 PRE_DROP_POLL_SECONDS = 2.0
 # Polling interval range (jittered to avoid detection)
-PRE_DROP_POLL_MIN_MS = 20   # ~50 req/s at fastest
-PRE_DROP_POLL_MAX_MS = 40   # ~25 req/s at slowest, avg ~33 req/s
+PRE_DROP_POLL_MIN_MS = 40   # ~25 req/s at fastest
+PRE_DROP_POLL_MAX_MS = 60   # ~17 req/s at slowest, avg ~20 req/s
 
 # Legacy pre-fire offset (still used for busy-wait precision entry)
 PRE_FIRE_MS = 200
