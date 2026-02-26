@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Pre-drop polling: start hammering find_slots() this many seconds BEFORE drop
-PRE_DROP_POLL_SECONDS = 3.0
+PRE_DROP_POLL_SECONDS = 2.0
 # Polling interval range (jittered to avoid detection)
 PRE_DROP_POLL_MIN_MS = 20   # ~50 req/s at fastest
 PRE_DROP_POLL_MAX_MS = 40   # ~25 req/s at slowest, avg ~33 req/s
@@ -1082,8 +1082,11 @@ async def _snipe_loop(
                 booked_slot = top_matches[i]
 
                 try:
-                    # Step 4: Dual-path booking (direct + proxy race)
-                    result = await client.dual_book(
+                    # Step 4: Single-path booking (direct from EC2 = fastest)
+                    # Dual-path (proxy + direct simultaneously) is suspicious —
+                    # two IPs booking the same slot at the same instant.
+                    # Direct from EC2 in us-east-1 is already 5-15ms RTT.
+                    result = await client.book(
                         book_token=book_token,
                         payment_method_id=payment_id,
                     )
