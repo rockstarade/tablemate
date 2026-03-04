@@ -35,6 +35,7 @@ async def list_curated():
             "neighborhood": r.get("neighborhood", ""),
             "url_slug": r.get("url_slug", ""),
             "image_url": r.get("image_url") or f"/static/restaurants/{r['venue_id']}.jpg",
+            "tagline": r.get("tagline", ""),
             "slot_interval": r.get("slot_interval", 15),
             "drop_days_ahead": r.get("drop_days_ahead"),
             "drop_hour": r.get("drop_hour"),
