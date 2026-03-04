@@ -2334,25 +2334,31 @@
                         service_start: r.service_start, service_end: r.service_end,
                         sort_order: r.sort_order, is_active: r.is_active,
                     };
+                    console.log('[SAVE] Sending PATCH for venue', r.venue_id, body);
                     const resp = await fetch(`/api/admin/vip/restaurants/${r.venue_id}`, {
                         method: 'PATCH',
                         headers: { ...this.headers(), 'Content-Type': 'application/json' },
                         body: JSON.stringify(body),
                     });
+                    const respText = await resp.text();
+                    console.log('[SAVE] Response:', resp.status, respText);
                     if (resp.ok) {
                         this.restMgr.saving[r.venue_id] = false;
                         this.restMgr.saved[r.venue_id] = true;
+                        alert('✅ Saved successfully! (status ' + resp.status + ')');
                         setTimeout(() => { this.restMgr.saved[r.venue_id] = false; }, 2000);
                     } else {
-                        const data = await resp.json().catch(() => ({}));
+                        const data = JSON.parse(respText).catch?.(() => ({})) || {};
                         this.restMgr.saving[r.venue_id] = false;
-                        this.restMgr.saveError[r.venue_id] = data.detail || 'Save failed';
-                        setTimeout(() => { this.restMgr.saveError[r.venue_id] = ''; }, 3000);
+                        const errMsg = data.detail || respText || 'Save failed (status ' + resp.status + ')';
+                        this.restMgr.saveError[r.venue_id] = errMsg;
+                        alert('❌ Save failed!\nStatus: ' + resp.status + '\nError: ' + errMsg);
                     }
                 } catch (err) {
+                    console.error('[SAVE] Error:', err);
                     this.restMgr.saving[r.venue_id] = false;
-                    this.restMgr.saveError[r.venue_id] = 'Network error';
-                    setTimeout(() => { this.restMgr.saveError[r.venue_id] = ''; }, 3000);
+                    this.restMgr.saveError[r.venue_id] = 'Network error: ' + err.message;
+                    alert('❌ Network error!\n' + err.message);
                 }
             },
 
