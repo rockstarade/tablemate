@@ -139,10 +139,12 @@ def create_app() -> FastAPI:
 
     @app.get("/reservations")
     async def reservations_page(request: Request):
-        return templates.TemplateResponse("reservations.html", {"request": request})
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/browse?panel=reservations", status_code=302)
 
     @app.get("/settings")
     async def settings_page(request: Request):
-        return templates.TemplateResponse("settings.html", {"request": request})
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse("/browse?modal=settings", status_code=302)
 
     return app

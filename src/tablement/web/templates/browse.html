@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RESR — Dashboard</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                     colors: {
                         brand: {
                             50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
@@ -36,163 +39,168 @@
 
         /* ═══════ THEME SYSTEM ═══════ */
         :root {
-            /* Backgrounds */
-            --bg: #ffffff;
+            --bg: #fafafa;
             --bg-card: #ffffff;
             --bg-input: #f1f5f9;
             --bg-hover: rgba(0,0,0,0.03);
-            --bg-overlay: rgba(0,0,0,0.3);
-            /* Text */
+            --bg-overlay: rgba(0,0,0,0.4);
             --c1: #0f172a;
             --c2: #475569;
             --c3: #94a3b8;
             --c4: #cbd5e1;
-            /* Borders */
             --border: rgba(0,0,0,0.08);
             --border-subtle: rgba(0,0,0,0.04);
-            /* Nav */
             --nav: #64748b;
             --nav-hover: #0f172a;
             --nav-active: #0ea5e9;
             --nav-active-bg: rgba(14,165,233,0.06);
-            /* Accent (sidebar reservation bank, referral) */
-            --accent: #0ea5e9;
-            --accent-bg: rgba(14,165,233,0.05);
-            --accent-border: rgba(14,165,233,0.12);
-            /* Hot section */
+            --accent: #6366f1;
+            --accent-bg: rgba(99,102,241,0.05);
+            --accent-border: rgba(99,102,241,0.12);
             --hot: #ea580c;
             --hot-bg: rgba(249,115,22,0.06);
             --hot-border: rgba(249,115,22,0.12);
-            /* Hot section buttons */
-            --bh-bg: #0ea5e9;
-            --bh-text: #ffffff;
-            --bh-border: #0ea5e9;
-            --bh-h-bg: #0284c7;
-            --bh-h-text: #ffffff;
-            /* All restaurants buttons */
-            --ba-bg: #f1f5f9;
-            --ba-text: #475569;
-            --ba-border: #e2e8f0;
-            --ba-h-bg: #0ea5e9;
-            --ba-h-text: #ffffff;
-            --ba-h-border: #0ea5e9;
-            /* Cards */
+            --btn-hot-bg: #0ea5e9;
+            --btn-hot-text: #fff;
+            --btn-hot-hover: #0284c7;
+            --btn-bg: #f1f5f9;
+            --btn-text: #475569;
+            --btn-border: #e2e8f0;
+            --btn-hover-bg: #0ea5e9;
+            --btn-hover-text: #fff;
             --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
             --card-h-shadow: 0 10px 30px rgba(0,0,0,0.08);
             --card-h-border: rgba(14,165,233,0.15);
-            /* Misc */
             --signout-h: #ef4444;
             --search-focus: rgba(14,165,233,0.3);
             --skeleton-a: rgba(0,0,0,0.04);
             --skeleton-b: rgba(0,0,0,0.08);
-            /* Logo */
-            --logo-bg-from: #0ea5e9;
-            --logo-bg-to: #0284c7;
-            --logo-text: #ffffff;
+            --logo-from: #0ea5e9;
+            --logo-to: #0284c7;
+            --logo-text: #fff;
+            --status-active: #3b82f6;
+            --status-active-bg: rgba(59,130,246,0.08);
+            --status-confirmed: #10b981;
+            --status-confirmed-bg: rgba(16,185,129,0.08);
+            --status-failed: #ef4444;
+            --status-failed-bg: rgba(239,68,68,0.08);
+            --status-sniping: #f59e0b;
+            --status-sniping-bg: rgba(245,158,11,0.08);
+            --res-bank-bg: rgba(14,165,233,0.05);
+            --res-bank-border: rgba(14,165,233,0.12);
+            --res-bank-text: #0ea5e9;
         }
-
         .dark {
-            --bg: #0a0e1a;
-            --bg-card: rgba(15,23,42,0.3);
+            --bg: #06080f;
+            --bg-card: rgba(15,23,42,0.35);
             --bg-input: rgba(255,255,255,0.04);
             --bg-hover: rgba(255,255,255,0.04);
-            --bg-overlay: rgba(0,0,0,0.6);
-            --c1: #e2e8f0;
+            --bg-overlay: rgba(0,0,0,0.65);
+            --c1: #f1f5f9;
             --c2: #94a3b8;
             --c3: #64748b;
             --c4: #475569;
-            --border: rgba(51,65,85,0.4);
-            --border-subtle: rgba(51,65,85,0.25);
+            --border: rgba(51,65,85,0.35);
+            --border-subtle: rgba(51,65,85,0.2);
             --nav: #94a3b8;
             --nav-hover: #ffffff;
             --nav-active: #fbbf24;
-            --nav-active-bg: rgba(245,158,11,0.1);
+            --nav-active-bg: rgba(245,158,11,0.08);
             --accent: #818cf8;
             --accent-bg: rgba(99,102,241,0.08);
-            --accent-border: rgba(99,102,241,0.2);
+            --accent-border: rgba(99,102,241,0.18);
             --hot: #fdba74;
-            --hot-bg: rgba(249,115,22,0.2);
-            --hot-border: rgba(249,115,22,0.2);
-            --bh-bg: rgba(245,158,11,0.1);
-            --bh-text: #fbbf24;
-            --bh-border: rgba(245,158,11,0.25);
-            --bh-h-bg: #f59e0b;
-            --bh-h-text: #0f172a;
-            --ba-bg: rgba(255,255,255,0.04);
-            --ba-text: #cbd5e1;
-            --ba-border: rgba(51,65,85,0.4);
-            --ba-h-bg: #f59e0b;
-            --ba-h-text: #0f172a;
-            --ba-h-border: #f59e0b;
+            --hot-bg: rgba(249,115,22,0.12);
+            --hot-border: rgba(249,115,22,0.18);
+            --btn-hot-bg: rgba(245,158,11,0.1);
+            --btn-hot-text: #fbbf24;
+            --btn-hot-hover: #f59e0b;
+            --btn-bg: rgba(255,255,255,0.04);
+            --btn-text: #cbd5e1;
+            --btn-border: rgba(51,65,85,0.4);
+            --btn-hover-bg: #f59e0b;
+            --btn-hover-text: #0f172a;
             --card-shadow: none;
-            --card-h-shadow: 0 12px 40px rgba(0,0,0,0.4);
-            --card-h-border: rgba(251,191,36,0.08);
+            --card-h-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            --card-h-border: rgba(251,191,36,0.06);
             --signout-h: #f87171;
-            --search-focus: rgba(99,102,241,0.4);
+            --search-focus: rgba(99,102,241,0.35);
             --skeleton-a: rgba(30,41,59,0.3);
             --skeleton-b: rgba(30,41,59,0.6);
-            --logo-bg-from: #fbbf24;
-            --logo-bg-to: #d97706;
+            --logo-from: #fbbf24;
+            --logo-to: #d97706;
             --logo-text: #0f172a;
+            --status-active: #60a5fa;
+            --status-active-bg: rgba(59,130,246,0.12);
+            --status-confirmed: #34d399;
+            --status-confirmed-bg: rgba(16,185,129,0.12);
+            --status-failed: #f87171;
+            --status-failed-bg: rgba(239,68,68,0.12);
+            --status-sniping: #fbbf24;
+            --status-sniping-bg: rgba(245,158,11,0.12);
+            --res-bank-bg: rgba(99,102,241,0.08);
+            --res-bank-border: rgba(99,102,241,0.18);
+            --res-bank-text: #818cf8;
         }
 
         body {
+            font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
             min-height: 100vh;
             transition: background 0.3s ease;
         }
 
-        /* ═══════ THEMED BACKGROUNDS ═══════ */
+        /* ═══════ LAYOUT BACKGROUNDS ═══════ */
         .sidebar-bg {
             background: #ffffff;
             border-right: 1px solid var(--border);
             transition: background 0.3s ease;
         }
         .dark .sidebar-bg {
-            background: linear-gradient(180deg, rgba(10,14,26,0.97) 0%, rgba(15,23,42,0.97) 100%);
-            backdrop-filter: blur(20px);
+            background: linear-gradient(180deg, rgba(8,12,22,0.98) 0%, rgba(15,23,42,0.98) 100%);
+            backdrop-filter: blur(24px);
         }
         .topbar-bg {
-            background: rgba(255,255,255,0.92);
+            background: rgba(250,250,250,0.88);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             transition: background 0.3s ease;
         }
         .dark .topbar-bg {
-            background: rgba(10,14,26,0.85);
+            background: rgba(6,8,15,0.82);
         }
         .mobile-nav-bg {
             background: rgba(255,255,255,0.95);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid var(--border);
-            transition: background 0.3s ease;
         }
         .dark .mobile-nav-bg {
-            background: rgba(10,14,26,0.92);
+            background: rgba(6,8,15,0.92);
         }
-        .mobile-sidebar-bg {
+        .panel-bg {
             background: #ffffff;
             transition: background 0.3s ease;
         }
-        .dark .mobile-sidebar-bg {
-            background: linear-gradient(180deg, rgba(10,14,26,0.98) 0%, rgba(15,23,42,0.98) 100%);
+        .dark .panel-bg {
+            background: rgba(10,14,26,0.97);
+            backdrop-filter: blur(24px);
         }
         .modal-bg {
             background: #ffffff;
             transition: background 0.3s ease;
         }
         .dark .modal-bg {
-            background: rgba(15,23,42,0.95);
+            background: rgba(15,23,42,0.97);
             backdrop-filter: blur(20px);
         }
 
         /* ═══════ CARD HOVER ═══════ */
         .restaurant-card {
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
             box-shadow: var(--card-shadow);
         }
         .restaurant-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-6px);
             box-shadow: var(--card-h-shadow);
             border-color: var(--card-h-border) !important;
         }
@@ -211,128 +219,158 @@
 
         /* ═══════ ANIMATIONS ═══════ */
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in { animation: fadeInUp 0.4s ease-out both; }
-        .fade-in-d1 { animation: fadeInUp 0.4s ease-out 0.06s both; }
+        .fade-in { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .fade-in-d1 { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
+        .fade-in-d2 { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both; }
 
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(100%); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .toast-enter { animation: slideInRight 0.3s ease-out; }
         @keyframes slideOutRight {
             from { opacity: 1; transform: translateX(0); }
             to { opacity: 0; transform: translateX(100%); }
         }
-        .toast-exit { animation: slideOutRight 0.3s ease-in forwards; }
+        .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+        .toast-exit { animation: slideOutRight 0.25s ease-in forwards; }
 
         @keyframes hotPulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.6; }
         }
         .hot-badge { animation: hotPulse 2s ease-in-out infinite; }
 
-        /* ═══════ IMAGE PLACEHOLDER ═══════ */
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .pulse-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+
+        /* ═══════ MISC ═══════ */
         .img-placeholder {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
 
-        /* ═══════ SCROLLBAR ═══════ */
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.25); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.4); }
 
-        /* ═══════ THEME TOGGLE ═══════ */
-        .theme-toggle {
-            transition: transform 0.3s ease, background 0.3s ease;
+        .theme-toggle { transition: transform 0.3s ease; }
+        .theme-toggle:hover { transform: rotate(15deg); }
+
+        /* Button fill animation */
+        .btn-book {
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
         }
-        .theme-toggle:hover {
-            transform: rotate(15deg);
+        .btn-book::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .dark .btn-book::before { background: #f59e0b; }
+        .btn-book::before { background: #0ea5e9; }
+        .btn-book:hover::before { opacity: 1; }
+        .btn-book:hover { color: #0f172a !important; border-color: transparent !important; }
+        .dark .btn-book:hover { color: #0f172a !important; }
+
+        /* Stagger animation for cards */
+        .stagger-item {
+            opacity: 0;
+            animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
     </style>
 </head>
 <body class="antialiased" style="color: var(--c1);" x-data="browseApp()" x-init="init()">
 
-    <!-- ═══════════════════ TOAST ═══════════════════ -->
+    <!-- ═══════════════ TOAST ═══════════════ -->
     <div x-show="toast.show" x-cloak
         class="fixed top-6 right-6 z-[100] max-w-sm"
         :class="toast.exiting ? 'toast-exit' : 'toast-enter'">
-        <div class="rounded-xl px-5 py-3.5 flex items-center gap-3 shadow-2xl modal-bg" style="border: 1px solid var(--border);">
+        <div class="rounded-2xl px-5 py-3.5 flex items-center gap-3 shadow-2xl modal-bg" style="border: 1px solid var(--border);">
             <span class="text-lg" x-text="toast.icon"></span>
-            <p class="text-sm" style="color: var(--c1);" x-text="toast.message"></p>
+            <p class="text-sm font-medium" style="color: var(--c1);" x-text="toast.message"></p>
         </div>
     </div>
 
-    <!-- ═══════════════════ SIDEBAR (Desktop) ═══════════════════ -->
+    <!-- ═══════════════ DESKTOP SIDEBAR ═══════════════ -->
     <aside class="fixed top-0 left-0 bottom-0 w-64 z-40 hidden lg:flex flex-col sidebar-bg">
-
         <!-- Logo -->
-        <div class="px-6 py-6">
+        <div class="px-6 py-7">
             <a href="/browse" class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
-                    style="background: linear-gradient(135deg, var(--logo-bg-from), var(--logo-bg-to)); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                    style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); box-shadow: 0 4px 14px rgba(0,0,0,0.12);">
                     <span class="font-extrabold text-sm" style="color: var(--logo-text);">R</span>
                 </div>
-                <span class="text-xl font-bold tracking-tight" style="color: var(--c1);">RESR</span>
+                <span class="text-xl font-extrabold tracking-tight" style="color: var(--c1);">RESR</span>
             </a>
         </div>
 
         <!-- Main nav -->
-        <nav class="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
+        <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
             <a href="/browse"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
                 style="background: var(--nav-active-bg); color: var(--nav-active);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                 Home
             </a>
-            <a href="/reservations"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all"
+            <button @click="openReservations()"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 My Reservations
-            </a>
+                <span x-show="activeResCount > 0"
+                    class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    style="background: var(--status-sniping-bg); color: var(--status-sniping);"
+                    x-text="activeResCount"></span>
+            </button>
             <a href="/browse#all-restaurants"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                Our Restaurants
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                All Restaurants
             </a>
         </nav>
 
         <!-- Account section -->
         <div class="px-3 py-3" style="border-top: 1px solid var(--border);">
-            <div class="px-4 py-2.5 mb-2">
-                <p class="font-semibold text-sm truncate" style="color: var(--c1);" x-text="userName || 'Your Account'"></p>
-                <p class="text-xs" style="color: var(--c3);">Manage profile</p>
-            </div>
-
             <!-- Reservation bank -->
-            <div class="mx-3 mb-3 rounded-xl px-4 py-3" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                <p class="text-[11px] font-semibold uppercase tracking-wider mb-1" style="color: var(--accent);">Reservations made</p>
-                <p class="text-2xl font-bold leading-none" style="color: var(--c1);" x-text="reservationsRemaining">0</p>
+            <div class="mx-2 mb-3 rounded-xl px-4 py-3.5" style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border);">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: var(--res-bank-text);">Reservations</p>
+                        <p class="text-xs" style="color: var(--c3);">Active bookings</p>
+                    </div>
+                    <p class="text-3xl font-extrabold leading-none" style="color: var(--c1);" x-text="activeResCount">0</p>
+                </div>
             </div>
 
-            <a href="/settings"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: var(--nav);"
-                onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Account Settings
-            </a>
-            <button
+            <button @click="showSettings = true"
                 class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Account
+            </button>
+            <button @click="showSupport = true"
+                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                style="color: var(--nav);"
+                onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
+                onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Support
             </button>
         </div>
@@ -342,123 +380,91 @@
             <button @click="signOut()"
                 class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
                 style="color: var(--c3);"
-                onmouseover="this.style.color='var(--signout-h)'; this.style.background='rgba(239,68,68,0.06)';"
+                onmouseover="this.style.color='var(--signout-h)'; this.style.background='rgba(239,68,68,0.05)';"
                 onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 Sign Out
             </button>
         </div>
     </aside>
 
-    <!-- ═══════════════════ MOBILE SIDEBAR OVERLAY ═══════════════════ -->
+    <!-- ═══════════════ MOBILE SIDEBAR OVERLAY ═══════════════ -->
     <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-50 lg:hidden">
-        <!-- Backdrop -->
         <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="sidebarOpen = false"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
             x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
-        <!-- Sidebar panel -->
-        <aside class="relative w-72 h-full flex flex-col shadow-2xl mobile-sidebar-bg"
+        <aside class="relative w-72 h-full flex flex-col shadow-2xl panel-bg"
             style="border-right: 1px solid var(--border);"
-            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
-
-            <!-- Close button -->
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full">
             <button @click="sidebarOpen = false" class="absolute top-5 right-4 transition-colors" style="color: var(--c3);"
                 onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-
-            <!-- Logo -->
-            <div class="px-6 py-6">
+            <div class="px-6 py-7">
                 <a href="/browse" class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style="background: linear-gradient(135deg, var(--logo-bg-from), var(--logo-bg-to));">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                        style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to));">
                         <span class="font-extrabold text-sm" style="color: var(--logo-text);">R</span>
                     </div>
-                    <span class="text-xl font-bold tracking-tight" style="color: var(--c1);">RESR</span>
+                    <span class="text-xl font-extrabold tracking-tight" style="color: var(--c1);">RESR</span>
                 </a>
             </div>
-
-            <!-- Nav links -->
-            <nav class="flex-1 px-3 py-2 space-y-0.5">
+            <nav class="flex-1 px-3 py-2 space-y-1">
                 <a href="/browse" @click="sidebarOpen = false"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium"
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold"
                     style="background: var(--nav-active-bg); color: var(--nav-active);">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                     Home
                 </a>
-                <a href="/reservations"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all"
-                    style="color: var(--nav);"
-                    onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                    onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <button @click="sidebarOpen = false; openReservations()"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
+                    style="color: var(--nav);">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     My Reservations
-                </a>
+                    <span x-show="activeResCount > 0" class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style="background: var(--status-sniping-bg); color: var(--status-sniping);"
+                        x-text="activeResCount"></span>
+                </button>
                 <a href="/browse#all-restaurants" @click="sidebarOpen = false"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium transition-all"
-                    style="color: var(--nav);"
-                    onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                    onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
-                    Our Restaurants
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                    style="color: var(--nav);">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    All Restaurants
                 </a>
             </nav>
-
-            <!-- Account -->
-            <div class="px-3 py-3" style="border-top: 1px solid var(--border);">
-                <div class="px-4 py-2.5 mb-2">
-                    <p class="font-semibold text-sm" style="color: var(--c1);" x-text="userName || 'Your Account'"></p>
-                    <p class="text-xs" style="color: var(--c3);">Manage profile</p>
+            <div class="px-3 py-4" style="border-top: 1px solid var(--border);">
+                <div class="mx-2 mb-3 rounded-xl px-4 py-3" style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border);">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: var(--res-bank-text);">Active Reservations</p>
+                    <p class="text-2xl font-extrabold leading-none" style="color: var(--c1);" x-text="activeResCount">0</p>
                 </div>
-                <!-- Reservation bank -->
-                <div class="mx-3 mb-3 rounded-xl px-4 py-3" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider mb-1" style="color: var(--accent);">Reservations made</p>
-                    <p class="text-2xl font-bold leading-none" style="color: var(--c1);" x-text="reservationsRemaining">0</p>
-                </div>
-                <a href="/settings"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
-                    style="color: var(--nav);"
-                    onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                    onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Account Settings
-                </a>
-                <button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                    style="color: var(--nav);"
-                    onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                    onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    Support
+                <button @click="sidebarOpen = false; showSettings = true"
+                    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                    style="color: var(--nav);">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Account
                 </button>
-            </div>
-
-            <!-- Sign out -->
-            <div class="px-3 py-3" style="border-top: 1px solid var(--border);">
                 <button @click="signOut()"
-                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
-                    style="color: var(--c3);"
-                    onmouseover="this.style.color='var(--signout-h)'; this.style.background='rgba(239,68,68,0.06)';"
-                    onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                    style="color: var(--c3);">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     Sign Out
                 </button>
             </div>
         </aside>
     </div>
 
-    <!-- ═══════════════════ TOP BAR ═══════════════════ -->
+    <!-- ═══════════════ TOP BAR ═══════════════ -->
     <header class="fixed top-0 left-0 lg:left-64 right-0 z-30 topbar-bg">
         <div class="flex items-center gap-4 px-5 lg:px-8 py-3.5">
-            <!-- Mobile hamburger -->
             <button @click="sidebarOpen = true" class="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-all"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
 
-            <!-- Search bar (centered) -->
+            <!-- Search bar -->
             <div class="flex-1 flex justify-center">
                 <div class="w-full max-w-xl relative">
                     <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
@@ -469,8 +475,6 @@
                         style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
-
-                    <!-- Search results dropdown -->
                     <div x-show="searchFocused && searchResults.length > 0" x-cloak
                         class="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-50 modal-bg"
                         style="border: 1px solid var(--border);">
@@ -480,8 +484,8 @@
                                 style="border-bottom: 1px solid var(--border-subtle);"
                                 onmouseover="this.style.background='var(--bg-hover)';"
                                 onmouseout="this.style.background='transparent';">
-                                <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0" style="background: var(--bg-input);">
-                                    <img :src="'/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg'"
+                                <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 img-placeholder">
+                                    <img :src="r.image_url || ('/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg')"
                                         class="w-full h-full object-cover" @error="$event.target.style.display='none'">
                                 </div>
                                 <div>
@@ -494,11 +498,11 @@
                 </div>
             </div>
 
-            <!-- Referral gift button -->
+            <!-- Gift / Referral -->
             <button @click="showReferral = true"
-                class="relative flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all group"
+                class="relative flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all"
                 style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                <svg class="w-[18px] h-[18px] transition-colors" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                <svg class="w-[18px] h-[18px]" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                 <span class="font-bold text-sm" style="color: var(--accent);">3</span>
             </button>
 
@@ -506,17 +510,15 @@
             <button @click="toggleTheme()" class="theme-toggle flex items-center justify-center w-9 h-9 rounded-xl transition-all"
                 style="background: var(--bg-hover); border: 1px solid var(--border);"
                 :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
-                <!-- Sun icon (shown in dark mode → click to go light) -->
                 <svg x-show="theme === 'dark'" class="w-[18px] h-[18px]" style="color: #fbbf24;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
                 </svg>
-                <!-- Moon icon (shown in light mode → click to go dark) -->
                 <svg x-show="theme === 'light'" x-cloak class="w-[18px] h-[18px]" style="color: #475569;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
                 </svg>
             </button>
 
-            <!-- Admin button (temp) -->
+            <!-- Admin (temp) -->
             <a href="/admin" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-xs font-medium"
                 style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--c3);"
                 onmouseover="this.style.color='var(--c1)';"
@@ -527,23 +529,26 @@
         </div>
     </header>
 
-    <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+    <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
     <main class="lg:ml-64 pt-[68px] pb-24 lg:pb-8 min-h-screen">
         <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1400px]">
 
             <!-- Page heading -->
-            <h1 class="text-2xl sm:text-3xl font-bold mb-8" style="color: var(--c1);">Where do you want to eat?</h1>
+            <div class="mb-8 fade-in">
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight" style="color: var(--c1);">Where do you want to eat?</h1>
+                <p class="text-sm mt-1" style="color: var(--c3);">NYC's most coveted tables, secured for you.</p>
+            </div>
 
             <!-- Loading skeletons -->
             <div x-show="loading" class="space-y-8">
                 <div>
-                    <div class="skeleton h-5 w-32 mb-4"></div>
+                    <div class="skeleton h-5 w-32 mb-5"></div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                         <template x-for="i in 4">
-                            <div class="rounded-2xl overflow-hidden">
+                            <div class="rounded-2xl overflow-hidden" style="border: 1px solid var(--border);">
                                 <div class="skeleton h-52 w-full"></div>
                                 <div class="p-4" style="background: var(--bg-card);">
-                                    <div class="skeleton h-4 w-3/4 mb-2"></div>
+                                    <div class="skeleton h-4 w-3/4 mb-2.5"></div>
                                     <div class="skeleton h-3 w-1/2 mb-3"></div>
                                     <div class="skeleton h-10 w-full rounded-xl"></div>
                                 </div>
@@ -553,52 +558,51 @@
                 </div>
             </div>
 
-            <!-- ─── WHAT'S HOT ─── -->
-            <section x-show="!loading && hotRestaurants.length > 0" x-cloak class="mb-10 fade-in">
-                <div class="flex items-center gap-3 mb-1.5">
+            <!-- ═══ WHAT'S HOT ═══ -->
+            <section x-show="!loading && hotRestaurants.length > 0" x-cloak class="mb-12 fade-in">
+                <div class="flex items-center gap-3 mb-1">
                     <h2 class="text-lg font-bold" style="color: var(--c1);">What's hot</h2>
-                    <span class="hot-badge flex items-center gap-1 px-2 py-0.5 rounded-md" style="background: var(--hot-bg); border: 1px solid var(--hot-border);">
-                        <span class="text-xs" style="color: var(--hot);">🔥</span>
-                        <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--hot);">Trending</span>
+                    <span class="hot-badge flex items-center gap-1 px-2 py-0.5 rounded-lg" style="background: var(--hot-bg); border: 1px solid var(--hot-border);">
+                        <span class="text-[10px]" style="color: var(--hot);">&#x1F525;</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wide" style="color: var(--hot);">Trending</span>
                     </span>
                 </div>
                 <p class="text-sm mb-5" style="color: var(--c3);">Most requested this week</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-                    <template x-for="r in hotRestaurants" :key="r.venue_id">
-                        <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer"
-                            style="border: 1px solid var(--border); background: var(--bg-card);"
+                    <template x-for="(r, idx) in hotRestaurants" :key="r.venue_id">
+                        <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
+                            :style="'animation-delay: ' + (idx * 0.06) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
                             @click="goToRestaurant(r)">
-                            <!-- Image -->
-                            <div class="relative h-44 sm:h-48 overflow-hidden img-placeholder">
+                            <div class="relative h-48 sm:h-56 overflow-hidden img-placeholder">
                                 <img :src="r.image_url" :alt="r.name"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent"></div>
-                                <!-- Hot badge -->
-                                <div class="absolute top-3 left-3">
-                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-500/20 backdrop-blur-sm border border-orange-500/20 text-[10px] font-semibold text-orange-300 uppercase tracking-wide">
-                                        🔥 Hot
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                                <div class="absolute top-3 left-3 flex items-center gap-2">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/20 backdrop-blur-md border border-orange-400/20 text-[10px] font-bold text-orange-300 uppercase tracking-wide">
+                                        &#x1F525; Hot
                                     </span>
                                 </div>
-                                <!-- Cuisine pill -->
                                 <div class="absolute top-3 right-3">
-                                    <span class="px-2 py-1 rounded-lg bg-black/40 backdrop-blur-sm text-[10px] font-medium text-white/70"
+                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/70"
                                         x-text="r.cuisine"></span>
                                 </div>
+                                <!-- Restaurant name overlay on image -->
+                                <div class="absolute bottom-3 left-3 right-3">
+                                    <h3 class="text-base font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
+                                    <p class="text-xs text-white/60 mt-0.5" x-text="r.neighborhood"></p>
+                                </div>
                             </div>
-                            <!-- Info -->
                             <div class="p-4">
-                                <h3 class="text-sm font-semibold mb-0.5 leading-snug" style="color: var(--c1);" x-text="r.name"></h3>
-                                <p class="text-xs mb-1" style="color: var(--c3);" x-text="r.neighborhood"></p>
-                                <p class="text-xs mb-3.5">
-                                    <span style="color: var(--c4);">Next release</span>
-                                    <span class="font-medium ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
-                                </p>
+                                <div class="flex items-center justify-between mb-3.5">
+                                    <p class="text-xs">
+                                        <span style="color: var(--c4);">Next release</span>
+                                        <span class="font-semibold ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
+                                    </p>
+                                </div>
                                 <button @click.stop="goToRestaurant(r)"
-                                    class="w-full py-2.5 rounded-xl text-xs font-semibold transition-all"
-                                    style="background: var(--bh-bg); color: var(--bh-text); border: 1px solid var(--bh-border);"
-                                    onmouseover="this.style.background='var(--bh-h-bg)'; this.style.color='var(--bh-h-text)';"
-                                    onmouseout="this.style.background='var(--bh-bg)'; this.style.color='var(--bh-text)';">
+                                    class="btn-book w-full py-2.5 rounded-xl text-xs font-bold transition-all"
+                                    style="background: var(--btn-hot-bg); color: var(--btn-hot-text); border: 1px solid transparent;">
                                     Book Now
                                 </button>
                             </div>
@@ -607,7 +611,7 @@
                 </div>
             </section>
 
-            <!-- ─── ALL RESTAURANTS ─── -->
+            <!-- ═══ ALL RESTAURANTS ═══ -->
             <section x-show="!loading" x-cloak id="all-restaurants" class="fade-in-d1">
                 <div class="flex items-center justify-between mb-5">
                     <div>
@@ -617,35 +621,34 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-                    <template x-for="r in restaurants" :key="r.venue_id">
-                        <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer"
-                            style="border: 1px solid var(--border); background: var(--bg-card);"
+                    <template x-for="(r, idx) in restaurants" :key="r.venue_id">
+                        <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
+                            :style="'animation-delay: ' + (idx * 0.04) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
                             @click="goToRestaurant(r)">
-                            <!-- Image -->
                             <div class="relative h-44 sm:h-52 overflow-hidden img-placeholder">
                                 <img :src="r.image_url" :alt="r.name"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent"></div>
-                                <!-- Cuisine pill -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
                                 <div class="absolute top-3 left-3">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-sm text-[10px] font-medium text-white/70"
+                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/70"
                                         x-text="r.cuisine"></span>
                                 </div>
+                                <div class="absolute bottom-3 left-3 right-3">
+                                    <h3 class="text-sm font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
+                                    <p class="text-[11px] text-white/60 mt-0.5" x-text="r.neighborhood"></p>
+                                </div>
                             </div>
-                            <!-- Info -->
                             <div class="p-4">
-                                <h3 class="text-sm font-semibold mb-0.5 leading-snug" style="color: var(--c1);" x-text="r.name"></h3>
-                                <p class="text-xs mb-1" style="color: var(--c3);" x-text="r.neighborhood"></p>
-                                <p class="text-xs mb-3.5">
-                                    <span style="color: var(--c4);">Next release</span>
-                                    <span class="font-medium ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
-                                </p>
+                                <div class="flex items-center justify-between mb-3.5">
+                                    <p class="text-xs">
+                                        <span style="color: var(--c4);">Next release</span>
+                                        <span class="font-semibold ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
+                                    </p>
+                                </div>
                                 <button @click.stop="goToRestaurant(r)"
-                                    class="w-full py-2.5 rounded-xl text-xs font-semibold transition-all"
-                                    style="background: var(--ba-bg); color: var(--ba-text); border: 1px solid var(--ba-border);"
-                                    onmouseover="this.style.background='var(--ba-h-bg)'; this.style.color='var(--ba-h-text)'; this.style.borderColor='var(--ba-h-border)';"
-                                    onmouseout="this.style.background='var(--ba-bg)'; this.style.color='var(--ba-text)'; this.style.borderColor='var(--ba-border)';">
+                                    class="btn-book w-full py-2.5 rounded-xl text-xs font-bold transition-all"
+                                    style="background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--btn-border);">
                                     Book Now
                                 </button>
                             </div>
@@ -658,123 +661,363 @@
                     <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style="background: var(--bg-input);">
                         <svg class="w-8 h-8" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2" style="color: var(--c1);">No restaurants found</h3>
-                    <p class="text-sm" style="color: var(--c3);">Check back soon — we're adding more restaurants.</p>
+                    <h3 class="text-lg font-bold mb-2" style="color: var(--c1);">No restaurants found</h3>
+                    <p class="text-sm" style="color: var(--c3);">Check back soon — we're adding new restaurants.</p>
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- ═══════════════════ MOBILE BOTTOM NAV ═══════════════════ -->
-    <nav class="fixed bottom-0 inset-x-0 z-50 lg:hidden mobile-nav-bg">
-        <div class="flex items-center justify-around py-2.5 px-2">
-            <a href="/browse" class="flex flex-col items-center gap-1 px-3 py-1" style="color: var(--nav-active);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
-                <span class="text-[10px] font-semibold">Home</span>
-            </a>
-            <a href="/reservations" class="flex flex-col items-center gap-1 px-3 py-1 transition-colors" style="color: var(--c3);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span class="text-[10px] font-semibold">Reservations</span>
-            </a>
-            <a href="/settings" class="flex flex-col items-center gap-1 px-3 py-1 transition-colors" style="color: var(--c3);">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span class="text-[10px] font-semibold">Settings</span>
-            </a>
-        </div>
-    </nav>
+    <!-- ═══════════════ RESERVATIONS PANEL (Slide-over) ═══════════════ -->
+    <div x-show="showReservations" x-cloak class="fixed inset-0 z-[60]" @keydown.escape.window="showReservations = false">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showReservations = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+        <!-- Panel -->
+        <div class="absolute top-0 right-0 bottom-0 w-full sm:w-[440px] shadow-2xl panel-bg flex flex-col"
+            style="border-left: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full">
 
-    <!-- ═══════════════════ REFERRAL MODAL ═══════════════════ -->
-    <div x-show="showReferral" x-cloak
-        class="fixed inset-0 z-[80] flex items-center justify-center"
-        @keydown.escape.window="showReferral = false">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
+                <div>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">My Reservations</h2>
+                    <p class="text-xs mt-0.5" style="color: var(--c3);" x-text="resSummaryText()"></p>
+                </div>
+                <button @click="showReservations = false" class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+                    style="color: var(--c3);"
+                    onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
+                    onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Filter tabs -->
+            <div class="px-6 pt-4 pb-2">
+                <div class="flex gap-1 rounded-xl p-1" style="background: var(--bg-input);">
+                    <template x-for="tab in resTabs" :key="tab.key">
+                        <button @click="resFilter = tab.key"
+                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                            :style="resFilter === tab.key
+                                ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);'
+                                : 'color: var(--c3);'">
+                            <span x-text="tab.label"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Reservation list -->
+            <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                <!-- Loading -->
+                <div x-show="reservationsLoading" class="space-y-3">
+                    <div class="skeleton h-24 w-full"></div>
+                    <div class="skeleton h-24 w-full"></div>
+                </div>
+
+                <template x-if="!reservationsLoading">
+                    <div>
+                        <template x-for="res in filteredRes()" :key="res.id">
+                            <div class="rounded-xl p-4 mb-3 transition-all"
+                                style="background: var(--bg-card); border: 1px solid var(--border);"
+                                :style="res.status === 'confirmed' ? 'border-color: var(--status-confirmed); box-shadow: 0 0 20px rgba(16,185,129,0.08);' : ''">
+
+                                <!-- Confirmed -->
+                                <template x-if="res.status === 'confirmed'">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-sm" style="color: var(--status-confirmed);">&#10003;</span>
+                                            <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">You're in!</span>
+                                        </div>
+                                        <h3 class="text-base font-bold mb-2" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                        <div class="space-y-1 text-xs" style="color: var(--c2);">
+                                            <p x-text="formatDateFull(res.target_date)"></p>
+                                            <p x-text="'Party of ' + res.party_size"></p>
+                                            <p x-show="res.time_preferences?.length" x-text="formatTimePrefs(res.time_preferences)"></p>
+                                        </div>
+                                        <div x-show="res.elapsed_seconds" class="mt-2 text-[11px]" style="color: var(--c4);" x-text="'Booked in ' + (res.elapsed_seconds < 1 ? Math.round(res.elapsed_seconds * 1000) + 'ms' : res.elapsed_seconds.toFixed(1) + 's')"></div>
+                                        <div class="flex gap-2 mt-3">
+                                            <a :href="calendarLink(res)" target="_blank"
+                                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                                style="border: 1px solid var(--border); color: var(--c2);"
+                                                onmouseover="this.style.borderColor='var(--c3)';"
+                                                onmouseout="this.style.borderColor='var(--border)';">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                Calendar
+                                            </a>
+                                            <a :href="'/restaurant/' + res.venue_id"
+                                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                                style="border: 1px solid var(--accent-border); color: var(--accent);">
+                                                Book Again
+                                            </a>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Active (scheduled, monitoring, sniping) -->
+                                <template x-if="isActiveRes(res.status)">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                                :style="'background:' + resStatusBg(res.status) + '; color:' + resStatusColor(res.status)"
+                                                x-text="resStatusLabel(res.status)"></span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-xs mb-2" style="color: var(--c3);">
+                                            <span x-text="formatDateShort(res.target_date)"></span>
+                                            <span x-text="'Party of ' + res.party_size"></span>
+                                        </div>
+                                        <div x-show="res._live" class="flex items-center gap-2 mb-2">
+                                            <span class="w-2 h-2 rounded-full pulse-dot" :style="'background:' + resStatusColor(res.status)"></span>
+                                            <span class="text-xs font-medium" :style="'color:' + resStatusColor(res.status)" x-text="res._liveMessage || resStatusLabel(res.status)"></span>
+                                        </div>
+                                        <button @click="cancelRes(res.id)"
+                                            class="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                                            style="border: 1px solid var(--status-failed-bg); color: var(--status-failed);"
+                                            onmouseover="this.style.background='var(--status-failed-bg)';"
+                                            onmouseout="this.style.background='transparent';">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <!-- Failed -->
+                                <template x-if="res.status === 'failed'">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="background: var(--status-failed-bg); color: var(--status-failed);">No luck</span>
+                                        </div>
+                                        <div class="text-xs mb-2" style="color: var(--c3);">
+                                            <span x-text="formatDateShort(res.target_date)"></span> &middot; Party of <span x-text="res.party_size"></span>
+                                        </div>
+                                        <a :href="'/restaurant/' + res.venue_id" class="text-xs font-medium" style="color: var(--accent);">Try again &rarr;</a>
+                                    </div>
+                                </template>
+
+                                <!-- Cancelled / Dry run -->
+                                <template x-if="res.status === 'cancelled' || res.status === 'dry_run'">
+                                    <div class="opacity-60">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h3 class="text-sm font-semibold" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                            <span class="text-[10px] font-medium" style="color: var(--c3);" x-text="res.status === 'dry_run' ? 'Test' : 'Cancelled'"></span>
+                                        </div>
+                                        <div class="text-xs" style="color: var(--c4);">
+                                            <span x-text="formatDateShort(res.target_date)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <!-- Empty -->
+                        <div x-show="filteredRes().length === 0" class="text-center py-12">
+                            <div class="text-4xl mb-3">&#127869;</div>
+                            <p class="text-sm font-semibold mb-1" style="color: var(--c1);">No reservations yet</p>
+                            <p class="text-xs" style="color: var(--c3);">Browse restaurants and let us handle the hard part.</p>
+                            <button @click="showReservations = false"
+                                class="mt-4 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                                style="background: var(--btn-hot-bg); color: var(--btn-hot-text);">
+                                Browse Restaurants
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
+    <div x-show="showSettings" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showSettings = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showSettings = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
+                <h2 class="text-lg font-bold" style="color: var(--c1);">Account</h2>
+                <button @click="showSettings = false" class="transition-colors" style="color: var(--c3);"
+                    onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="px-6 py-5 space-y-5">
+                <!-- Profile -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Profile</p>
+                    <div class="flex items-center gap-4 p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold"
+                            style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); color: var(--logo-text);"
+                            x-text="(userName || 'U').charAt(0).toUpperCase()"></div>
+                        <div>
+                            <p class="text-sm font-semibold" style="color: var(--c1);" x-text="userName || 'User'"></p>
+                            <p class="text-xs" style="color: var(--c3);" x-text="userEmail || 'No email linked'"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resy Account -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Resy Account</p>
+                    <div class="flex items-center justify-between p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="resyLinked ? 'background: var(--status-confirmed-bg);' : 'background: var(--status-failed-bg);'">
+                                <svg x-show="resyLinked" class="w-4 h-4" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <svg x-show="!resyLinked" class="w-4 h-4" style="color: var(--status-failed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium" style="color: var(--c1);" x-text="resyLinked ? 'Connected' : 'Not connected'"></p>
+                                <p class="text-xs" style="color: var(--c3);">Resy booking account</p>
+                            </div>
+                        </div>
+                        <button x-show="!resyLinked" @click="showSettings = false; showResyLink = true"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            style="background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent);">
+                            Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Theme -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Appearance</p>
+                    <div class="flex items-center justify-between p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div>
+                            <p class="text-sm font-medium" style="color: var(--c1);">Theme</p>
+                            <p class="text-xs" style="color: var(--c3);" x-text="theme === 'dark' ? 'Dark mode' : 'Light mode'"></p>
+                        </div>
+                        <button @click="toggleTheme()" class="relative w-11 h-6 rounded-full transition-colors"
+                            :style="theme === 'dark' ? 'background: var(--nav-active);' : 'background: var(--c4);'">
+                            <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+                                :class="theme === 'dark' ? 'translate-x-5' : ''"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign out -->
+            <div class="px-6 py-4" style="border-top: 1px solid var(--border);">
+                <button @click="signOut()"
+                    class="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+                    style="border: 1px solid rgba(239,68,68,0.2); color: var(--signout-h);"
+                    onmouseover="this.style.background='rgba(239,68,68,0.06)';"
+                    onmouseout="this.style.background='transparent';">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SUPPORT MODAL ═══════════════ -->
+    <div x-show="showSupport" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showSupport = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showSupport = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showSupport = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">Support</h2>
+                    <p class="text-sm" style="color: var(--c3);">We're here to help</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">Email us</p>
+                    <p class="text-sm" style="color: var(--accent);">support@resr.app</p>
+                </div>
+                <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">Response time</p>
+                    <p class="text-xs" style="color: var(--c3);">We typically respond within a few hours during business days.</p>
+                </div>
+                <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">FAQ</p>
+                    <div class="space-y-2 mt-2">
+                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">How does it work?</span> We monitor restaurant booking systems and grab tables the moment they become available.</p>
+                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">Is it safe?</span> Yes. We use your Resy credentials securely to make bookings on your behalf.</p>
+                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">Can I cancel?</span> You can cancel any active reservation request at any time.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ REFERRAL MODAL ═══════════════ -->
+    <div x-show="showReferral" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showReferral = false">
         <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showReferral = false"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
         <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
             style="border: 1px solid var(--accent-border);"
-            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <button @click="showReferral = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
                 onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-
             <div class="flex items-center gap-3 mb-5">
                 <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                 </div>
                 <div>
                     <h2 class="text-lg font-bold" style="color: var(--c1);">Gift a Reservation</h2>
-                    <p class="text-sm" style="color: var(--c3);">Share the love with friends</p>
+                    <p class="text-sm" style="color: var(--c3);">Share with friends</p>
                 </div>
             </div>
-
-            <p class="text-sm mb-6" style="color: var(--c2);">You have <span class="font-bold" style="color: var(--accent);">3 free reservations</span> to give to friends. When they sign up with your code, they get a free booking.</p>
-
-            <!-- Shareable code -->
+            <p class="text-sm mb-6" style="color: var(--c2);">You have <span class="font-bold" style="color: var(--accent);">3 free reservations</span> to give to friends. They get a free booking when they sign up with your code.</p>
             <div class="flex items-center gap-3 rounded-xl p-4 mb-3" style="background: var(--bg-input); border: 1px solid var(--border);">
-                <code class="font-mono text-base font-semibold flex-1 tracking-wider" style="color: var(--c1);" x-text="referralCode"></code>
-                <button @click="copyReferralCode()"
-                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                <code class="font-mono text-base font-bold flex-1 tracking-wider" style="color: var(--c1);" x-text="referralCode"></code>
+                <button @click="copyReferralCode()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                     style="background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent);">
                     <span x-text="referralCopied ? 'Copied!' : 'Copy'"></span>
                 </button>
             </div>
-            <p class="text-xs" style="color: var(--c4);">Or share the link: <span style="color: var(--c2);">resr.app/r/<span x-text="referralCode"></span></span></p>
+            <p class="text-xs" style="color: var(--c4);">Or share: <span style="color: var(--c2);">resr.app/r/<span x-text="referralCode"></span></span></p>
         </div>
     </div>
 
-    <!-- ═══════════════════ RESY LINK MODAL ═══════════════════ -->
-    <div x-show="showResyLink" x-cloak
-        class="fixed inset-0 z-[80] flex items-center justify-center"
-        @keydown.escape.window="showResyLink = false">
+    <!-- ═══════════════ RESY LINK MODAL ═══════════════ -->
+    <div x-show="showResyLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showResyLink = false">
         <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showResyLink = false"></div>
         <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
             style="border: 1px solid var(--border);"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 scale-95"
-            x-transition:enter-end="opacity-100 scale-100">
-
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
             <button @click="showResyLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
                 onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
-
-            <h2 class="text-lg font-semibold mb-1" style="color: var(--c1);">Link your Resy account</h2>
+            <h2 class="text-lg font-bold mb-1" style="color: var(--c1);">Link your Resy account</h2>
             <p class="text-sm mb-6" style="color: var(--c3);">We need your Resy credentials to book on your behalf.</p>
-
-            <!-- Tabs -->
             <div class="flex gap-1 mb-6 rounded-xl p-1" style="background: var(--bg-input);">
-                <button @click="resyLinkTab = 'phone'"
-                    class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-                    :style="resyLinkTab === 'phone'
-                        ? 'background: var(--bh-bg); color: var(--bh-text);'
-                        : 'color: var(--c3);'">
+                <button @click="resyLinkTab = 'phone'" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                    :style="resyLinkTab === 'phone' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
                     Phone + OTP
                 </button>
-                <button @click="resyLinkTab = 'email'"
-                    class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
-                    :style="resyLinkTab === 'email'
-                        ? 'background: var(--bh-bg); color: var(--bh-text);'
-                        : 'color: var(--c3);'">
+                <button @click="resyLinkTab = 'email'" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                    :style="resyLinkTab === 'email' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
                     Email + Password
                 </button>
             </div>
-
-            <!-- Phone OTP tab -->
+            <!-- Phone OTP -->
             <div x-show="resyLinkTab === 'phone'">
                 <div x-show="resyPhoneStep === 'phone'">
                     <p class="text-xs mb-4" style="color: var(--c3);">Enter the phone number linked to your Resy account.</p>
                     <div class="flex items-center gap-3 mb-4">
                         <div class="flex items-center px-4 py-3 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border);">
-                            <span class="text-lg font-medium select-none" style="color: var(--c3);">+1</span>
+                            <span class="text-lg font-medium" style="color: var(--c3);">+1</span>
                         </div>
-                        <input type="tel"
-                            x-model="resyPhoneDisplay"
-                            @input="formatResyPhone($event)"
-                            @keydown="resyPhoneKeydown($event)"
-                            placeholder="(555) 123-4567"
-                            maxlength="14"
-                            inputmode="numeric"
+                        <input type="tel" x-model="resyPhoneDisplay" @input="formatResyPhone($event)" @keydown="resyPhoneKeydown($event)"
+                            placeholder="(555) 123-4567" maxlength="14" inputmode="numeric"
                             class="flex-1 px-4 py-3 rounded-xl text-lg tracking-wide focus:outline-none"
                             style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                             onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
@@ -782,9 +1025,7 @@
                     </div>
                     <button @click="sendResyOtp()" :disabled="resyLoading || resyPhoneDigits.length !== 10"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-                        :style="resyPhoneDigits.length === 10
-                            ? 'background: var(--bh-bg); color: var(--bh-text);'
-                            : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        :style="resyPhoneDigits.length === 10 ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
                         <span x-show="!resyLoading">Send Code to Resy</span>
                         <span x-show="resyLoading" class="flex items-center justify-center gap-2">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
@@ -797,11 +1038,8 @@
                     <div class="flex justify-center gap-2 mb-4" @paste.prevent="handleResyOtpPaste($event)">
                         <template x-for="(digit, i) in resyOtpDigits" :key="i">
                             <input type="text" inputmode="numeric" maxlength="1"
-                                :x-ref="'resyOtp' + i"
-                                :value="digit"
-                                @input="handleResyOtpInput($event, i)"
-                                @keydown="handleResyOtpKeydown($event, i)"
-                                @focus="$event.target.select()"
+                                :x-ref="'resyOtp' + i" :value="digit"
+                                @input="handleResyOtpInput($event, i)" @keydown="handleResyOtpKeydown($event, i)" @focus="$event.target.select()"
                                 class="w-11 h-12 text-center text-lg font-semibold rounded-xl focus:outline-none"
                                 style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                                 onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
@@ -810,20 +1048,17 @@
                     </div>
                     <button @click="verifyResyOtp()" :disabled="resyLoading || resyOtpDigits.join('').length !== 6"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-                        :style="resyOtpDigits.join('').length === 6
-                            ? 'background: var(--bh-bg); color: var(--bh-text);'
-                            : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        :style="resyOtpDigits.join('').length === 6 ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
                         <span x-show="!resyLoading">Verify & Link</span>
                         <span x-show="resyLoading" class="flex items-center justify-center gap-2">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
                             Linking...
                         </span>
                     </button>
-                    <button @click="resyPhoneStep = 'phone'" class="mt-3 text-xs transition-colors w-full text-center" style="color: var(--c3);">← Change number</button>
+                    <button @click="resyPhoneStep = 'phone'" class="mt-3 text-xs w-full text-center" style="color: var(--c3);">&larr; Change number</button>
                 </div>
             </div>
-
-            <!-- Email + Password tab -->
+            <!-- Email + Password -->
             <div x-show="resyLinkTab === 'email'">
                 <p class="text-xs mb-4" style="color: var(--c3);">Enter your Resy login credentials. They're encrypted and stored securely.</p>
                 <form @submit.prevent="linkResyEmail()">
@@ -839,9 +1074,7 @@
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
                     <button type="submit" :disabled="resyLoading || !resyEmail || !resyPassword"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
-                        :style="resyEmail && resyPassword
-                            ? 'background: var(--bh-bg); color: var(--bh-text);'
-                            : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        :style="resyEmail && resyPassword ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
                         <span x-show="!resyLoading">Link Resy Account</span>
                         <span x-show="resyLoading" class="flex items-center justify-center gap-2">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
@@ -850,40 +1083,76 @@
                     </button>
                 </form>
             </div>
-
             <p x-show="resyError" x-cloak class="mt-4 text-red-400 text-sm" x-text="resyError"></p>
         </div>
     </div>
 
-    <!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+    <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
+    <nav class="fixed bottom-0 inset-x-0 z-50 lg:hidden mobile-nav-bg">
+        <div class="flex items-center justify-around py-2.5 px-2">
+            <a href="/browse" class="flex flex-col items-center gap-1 px-3 py-1" style="color: var(--nav-active);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <span class="text-[10px] font-bold">Home</span>
+            </a>
+            <button @click="openReservations()" class="flex flex-col items-center gap-1 px-3 py-1 relative" style="color: var(--c3);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="text-[10px] font-bold">Reservations</span>
+                <span x-show="activeResCount > 0" class="absolute -top-0.5 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
+                    style="background: var(--status-sniping); color: #0f172a;" x-text="activeResCount"></span>
+            </button>
+            <button @click="showSettings = true" class="flex flex-col items-center gap-1 px-3 py-1" style="color: var(--c3);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span class="text-[10px] font-bold">Account</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
     <script>
     function browseApp() {
         return {
-            // Core state
+            // Core
             restaurants: [],
             loading: true,
             token: localStorage.getItem('tablement_token'),
             resyLinked: false,
 
-            // UI state
+            // UI
             sidebarOpen: false,
             searchQuery: '',
             searchResults: [],
             searchFocused: false,
+
+            // Panels & Modals
+            showReservations: false,
+            showSettings: false,
+            showSupport: false,
             showReferral: false,
             showResyLink: false,
             pendingVenueId: null,
 
-            // User state
+            // User
             userName: '',
-            reservationsRemaining: 0,
+            userEmail: '',
             referralCode: 'RESR-XXXX',
             referralCopied: false,
 
             // Theme
             theme: localStorage.getItem('resr_theme') || 'dark',
 
-            // Resy link modal
+            // Reservations
+            reservations: [],
+            reservationsLoading: true,
+            resFilter: 'all',
+            eventSources: {},
+            resTabs: [
+                { key: 'all', label: 'All' },
+                { key: 'active', label: 'Active' },
+                { key: 'confirmed', label: 'Booked' },
+                { key: 'history', label: 'History' },
+            ],
+
+            // Resy link
             resyLinkTab: 'phone',
             resyPhoneStep: 'phone',
             resyPhoneDisplay: '',
@@ -897,8 +1166,8 @@
             // Toast
             toast: { show: false, message: '', icon: '', exiting: false },
 
+            // ── Init ──
             async init() {
-                // Apply theme immediately
                 this.applyTheme();
                 this.$watch('theme', () => this.applyTheme());
 
@@ -909,7 +1178,23 @@
                 await Promise.all([
                     this.loadProfile(),
                     this.loadRestaurants(),
+                    this.loadReservations(),
                 ]);
+
+                // Handle query params
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('panel') === 'reservations') {
+                    this.showReservations = true;
+                    window.history.replaceState({}, '', '/browse');
+                }
+                if (params.get('modal') === 'settings') {
+                    this.showSettings = true;
+                    window.history.replaceState({}, '', '/browse');
+                }
+                if (params.get('toast')) {
+                    this.showToast(params.get('toast'));
+                    window.history.replaceState({}, '', '/browse');
+                }
             },
 
             applyTheme() {
@@ -920,11 +1205,9 @@
                 }
                 localStorage.setItem('resr_theme', this.theme);
             },
+            toggleTheme() { this.theme = this.theme === 'dark' ? 'light' : 'dark'; },
 
-            toggleTheme() {
-                this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            },
-
+            // ── Data Loading ──
             async loadProfile() {
                 try {
                     const resp = await fetch('/api/auth/me', {
@@ -939,13 +1222,12 @@
                         const data = await resp.json();
                         this.resyLinked = data.resy_linked || false;
                         if (data.resy_email) {
+                            this.userEmail = data.resy_email;
                             this.userName = data.resy_email.split('@')[0];
                             this.userName = this.userName.charAt(0).toUpperCase() + this.userName.slice(1);
                         }
                     }
-                } catch (e) {
-                    console.error('Failed to load profile:', e);
-                }
+                } catch (e) { console.error('Profile load failed:', e); }
             },
 
             async loadRestaurants() {
@@ -953,14 +1235,29 @@
                     const resp = await fetch('/api/curated/');
                     const data = await resp.json();
                     this.restaurants = data.restaurants || [];
-                } catch (e) {
-                    console.error('Failed to load restaurants:', e);
-                } finally {
-                    this.loading = false;
-                }
+                } catch (e) { console.error('Restaurants load failed:', e); }
+                finally { this.loading = false; }
             },
 
-            // Computed: hot restaurants
+            async loadReservations() {
+                try {
+                    const resp = await fetch('/api/reservations/', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.reservations = (data.reservations || []).map(r => ({
+                            ...r, _live: false, _liveMessage: '',
+                        }));
+                        this.reservations.forEach(r => {
+                            if (this.isActiveRes(r.status)) this.connectSSE(r);
+                        });
+                    }
+                } catch (e) { console.error('Reservations load failed:', e); }
+                finally { this.reservationsLoading = false; }
+            },
+
+            // ── Restaurant Logic ──
             get hotRestaurants() {
                 const hotNames = ['carbone', '4 charles', 'atomix', 'torrisi'];
                 return this.restaurants.filter(r =>
@@ -968,7 +1265,6 @@
                 ).slice(0, 4);
             },
 
-            // Next release date calculator
             getNextRelease(r) {
                 if (!r.drop_days_ahead) return 'TBD';
                 const today = new Date();
@@ -977,25 +1273,18 @@
                 return release.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             },
 
-            // Search
             async searchVenues() {
-                if (this.searchQuery.length < 2) {
-                    this.searchResults = [];
-                    return;
-                }
+                if (this.searchQuery.length < 2) { this.searchResults = []; return; }
                 try {
                     const resp = await fetch(`/api/venue/search?query=${encodeURIComponent(this.searchQuery)}&limit=5`);
                     const data = await resp.json();
                     this.searchResults = data.results || [];
-                } catch (e) {
-                    console.error('Search failed:', e);
-                }
+                } catch (e) { console.error('Search failed:', e); }
             },
 
             goToRestaurant(r) {
                 const venueId = r.venue_id || r.resy_id;
-                this.searchResults = [];
-                this.searchQuery = '';
+                this.searchResults = []; this.searchQuery = '';
                 const isDevUser = localStorage.getItem('tablement_dev_user') === 'true';
                 if (!this.resyLinked && !isDevUser) {
                     this.pendingVenueId = venueId;
@@ -1004,12 +1293,9 @@
                 }
                 window.location.href = `/restaurant/${venueId}`;
             },
-
             goToRestaurantSearch(r) {
                 const venueId = r.resy_id || r.venue_id;
-                this.searchResults = [];
-                this.searchQuery = '';
-                this.searchFocused = false;
+                this.searchResults = []; this.searchQuery = ''; this.searchFocused = false;
                 const isDevUser = localStorage.getItem('tablement_dev_user') === 'true';
                 if (!this.resyLinked && !isDevUser) {
                     this.pendingVenueId = venueId;
@@ -1019,15 +1305,166 @@
                 window.location.href = `/restaurant/${venueId}`;
             },
 
-            // Referral
+            // ── Reservations Panel ──
+            openReservations() {
+                this.showReservations = true;
+                if (this.reservationsLoading && this.reservations.length === 0) {
+                    this.loadReservations();
+                }
+            },
+
+            get activeResCount() {
+                return this.reservations.filter(r => this.isActiveRes(r.status)).length;
+            },
+
+            isActiveRes(status) {
+                return ['scheduled', 'monitoring', 'sniping'].includes(status);
+            },
+
+            filteredRes() {
+                const f = this.resFilter;
+                if (f === 'all') return this.reservations;
+                if (f === 'active') return this.reservations.filter(r => this.isActiveRes(r.status));
+                if (f === 'confirmed') return this.reservations.filter(r => r.status === 'confirmed');
+                if (f === 'history') return this.reservations.filter(r => ['failed', 'cancelled', 'dry_run'].includes(r.status));
+                return this.reservations;
+            },
+
+            resSummaryText() {
+                const active = this.reservations.filter(r => this.isActiveRes(r.status)).length;
+                const confirmed = this.reservations.filter(r => r.status === 'confirmed').length;
+                const parts = [];
+                if (active > 0) parts.push(`${active} active`);
+                if (confirmed > 0) parts.push(`${confirmed} confirmed`);
+                return parts.length ? parts.join(' · ') : 'No active reservations';
+            },
+
+            resStatusColor(status) {
+                const map = { scheduled: 'var(--status-active)', monitoring: 'var(--accent)', sniping: 'var(--status-sniping)' };
+                return map[status] || 'var(--c3)';
+            },
+            resStatusBg(status) {
+                const map = { scheduled: 'var(--status-active-bg)', monitoring: 'var(--accent-bg)', sniping: 'var(--status-sniping-bg)' };
+                return map[status] || 'var(--bg-input)';
+            },
+            resStatusLabel(status) {
+                const map = { scheduled: 'Queued', monitoring: 'Watching', sniping: 'Booking' };
+                return map[status] || status;
+            },
+
+            async cancelRes(id) {
+                try {
+                    const resp = await fetch(`/api/reservations/${id}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (resp.ok) {
+                        const r = this.reservations.find(r => r.id === id);
+                        if (r) { r.status = 'cancelled'; r._live = false; }
+                        if (this.eventSources[id]) { this.eventSources[id].close(); delete this.eventSources[id]; }
+                        this.showToast('Reservation cancelled', '&#10003;');
+                    }
+                } catch (e) { console.error('Cancel failed:', e); }
+            },
+
+            // ── SSE ──
+            connectSSE(res) {
+                const id = res.id;
+                if (this.eventSources[id]) return;
+                const es = new EventSource(`/api/reservations/${id}/events`);
+                this.eventSources[id] = es;
+                res._live = true;
+
+                es.addEventListener('snipe_phase', (e) => {
+                    const data = JSON.parse(e.data);
+                    res._liveMessage = this.friendlyPhase(data);
+                    res.status = this.mapPhase(data.phase);
+                });
+                es.addEventListener('snipe_attempt', (e) => {
+                    const data = JSON.parse(e.data);
+                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Watching for openings...';
+                });
+                es.addEventListener('countdown_tick', (e) => {
+                    const data = JSON.parse(e.data);
+                    const secs = Math.ceil(data.seconds_remaining);
+                    if (secs > 3600) { const h = Math.floor(secs/3600), m = Math.floor((secs%3600)/60); res._liveMessage = `Ready in ${h}h ${m}m`; }
+                    else if (secs > 60) { const m = Math.floor(secs/60), s = secs%60; res._liveMessage = `Ready in ${m}m ${s}s`; }
+                    else { res._liveMessage = `Almost there... ${secs}s`; }
+                });
+                es.addEventListener('snipe_result', (e) => {
+                    const data = JSON.parse(e.data);
+                    res._live = false;
+                    if (data.success) {
+                        res.status = 'confirmed';
+                        res._liveMessage = '';
+                        res.elapsed_seconds = data.elapsed_seconds || res.elapsed_seconds;
+                        this.showToast("You're in! Reservation confirmed.", '&#127881;');
+                    } else {
+                        res.status = data.dry_run ? 'dry_run' : 'failed';
+                        res.error = data.error;
+                        res._liveMessage = '';
+                    }
+                    es.close(); delete this.eventSources[id];
+                });
+                es.onerror = () => { res._live = false; es.close(); delete this.eventSources[id]; };
+            },
+            friendlyPhase(data) {
+                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Watching for openings...' };
+                return map[data.phase] || data.message || 'Working on it...';
+            },
+            mapPhase(phase) {
+                const map = { waiting: 'scheduled', authenticating: 'scheduled', warming: 'scheduled', sniping: 'sniping', monitoring: 'monitoring', done: 'completed' };
+                return map[phase] || phase;
+            },
+
+            // ── Formatting ──
+            formatDateShort(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            },
+            formatDateFull(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            },
+            formatTime(timeStr) {
+                if (!timeStr) return '';
+                const [h, m] = timeStr.split(':').map(Number);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+            },
+            formatTimePrefs(prefs) {
+                if (!prefs || prefs.length === 0) return '';
+                return prefs.map(p => this.formatTime(p.time)).join(', ');
+            },
+            calendarLink(r) {
+                const dateStr = r.target_date.replace(/-/g, '');
+                let timeStr = '190000';
+                if (r.time_preferences && r.time_preferences.length > 0) {
+                    timeStr = (r.time_preferences[0].time.replace(/:/g, '') + '00').padStart(6, '0');
+                }
+                const startDT = dateStr + 'T' + timeStr;
+                const startH = parseInt(timeStr.substring(0, 2));
+                const endH = String(Math.min(startH + 2, 23)).padStart(2, '0');
+                const endDT = dateStr + 'T' + endH + timeStr.substring(2);
+                const params = new URLSearchParams({
+                    action: 'TEMPLATE', text: `Dinner at ${r.venue_name}`,
+                    dates: `${startDT}/${endDT}`, details: `Party of ${r.party_size}\nBooked via RESR`, ctz: 'America/New_York',
+                });
+                return `https://calendar.google.com/calendar/render?${params.toString()}`;
+            },
+
+            // ── Referral ──
             copyReferralCode() {
                 navigator.clipboard.writeText(this.referralCode);
                 this.referralCopied = true;
-                this.showToast('Code copied!', '📋');
+                this.showToast('Code copied!', '&#128203;');
                 setTimeout(() => { this.referralCopied = false; }, 2000);
             },
 
-            // --- Resy Phone OTP ---
+            // ── Resy Phone OTP ──
             _fmtPhone(raw) {
                 let f = '';
                 if (raw.length > 0) f += '(' + raw.slice(0, 3);
@@ -1036,21 +1473,16 @@
                 if (raw.length > 6) f += '-' + raw.slice(6);
                 return f;
             },
-
             formatResyPhone(e) {
                 let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
                 this.resyPhoneDigits = raw;
                 const f = this._fmtPhone(raw);
                 this.resyPhoneDisplay = f;
-                this.$nextTick(() => {
-                    e.target.value = f;
-                    e.target.setSelectionRange(f.length, f.length);
-                });
+                this.$nextTick(() => { e.target.value = f; e.target.setSelectionRange(f.length, f.length); });
             },
-
             resyPhoneKeydown(e) {
-                const passthrough = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-                if (passthrough.includes(e.key)) return;
+                const pass = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (pass.includes(e.key)) return;
                 if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
                 if (e.key === 'Backspace' || e.key === 'Delete') {
                     e.preventDefault();
@@ -1058,104 +1490,73 @@
                         this.resyPhoneDigits = this.resyPhoneDigits.slice(0, -1);
                         const f = this._fmtPhone(this.resyPhoneDigits);
                         this.resyPhoneDisplay = f;
-                        this.$nextTick(() => {
-                            e.target.value = f;
-                            e.target.setSelectionRange(f.length, f.length);
-                        });
+                        this.$nextTick(() => { e.target.value = f; e.target.setSelectionRange(f.length, f.length); });
                     }
                     return;
                 }
                 if (!/^\d$/.test(e.key)) e.preventDefault();
             },
-
             async sendResyOtp() {
-                this.resyLoading = true;
-                this.resyError = '';
+                this.resyLoading = true; this.resyError = '';
                 try {
-                    this.resyError = 'Phone OTP coming soon. Please use Email + Password for now.';
+                    this.resyError = 'Phone OTP coming soon. Please use Email + Password.';
                     this.resyLinkTab = 'email';
-                } finally {
-                    this.resyLoading = false;
-                }
+                } finally { this.resyLoading = false; }
             },
-
             handleResyOtpInput(e, idx) {
                 const val = e.target.value.replace(/\D/g, '');
                 this.resyOtpDigits[idx] = val.slice(-1) || '';
                 e.target.value = this.resyOtpDigits[idx];
-                if (val && idx < 5) {
-                    this.$nextTick(() => this.$refs['resyOtp' + (idx + 1)]?.focus());
-                }
-                if (this.resyOtpDigits.every(d => d !== '')) {
-                    this.$nextTick(() => this.verifyResyOtp());
-                }
+                if (val && idx < 5) this.$nextTick(() => this.$refs['resyOtp' + (idx + 1)]?.focus());
+                if (this.resyOtpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyResyOtp());
             },
-
             handleResyOtpKeydown(e, idx) {
                 if (e.key === 'Backspace') {
                     if (this.resyOtpDigits[idx] === '' && idx > 0) {
-                        this.$nextTick(() => {
-                            this.$refs['resyOtp' + (idx - 1)]?.focus();
-                            this.resyOtpDigits[idx - 1] = '';
-                        });
-                    } else {
-                        this.resyOtpDigits[idx] = '';
-                        e.target.value = '';
-                    }
+                        this.$nextTick(() => { this.$refs['resyOtp' + (idx - 1)]?.focus(); this.resyOtpDigits[idx - 1] = ''; });
+                    } else { this.resyOtpDigits[idx] = ''; e.target.value = ''; }
                     e.preventDefault();
                 }
             },
-
             handleResyOtpPaste(e) {
                 const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
                 for (let i = 0; i < 6; i++) this.resyOtpDigits[i] = pasted[i] || '';
                 if (pasted.length === 6) this.$nextTick(() => this.verifyResyOtp());
             },
-
-            async verifyResyOtp() {
-                this.resyError = 'Phone OTP not yet implemented.';
-            },
+            async verifyResyOtp() { this.resyError = 'Phone OTP not yet implemented.'; },
 
             async linkResyEmail() {
-                this.resyLoading = true;
-                this.resyError = '';
+                this.resyLoading = true; this.resyError = '';
                 try {
                     const resp = await fetch('/api/auth/link-resy', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + this.token,
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
                         body: JSON.stringify({ email: this.resyEmail, password: this.resyPassword }),
                     });
                     const data = await resp.json();
                     if (!resp.ok) throw new Error(data.detail || 'Failed to link Resy');
-
                     this.resyLinked = true;
                     this.showResyLink = false;
-                    this.showToast('Resy account linked!', '✅');
-
+                    this.showToast('Resy account linked!', '&#10003;');
                     if (this.pendingVenueId) {
-                        const vid = this.pendingVenueId;
-                        this.pendingVenueId = null;
+                        const vid = this.pendingVenueId; this.pendingVenueId = null;
                         setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
                     }
-                } catch (e) {
-                    this.resyError = e.message;
-                } finally {
-                    this.resyLoading = false;
-                }
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
             },
 
-            showToast(message, icon = '✅') {
+            // ── Toast ──
+            showToast(message, icon = '&#10003;') {
                 this.toast = { show: true, message, icon, exiting: false };
                 setTimeout(() => {
                     this.toast.exiting = true;
                     setTimeout(() => { this.toast.show = false; }, 300);
-                }, 2000);
+                }, 2500);
             },
 
             signOut() {
+                Object.values(this.eventSources).forEach(es => es.close());
                 localStorage.removeItem('tablement_token');
                 localStorage.removeItem('tablement_refresh');
                 window.location.href = '/';
@@ -1163,15 +1564,12 @@
         }
     }
     </script>
+    <!-- Theme anti-flash -->
     <script>
-    // Apply theme before Alpine loads to avoid flash
     (function() {
         const theme = localStorage.getItem('resr_theme') || 'dark';
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+        if (theme === 'dark') { document.documentElement.classList.add('dark'); }
+        else { document.documentElement.classList.remove('dark'); }
     })();
     </script>
 </body>

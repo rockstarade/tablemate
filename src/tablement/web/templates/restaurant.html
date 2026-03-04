@@ -1,20 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablement</title>
+    <title>RESR — Book</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                     colors: {
                         brand: {
                             50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
                             300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
                             600: '#d97706', 700: '#b45309',
-                        }
+                        },
+                        accent: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca',
+                        },
                     }
                 }
             }
@@ -23,110 +33,207 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
+
+        /* ═══════ THEME ═══════ */
+        :root {
+            --bg: #fafafa;
+            --bg-card: #ffffff;
+            --bg-input: #f1f5f9;
+            --bg-hover: rgba(0,0,0,0.03);
+            --bg-overlay: rgba(0,0,0,0.4);
+            --c1: #0f172a;
+            --c2: #475569;
+            --c3: #94a3b8;
+            --c4: #cbd5e1;
+            --border: rgba(0,0,0,0.08);
+            --accent: #6366f1;
+            --accent-bg: rgba(99,102,241,0.06);
+            --accent-border: rgba(99,102,241,0.12);
+            --search-focus: rgba(14,165,233,0.3);
+            --btn-bg: #0ea5e9;
+            --btn-text: #ffffff;
+            --btn-hover: #0284c7;
+            --skeleton-a: rgba(0,0,0,0.04);
+            --skeleton-b: rgba(0,0,0,0.08);
+            --cal-released-bg: rgba(239,68,68,0.06);
+            --cal-released-border: rgba(239,68,68,0.15);
+            --cal-released-hover: rgba(239,68,68,0.12);
+            --cal-unreleased-bg: rgba(245,158,11,0.06);
+            --cal-unreleased-border: rgba(245,158,11,0.2);
+            --cal-unreleased-hover: rgba(245,158,11,0.12);
+            --cal-selected-bg: #f59e0b;
+            --cal-selected-text: #0f172a;
+            --time-hot-border: rgba(249,115,22,0.2);
+            --time-hot-hover: rgba(249,115,22,0.08);
+            --logo-from: #0ea5e9;
+            --logo-to: #0284c7;
+            --logo-text: #fff;
+        }
+        .dark {
+            --bg: #06080f;
+            --bg-card: rgba(15,23,42,0.4);
+            --bg-input: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.04);
+            --bg-overlay: rgba(0,0,0,0.65);
+            --c1: #f1f5f9;
+            --c2: #94a3b8;
+            --c3: #64748b;
+            --c4: #475569;
+            --border: rgba(51,65,85,0.35);
+            --accent: #818cf8;
+            --accent-bg: rgba(99,102,241,0.08);
+            --accent-border: rgba(99,102,241,0.18);
+            --search-focus: rgba(99,102,241,0.35);
+            --btn-bg: #f59e0b;
+            --btn-text: #0f172a;
+            --btn-hover: #d97706;
+            --skeleton-a: rgba(30,41,59,0.3);
+            --skeleton-b: rgba(30,41,59,0.6);
+            --cal-released-bg: rgba(239,68,68,0.08);
+            --cal-released-border: rgba(239,68,68,0.2);
+            --cal-released-hover: rgba(239,68,68,0.15);
+            --cal-unreleased-bg: rgba(245,158,11,0.08);
+            --cal-unreleased-border: rgba(245,158,11,0.25);
+            --cal-unreleased-hover: rgba(245,158,11,0.15);
+            --cal-selected-bg: #f59e0b;
+            --cal-selected-text: #0f172a;
+            --time-hot-border: rgba(249,115,22,0.25);
+            --time-hot-hover: rgba(249,115,22,0.12);
+            --logo-from: #fbbf24;
+            --logo-to: #d97706;
+            --logo-text: #0f172a;
+        }
+
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
             min-height: 100vh;
+            transition: background 0.3s ease;
         }
-        .glass {
-            background: rgba(30, 41, 59, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+
+        .card-glass {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: background 0.3s ease;
         }
+
+        .cal-cell { transition: all 0.15s ease; cursor: pointer; }
+        .cal-cell:hover:not(.cal-past):not(.cal-empty) { transform: scale(1.08); }
+        .time-pill { transition: all 0.15s ease; cursor: pointer; }
+        .time-pill:hover { transform: translateY(-1px); }
+
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in { animation: fadeInUp 0.4s ease-out; }
+        .fade-in { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
         }
         .skeleton {
-            background: linear-gradient(90deg, rgba(51,65,85,0.3) 25%, rgba(51,65,85,0.6) 50%, rgba(51,65,85,0.3) 75%);
+            background: linear-gradient(90deg, var(--skeleton-a) 25%, var(--skeleton-b) 50%, var(--skeleton-a) 75%);
             background-size: 200% 100%;
             animation: shimmer 1.8s ease-in-out infinite;
             border-radius: 0.75rem;
         }
 
-        /* Calendar date cell */
-        .cal-cell {
-            transition: all 0.15s ease;
-            cursor: pointer;
-        }
-        .cal-cell:hover:not(.cal-past):not(.cal-empty) {
-            transform: scale(1.08);
-        }
-
-        /* Time pill */
-        .time-pill {
-            transition: all 0.15s ease;
-            cursor: pointer;
-        }
-        .time-pill:hover {
-            transform: translateY(-1px);
-        }
-
-        /* Toast */
         @keyframes slideInRight {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .toast-enter { animation: slideInRight 0.3s ease-out; }
+        .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.25); border-radius: 3px; }
+
+        .img-placeholder { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
     </style>
 </head>
-<body class="text-slate-200 antialiased" x-data="restaurantApp()" x-init="init()" x-cloak>
+<body class="antialiased" style="color: var(--c1);" x-data="restaurantApp()" x-init="init()" x-cloak>
 
     <!-- Header -->
-    <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+    <header class="sticky top-0 z-50 backdrop-blur-xl" style="background: var(--bg); border-bottom: 1px solid var(--border);">
         <div class="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="/browse" class="flex items-center gap-2 text-slate-400 hover:text-white transition">
+            <a href="/browse" class="flex items-center gap-2 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                <span class="text-sm">Back</span>
+                <span class="text-sm font-medium">Back</span>
             </a>
-            <span class="text-sm font-medium text-brand-400">tablement</span>
+            <a href="/browse" class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to));">
+                    <span class="font-extrabold text-[10px]" style="color: var(--logo-text);">R</span>
+                </div>
+                <span class="text-sm font-bold tracking-tight" style="color: var(--c1);">RESR</span>
+            </a>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-lg mx-auto px-4 pt-6 pb-32">
+    <main class="max-w-lg mx-auto px-4 pt-5 pb-32">
 
         <!-- Loading skeleton -->
         <template x-if="loading">
             <div>
-                <div class="skeleton h-8 w-48 mb-3"></div>
-                <div class="skeleton h-5 w-32 mb-6"></div>
-                <div class="skeleton h-72 w-full mb-4"></div>
-                <div class="skeleton h-12 w-full"></div>
+                <div class="skeleton h-48 w-full rounded-2xl mb-4"></div>
+                <div class="skeleton h-7 w-48 mb-2"></div>
+                <div class="skeleton h-4 w-32 mb-6"></div>
+                <div class="skeleton h-72 w-full rounded-2xl mb-4"></div>
             </div>
         </template>
 
-        <!-- Restaurant header -->
+        <!-- Restaurant content -->
         <template x-if="!loading && restaurant">
             <div class="fade-in">
-                <!-- Name + meta -->
-                <div class="mb-6">
-                    <h1 class="text-2xl font-bold text-white" x-text="restaurant.name"></h1>
-                    <p class="text-sm text-slate-400 mt-1">
-                        <span x-text="restaurant.cuisine"></span>
-                        <span class="mx-1.5 text-slate-600">&bull;</span>
-                        <span x-text="restaurant.neighborhood"></span>
-                    </p>
+
+                <!-- ═══ HERO IMAGE ═══ -->
+                <div class="relative h-48 sm:h-56 rounded-2xl overflow-hidden mb-5 img-placeholder">
+                    <img :src="restaurant.image_url" :alt="restaurant.name"
+                        class="w-full h-full object-cover"
+                        @error="$event.target.style.display='none'">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 right-4">
+                        <h1 class="text-2xl font-extrabold text-white drop-shadow-lg" x-text="restaurant.name"></h1>
+                        <p class="text-sm text-white/70 mt-0.5">
+                            <span x-text="restaurant.cuisine"></span>
+                            <span class="mx-1.5 text-white/30">&bull;</span>
+                            <span x-text="restaurant.neighborhood"></span>
+                        </p>
+                    </div>
                 </div>
 
-                <!-- ==================== CALENDAR ==================== -->
-                <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4">
+                <!-- ═══ DATE COUNTER ═══ -->
+                <div x-show="selectedDates.length > 0" class="mb-4 flex items-center gap-2 px-1">
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                        <span class="text-xs font-bold" style="color: var(--accent);" x-text="selectedDates.length"></span>
+                        <span class="text-xs" style="color: var(--accent);">date<span x-show="selectedDates.length > 1">s</span> selected</span>
+                    </div>
+                    <div x-show="selectedTimes.length > 0" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                        <span class="text-xs font-bold" style="color: var(--accent);" x-text="selectedTimes.length"></span>
+                        <span class="text-xs" style="color: var(--accent);">time<span x-show="selectedTimes.length > 1">s</span></span>
+                    </div>
+                </div>
+
+                <!-- ═══ CALENDAR ═══ -->
+                <div class="card-glass rounded-2xl p-4 mb-4">
                     <!-- Month nav -->
                     <div class="flex items-center justify-between mb-4">
-                        <button @click="prevMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition text-slate-400 hover:text-white">
+                        <button @click="prevMonth()" class="p-2 rounded-lg transition-all" style="color: var(--c3);"
+                            onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
+                            onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <h2 class="text-lg font-semibold text-white" x-text="monthLabel"></h2>
-                        <button @click="nextMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition text-slate-400 hover:text-white">
+                        <h2 class="text-base font-bold" style="color: var(--c1);" x-text="monthLabel"></h2>
+                        <button @click="nextMonth()" class="p-2 rounded-lg transition-all" style="color: var(--c3);"
+                            onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
+                            onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
@@ -136,75 +243,71 @@
                     <!-- Weekday headers -->
                     <div class="grid grid-cols-7 mb-2">
                         <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
-                            <div class="text-center text-xs font-medium text-slate-500 py-1" x-text="d"></div>
+                            <div class="text-center text-[11px] font-semibold py-1" style="color: var(--c4);" x-text="d"></div>
                         </template>
                     </div>
 
                     <!-- Calendar grid -->
                     <div class="grid grid-cols-7 gap-1">
                         <template x-for="cell in calendarCells" :key="cell.key">
-                            <div
-                                class="cal-cell aspect-square flex items-center justify-center rounded-xl text-sm font-medium relative"
+                            <div class="cal-cell aspect-square flex items-center justify-center rounded-xl text-sm font-medium relative"
                                 :class="cellClasses(cell)"
-                                @click="cell.day && !cell.isPast && toggleDate(cell.dateStr)"
-                            >
+                                :style="cellStyles(cell)"
+                                @click="cell.day && !cell.isPast && toggleDate(cell.dateStr)">
                                 <span x-text="cell.day || ''"></span>
-                                <!-- Today indicator -->
-                                <div x-show="cell.isToday" class="absolute inset-0 rounded-xl ring-1 ring-white/30 pointer-events-none"></div>
+                                <div x-show="cell.isToday" class="absolute inset-0 rounded-xl pointer-events-none" style="box-shadow: inset 0 0 0 1px var(--c4);"></div>
                             </div>
                         </template>
                     </div>
 
                     <!-- Legend -->
-                    <div class="flex items-center gap-4 mt-4 pt-3 border-t border-slate-700/30">
+                    <div class="flex items-center gap-5 mt-4 pt-3" style="border-top: 1px solid var(--border);">
                         <div class="flex items-center gap-1.5">
-                            <div class="w-3 h-3 rounded bg-red-500/20 border border-red-400/30"></div>
-                            <span class="text-xs text-slate-400">Sold out</span>
+                            <div class="w-3 h-3 rounded" style="background: var(--cal-released-bg); border: 1px solid var(--cal-released-border);"></div>
+                            <span class="text-[11px] font-medium" style="color: var(--c3);">Sold out</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <div class="w-3 h-3 rounded bg-amber-500/20 border border-amber-400/30"></div>
-                            <span class="text-xs text-slate-400">Not yet released</span>
+                            <div class="w-3 h-3 rounded" style="background: var(--cal-unreleased-bg); border: 1px solid var(--cal-unreleased-border);"></div>
+                            <span class="text-[11px] font-medium" style="color: var(--c3);">Not yet released</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- ==================== INFO BANNERS ==================== -->
+                <!-- ═══ INFO BANNERS ═══ -->
                 <template x-if="hasReleasedSelected">
-                    <div class="glass rounded-xl border border-red-500/20 p-3 mb-3 fade-in">
-                        <div class="flex items-start gap-2">
-                            <svg class="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="card-glass rounded-xl p-3 mb-3 fade-in" style="border-color: var(--cal-released-border) !important;">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: #ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
-                            <p class="text-sm text-slate-300">Sold out &mdash; we'll grab it if someone cancels.</p>
+                            <p class="text-sm" style="color: var(--c2);">Sold out &mdash; we'll grab it if someone cancels.</p>
                         </div>
                     </div>
                 </template>
                 <template x-if="hasUnreleasedSelected">
-                    <div class="glass rounded-xl border border-amber-500/20 p-3 mb-3 fade-in">
-                        <div class="flex items-start gap-2">
-                            <svg class="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="card-glass rounded-xl p-3 mb-3 fade-in" style="border-color: var(--cal-unreleased-border) !important;">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            <p class="text-sm text-slate-300">Not yet released &mdash; we'll book it the moment it opens.</p>
+                            <p class="text-sm" style="color: var(--c2);">Not yet released &mdash; we'll book the moment it opens.</p>
                         </div>
                     </div>
                 </template>
 
-                <!-- ==================== TIME PICKER ==================== -->
+                <!-- ═══ TIME PICKER ═══ -->
                 <template x-if="selectedDates.length > 0">
-                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
                         <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-medium text-slate-300">Preferred times</h3>
-                            <span class="text-xs text-slate-500">Select all that work</span>
+                            <h3 class="text-sm font-bold" style="color: var(--c1);">Preferred times</h3>
+                            <span class="text-[11px] font-medium" style="color: var(--c3);">Select all that work</span>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="tp in timePills" :key="tp.time">
-                                <button
-                                    class="time-pill px-3.5 py-2 rounded-xl text-sm font-medium border"
-                                    :class="timeClasses(tp)"
-                                    @click="toggleTime(tp.time)"
-                                >
+                                <button class="time-pill px-3.5 py-2 rounded-xl text-sm font-semibold"
+                                    :style="timeStyles(tp)"
+                                    @click="toggleTime(tp.time)">
                                     <span x-text="tp.label"></span>
                                     <template x-if="tp.isHot && !selectedTimes.includes(tp.time)">
                                         <span class="ml-1 text-orange-400">&#x1F525;</span>
@@ -215,85 +318,68 @@
                     </div>
                 </template>
 
-                <!-- ==================== PARTY SIZE ==================== -->
+                <!-- ═══ PARTY SIZE ═══ -->
                 <template x-if="selectedDates.length > 0 && selectedTimes.length > 0">
-                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-medium text-slate-300">Party size</h3>
+                            <h3 class="text-sm font-bold" style="color: var(--c1);">Party size</h3>
                             <div class="flex items-center gap-3">
-                                <button
-                                    @click="partySize = Math.max(1, partySize - 1)"
-                                    class="w-8 h-8 rounded-lg border border-slate-600 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-width="2" d="M20 12H4"/>
-                                    </svg>
+                                <button @click="partySize = Math.max(1, partySize - 1)"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                                    style="border: 1px solid var(--border); color: var(--c3);"
+                                    onmouseover="this.style.color='var(--c1)'; this.style.borderColor='var(--c2)';"
+                                    onmouseout="this.style.color='var(--c3)'; this.style.borderColor='var(--border)';">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M20 12H4"/></svg>
                                 </button>
-                                <span class="text-lg font-semibold text-white w-6 text-center tabular-nums" x-text="partySize"></span>
-                                <button
-                                    @click="partySize = Math.min(20, partySize + 1)"
-                                    class="w-8 h-8 rounded-lg border border-slate-600 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition"
-                                >
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
+                                <span class="text-lg font-bold w-6 text-center tabular-nums" style="color: var(--c1);" x-text="partySize"></span>
+                                <button @click="partySize = Math.min(20, partySize + 1)"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                                    style="border: 1px solid var(--border); color: var(--c3);"
+                                    onmouseover="this.style.color='var(--c1)'; this.style.borderColor='var(--c2)';"
+                                    onmouseout="this.style.color='var(--c3)'; this.style.borderColor='var(--border)';">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </template>
 
-                <!-- ==================== EARLIEST AVAILABLE TOGGLE ==================== -->
+                <!-- ═══ BOOK EARLIEST TOGGLE ═══ -->
                 <template x-if="releasedCount >= 2">
-                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-sm font-medium text-slate-300">Book earliest available</h3>
-                                <p class="text-xs text-slate-500 mt-0.5">We'll book the first cancellation we find</p>
+                                <h3 class="text-sm font-bold" style="color: var(--c1);">Book earliest available</h3>
+                                <p class="text-[11px] mt-0.5" style="color: var(--c3);">We'll book the first cancellation we find</p>
                             </div>
-                            <button
-                                @click="bookEarliest = !bookEarliest"
+                            <button @click="bookEarliest = !bookEarliest"
                                 class="relative w-11 h-6 rounded-full transition-colors"
-                                :class="bookEarliest ? 'bg-brand-500' : 'bg-slate-600'"
-                            >
-                                <span
-                                    class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-                                    :class="bookEarliest ? 'translate-x-5' : ''"
-                                ></span>
+                                :style="bookEarliest ? 'background: var(--btn-bg);' : 'background: var(--c4);'">
+                                <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+                                    :class="bookEarliest ? 'translate-x-5' : ''"></span>
                             </button>
                         </div>
                     </div>
                 </template>
 
-                <!-- ==================== LATEST NOTIFY ==================== -->
+                <!-- ═══ CUTOFF TIME ═══ -->
                 <template x-if="releasedCount >= 1">
-                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-sm font-medium text-slate-300">Stop watching</h3>
-                                <p class="text-xs text-slate-500 mt-0.5">Latest you'd want a reservation</p>
+                                <h3 class="text-sm font-bold" style="color: var(--c1);">Cancel if not booked by</h3>
+                                <p class="text-[11px] mt-0.5" style="color: var(--c3);">We'll stop searching after this window</p>
                             </div>
-                            <select
-                                x-model="latestNotify"
-                                class="bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-brand-500"
-                            >
+                            <select x-model="latestNotify"
+                                class="rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none"
+                                style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);">
                                 <option value="2">2h before</option>
                                 <option value="4">4h before</option>
                                 <option value="6">6h before</option>
-                                <option value="12">Same day morning</option>
+                                <option value="12">Same morning</option>
                                 <option value="24">Day before</option>
                             </select>
                         </div>
-                    </div>
-                </template>
-
-                <!-- ==================== SELECTED SUMMARY ==================== -->
-                <template x-if="selectedDates.length > 0">
-                    <div class="mb-4 px-1">
-                        <p class="text-xs text-slate-500">
-                            <span x-text="selectedDates.length"></span> date<span x-show="selectedDates.length > 1">s</span>,
-                            <span x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
-                        </p>
                     </div>
                 </template>
 
@@ -302,25 +388,24 @@
 
         <!-- Error state -->
         <template x-if="!loading && error">
-            <div class="glass rounded-2xl border border-red-500/20 p-6 text-center fade-in">
-                <p class="text-red-400 text-sm" x-text="error"></p>
-                <a href="/browse" class="text-brand-400 text-sm mt-3 inline-block hover:text-brand-300">Back to browse</a>
+            <div class="card-glass rounded-2xl p-6 text-center fade-in" style="border-color: rgba(239,68,68,0.2) !important;">
+                <p class="text-sm" style="color: #ef4444;" x-text="error"></p>
+                <a href="/browse" class="text-sm mt-3 inline-block font-semibold" style="color: var(--accent);">Back to browse</a>
             </div>
         </template>
 
     </main>
 
     <!-- Fixed bottom CTA -->
-    <div class="fixed bottom-0 inset-x-0 z-40 glass border-t border-slate-700/50 p-4 pb-safe" x-show="canSubmit" x-transition>
+    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: var(--bg); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
         <div class="max-w-lg mx-auto">
-            <button
-                @click="submitBooking()"
-                :disabled="submitting"
-                class="w-full py-3.5 rounded-2xl font-semibold text-base transition-all"
-                :class="submitting
-                    ? 'bg-brand-500/50 text-white/50 cursor-wait'
-                    : 'bg-brand-500 text-white hover:bg-brand-400 active:scale-[0.98]'"
-            >
+            <button @click="submitBooking()" :disabled="submitting"
+                class="w-full py-3.5 rounded-2xl font-bold text-base transition-all"
+                :style="submitting
+                    ? 'background: var(--btn-bg); opacity: 0.5; color: var(--btn-text); cursor: wait;'
+                    : 'background: var(--btn-bg); color: var(--btn-text);'"
+                onmouseover="if(!this.disabled) this.style.background='var(--btn-hover)';"
+                onmouseout="this.style.background='var(--btn-bg)';">
                 <span x-show="!submitting">Get This Table</span>
                 <span x-show="submitting" class="flex items-center justify-center gap-2">
                     <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -333,17 +418,14 @@
     </div>
 
     <!-- Toast -->
-    <div
-        x-show="toast" x-transition
-        class="fixed top-16 right-4 z-50 glass border border-slate-700/50 rounded-xl px-4 py-3 max-w-xs toast-enter"
-    >
-        <p class="text-sm text-white" x-text="toast"></p>
+    <div x-show="toast" x-transition class="fixed top-16 right-4 z-50 rounded-xl px-5 py-3.5 max-w-xs toast-enter modal-bg shadow-2xl"
+        style="background: var(--bg-card); border: 1px solid var(--border);">
+        <p class="text-sm font-medium" style="color: var(--c1);" x-text="toast"></p>
     </div>
 
     <script>
     function restaurantApp() {
         return {
-            // State
             loading: true,
             error: null,
             restaurant: null,
@@ -356,19 +438,22 @@
             submitting: false,
             toast: null,
             venueId: {{ venue_id }},
+            theme: localStorage.getItem('resr_theme') || 'dark',
 
             async init() {
+                // Apply theme
+                if (this.theme === 'dark') { document.documentElement.classList.add('dark'); }
+                else { document.documentElement.classList.remove('dark'); }
+
                 const token = localStorage.getItem('tablement_token');
-                if (!token) {
-                    window.location.href = '/';
-                    return;
-                }
+                if (!token) { window.location.href = '/'; return; }
 
                 try {
                     const resp = await fetch(`/api/curated/${this.venueId}`);
                     const data = await resp.json();
                     if (data.restaurant) {
                         this.restaurant = data.restaurant;
+                        document.title = `RESR — ${this.restaurant.name}`;
                     } else {
                         this.error = 'Restaurant not found';
                     }
@@ -378,219 +463,135 @@
                 this.loading = false;
             },
 
-            // ==================== Calendar Logic ====================
-
+            // ═══ Calendar ═══
             get monthLabel() {
                 return this.currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             },
-
             prevMonth() {
                 const d = new Date(this.currentMonth);
                 d.setMonth(d.getMonth() - 1);
-                // Don't go before current month
                 const now = new Date();
                 if (d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth())) {
                     this.currentMonth = d;
                 }
             },
-
             nextMonth() {
                 const d = new Date(this.currentMonth);
                 d.setMonth(d.getMonth() + 1);
-                // Don't go more than 3 months ahead
                 const limit = new Date();
                 limit.setMonth(limit.getMonth() + 3);
-                if (d <= limit) {
-                    this.currentMonth = d;
-                }
+                if (d <= limit) { this.currentMonth = d; }
             },
-
             get lastReleasedDate() {
                 if (!this.restaurant || !this.restaurant.drop_days_ahead) return null;
                 const d = new Date();
                 d.setDate(d.getDate() + this.restaurant.drop_days_ahead);
-                // Normalize to midnight
                 d.setHours(0, 0, 0, 0);
                 return d;
             },
-
             isReleasedDate(dateStr) {
-                if (!this.lastReleasedDate) return true; // If no drop policy, assume all released
+                if (!this.lastReleasedDate) return true;
                 const d = new Date(dateStr + 'T00:00:00');
                 return d <= this.lastReleasedDate;
             },
-
-            isUnreleasedDate(dateStr) {
-                return !this.isReleasedDate(dateStr);
-            },
+            isUnreleasedDate(dateStr) { return !this.isReleasedDate(dateStr); },
 
             get calendarCells() {
                 const year = this.currentMonth.getFullYear();
                 const month = this.currentMonth.getMonth();
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
+                const today = new Date(); today.setHours(0, 0, 0, 0);
                 const cells = [];
-
-                // Empty cells before first day
                 for (let i = 0; i < firstDay; i++) {
                     cells.push({ key: `e${i}`, day: null, dateStr: null, isPast: true, isToday: false, isReleased: false, isUnreleased: false });
                 }
-
-                // Day cells
                 for (let d = 1; d <= daysInMonth; d++) {
-                    const cellDate = new Date(year, month, d);
-                    cellDate.setHours(0, 0, 0, 0);
+                    const cellDate = new Date(year, month, d); cellDate.setHours(0, 0, 0, 0);
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const isPast = cellDate < today;
-                    const isToday = cellDate.getTime() === today.getTime();
-
                     cells.push({
-                        key: dateStr,
-                        day: d,
-                        dateStr,
-                        isPast,
-                        isToday,
+                        key: dateStr, day: d, dateStr, isPast,
+                        isToday: cellDate.getTime() === today.getTime(),
                         isReleased: !isPast && this.isReleasedDate(dateStr),
                         isUnreleased: !isPast && this.isUnreleasedDate(dateStr),
                     });
                 }
-
                 return cells;
             },
 
             cellClasses(cell) {
                 if (!cell.day) return 'cal-empty';
-                if (cell.isPast) return 'cal-past opacity-25 cursor-default pointer-events-none text-slate-600';
-
+                if (cell.isPast) return 'cal-past opacity-25 cursor-default pointer-events-none';
+                return '';
+            },
+            cellStyles(cell) {
+                if (!cell.day || cell.isPast) return 'color: var(--c4);';
                 const isSelected = this.selectedDates.includes(cell.dateStr);
-
-                if (isSelected) {
-                    return 'bg-brand-500 text-white font-bold scale-105 shadow-lg shadow-brand-500/20';
-                }
-
-                if (cell.isReleased) {
-                    return 'bg-red-500/10 border border-red-400/20 text-slate-200 hover:bg-red-500/20 hover:border-red-400/40';
-                }
-
-                if (cell.isUnreleased) {
-                    return 'bg-amber-500/10 border border-amber-400/30 text-slate-200 hover:bg-amber-500/20 hover:border-amber-400/50';
-                }
-
-                return 'text-slate-400';
+                if (isSelected) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700; transform: scale(1.05); box-shadow: 0 4px 12px rgba(245,158,11,0.25);`;
+                if (cell.isReleased) return `background: var(--cal-released-bg); border: 1px solid var(--cal-released-border); color: var(--c1);`;
+                if (cell.isUnreleased) return `background: var(--cal-unreleased-bg); border: 1px solid var(--cal-unreleased-border); color: var(--c1);`;
+                return `color: var(--c3);`;
             },
 
             toggleDate(dateStr) {
                 if (!dateStr) return;
-
                 const idx = this.selectedDates.indexOf(dateStr);
-                if (idx >= 0) {
-                    this.selectedDates.splice(idx, 1);
-                    return;
-                }
-
-                // Enforce limits: max 5 released dates
+                if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
                 if (this.isReleasedDate(dateStr)) {
                     const currentReleased = this.selectedDates.filter(d => this.isReleasedDate(d)).length;
-                    if (currentReleased >= 5) {
-                        this.showToast('Max 5 sold-out dates');
-                        return;
-                    }
+                    if (currentReleased >= 5) { this.showToast('Max 5 sold-out dates'); return; }
                 }
-
                 this.selectedDates.push(dateStr);
                 this.selectedDates.sort();
             },
 
-            // ==================== Time Picker Logic ====================
-
+            // ═══ Time Picker ═══
             get timePills() {
                 if (!this.restaurant) return [];
                 const start = this.parseTime(this.restaurant.service_start || '17:00');
                 const end = this.parseTime(this.restaurant.service_end || '22:00');
                 const hotStart = this.parseTime(this.restaurant.hot_start || '19:00');
                 const hotEnd = this.parseTime(this.restaurant.hot_end || '20:30');
-
                 const pills = [];
                 let t = start;
                 while (t <= end) {
-                    const h = Math.floor(t / 60);
-                    const m = t % 60;
+                    const h = Math.floor(t / 60), m = t % 60;
                     const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                     const h12 = h > 12 ? h - 12 : h;
-                    const ampm = h >= 12 ? 'PM' : 'AM';
-                    const label = `${h12}:${String(m).padStart(2, '0')}`;
-
-                    pills.push({
-                        time: timeStr,
-                        label,
-                        isHot: t >= hotStart && t <= hotEnd,
-                    });
+                    pills.push({ time: timeStr, label: `${h12}:${String(m).padStart(2, '0')}`, isHot: t >= hotStart && t <= hotEnd });
                     t += 30;
                 }
                 return pills;
             },
+            parseTime(str) { const [h, m] = str.split(':').map(Number); return h * 60 + (m || 0); },
 
-            parseTime(str) {
-                // Parse "HH:MM" to minutes since midnight
-                const [h, m] = str.split(':').map(Number);
-                return h * 60 + (m || 0);
-            },
-
-            timeClasses(tp) {
+            timeStyles(tp) {
                 const isSelected = this.selectedTimes.includes(tp.time);
-                if (isSelected) {
-                    return 'bg-brand-500 text-white border-brand-500';
-                }
-                if (tp.isHot) {
-                    return 'bg-slate-800/50 text-slate-200 border-orange-400/30 hover:bg-orange-500/10 hover:border-orange-400/50';
-                }
-                return 'bg-slate-800/50 text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500';
+                if (isSelected) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
+                if (tp.isHot) return `background: var(--bg-input); color: var(--c1); border: 1px solid var(--time-hot-border);`;
+                return `background: var(--bg-input); color: var(--c2); border: 1px solid var(--border);`;
             },
 
             toggleTime(timeStr) {
                 const idx = this.selectedTimes.indexOf(timeStr);
-                if (idx >= 0) {
-                    this.selectedTimes.splice(idx, 1);
-                } else {
-                    this.selectedTimes.push(timeStr);
-                    this.selectedTimes.sort();
-                }
+                if (idx >= 0) { this.selectedTimes.splice(idx, 1); }
+                else { this.selectedTimes.push(timeStr); this.selectedTimes.sort(); }
             },
 
-            // ==================== Computed Properties ====================
+            // ═══ Computed ═══
+            get releasedCount() { return this.selectedDates.filter(d => this.isReleasedDate(d)).length; },
+            get hasReleasedSelected() { return this.releasedCount > 0; },
+            get hasUnreleasedSelected() { return this.selectedDates.some(d => this.isUnreleasedDate(d)); },
+            get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading; },
 
-            get releasedCount() {
-                return this.selectedDates.filter(d => this.isReleasedDate(d)).length;
-            },
-
-            get hasReleasedSelected() {
-                return this.releasedCount > 0;
-            },
-
-            get hasUnreleasedSelected() {
-                return this.selectedDates.some(d => this.isUnreleasedDate(d));
-            },
-
-            get canSubmit() {
-                return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading;
-            },
-
-            // ==================== Submit ====================
-
+            // ═══ Submit ═══
             async submitBooking() {
                 if (this.submitting || !this.canSubmit) return;
                 this.submitting = true;
-
                 const token = localStorage.getItem('tablement_token');
-                if (!token) {
-                    window.location.href = '/';
-                    return;
-                }
+                if (!token) { window.location.href = '/'; return; }
 
-                // Build drop_time from restaurant data (for unreleased dates)
                 let dropTime = null;
                 if (this.restaurant.drop_days_ahead) {
                     dropTime = {
@@ -601,7 +602,6 @@
                         days_ahead: this.restaurant.drop_days_ahead,
                     };
                 }
-
                 const payload = {
                     venue_id: this.venueId,
                     venue_name: this.restaurant.name,
@@ -616,29 +616,19 @@
                 try {
                     const resp = await fetch('/api/reservations/batch', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify(payload),
                     });
-
                     if (!resp.ok) {
                         const err = await resp.json().catch(() => ({}));
                         throw new Error(err.detail || 'Failed to create reservations');
                     }
-
-                    const data = await resp.json();
-                    // Redirect to reservations page with success toast
-                    window.location.href = '/reservations?toast=' + encodeURIComponent("We're on it! Watching " + this.selectedDates.length + " date" + (this.selectedDates.length > 1 ? 's' : ''));
-
+                    window.location.href = '/browse?toast=' + encodeURIComponent("We're on it! Watching " + this.selectedDates.length + " date" + (this.selectedDates.length > 1 ? 's' : ''));
                 } catch (e) {
                     this.showToast(e.message || 'Something went wrong');
                     this.submitting = false;
                 }
             },
-
-            // ==================== Toast ====================
 
             showToast(msg) {
                 this.toast = msg;
@@ -647,6 +637,13 @@
         };
     }
     </script>
-
+    <!-- Theme anti-flash -->
+    <script>
+    (function() {
+        const theme = localStorage.getItem('resr_theme') || 'dark';
+        if (theme === 'dark') { document.documentElement.classList.add('dark'); }
+        else { document.documentElement.classList.remove('dark'); }
+    })();
+    </script>
 </body>
 </html>
