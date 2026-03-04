@@ -98,7 +98,7 @@
         <div class="fixed top-[53px] inset-x-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6 flex gap-1 overflow-x-auto">
                 <template x-for="tab in tabs">
-                    <button @click="activeTab = tab.id; if (tab.id === 'analytics' && !analytics.loaded) loadAnalytics();"
+                    <button @click="activeTab = tab.id; if (tab.id === 'analytics' && !analytics.loaded) loadAnalytics(); if (tab.id === 'restaurants' && !restMgr.loaded) loadRestaurantsMgr();"
                         class="px-4 py-2.5 text-xs font-medium transition-colors border-b-2 whitespace-nowrap"
                         :class="activeTab === tab.id
                             ? 'text-brand-400 border-brand-400'
@@ -1121,6 +1121,152 @@
                 </div>
             </div>
 
+            <!-- ==================== RESTAURANTS ==================== -->
+            <div x-show="activeTab === 'restaurants'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Restaurants</h2>
+                    <div class="flex items-center gap-3">
+                        <span x-show="restMgr.loaded" class="text-xs text-slate-500" x-text="restMgr.restaurants.length + ' total'"></span>
+                        <button @click="restMgr.showAdd = true" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/20 text-brand-400 hover:bg-brand-500/30">+ Add</button>
+                        <button @click="loadRestaurantsMgr()" class="text-xs text-slate-400 hover:text-white">Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Add Restaurant Modal -->
+                <div x-show="restMgr.showAdd" x-cloak class="glass rounded-xl border border-brand-500/30 p-5 space-y-3">
+                    <h3 class="text-sm font-semibold text-white">Add Restaurant from Resy</h3>
+                    <div class="flex gap-2">
+                        <input type="text" x-model="restMgr.addQuery" placeholder="Search Resy (e.g. Carbone)..."
+                            @keydown.enter="searchResyForAdd()"
+                            class="flex-1 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500">
+                        <button @click="searchResyForAdd()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-500/20 text-brand-400 hover:bg-brand-500/30">Search</button>
+                        <button @click="restMgr.showAdd = false; restMgr.addResults = [];" class="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-white">Cancel</button>
+                    </div>
+                    <div x-show="restMgr.addResults.length > 0" class="space-y-2">
+                        <template x-for="sr in restMgr.addResults" :key="sr.resy_id">
+                            <div class="flex items-center justify-between bg-slate-800/50 rounded-lg px-3 py-2">
+                                <div>
+                                    <span class="text-xs text-white font-medium" x-text="sr.name"></span>
+                                    <span class="text-[10px] text-slate-500 ml-2" x-text="sr.cuisine + ' — ' + sr.neighborhood"></span>
+                                </div>
+                                <button @click="addRestaurantFromSearch(sr)" class="px-2 py-1 rounded text-[10px] font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30">Add</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="restMgr.loading" class="text-center py-8">
+                    <div class="text-slate-400 text-sm">Loading restaurants...</div>
+                </div>
+
+                <!-- Restaurant list -->
+                <div x-show="restMgr.loaded && !restMgr.loading" class="space-y-3">
+                    <template x-for="r in restMgr.restaurants" :key="r.venue_id">
+                        <div class="glass rounded-xl border border-slate-700/50 p-4">
+                            <!-- Header row: thumbnail + name + expand toggle -->
+                            <div class="flex items-center gap-4 cursor-pointer" @click="r._expanded = !r._expanded">
+                                <div class="w-16 h-12 rounded-lg bg-slate-800 border border-slate-700 flex-shrink-0 overflow-hidden">
+                                    <img x-show="r.image_url" :src="r.image_url" class="w-full h-full object-cover" @error="$el.style.display='none'">
+                                    <div x-show="!r.image_url" class="w-full h-full flex items-center justify-center text-slate-600 text-[10px]">No img</div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-white" x-text="r.name"></span>
+                                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400" x-text="r.cuisine"></span>
+                                        <span class="text-[10px] text-slate-600" x-text="r.neighborhood"></span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 mt-0.5" x-text="(r.slot_interval || 15) + '-min slots'"></div>
+                                </div>
+                                <div class="text-[10px] text-slate-600" x-text="'#' + r.venue_id"></div>
+                                <svg class="w-4 h-4 text-slate-500 transition-transform" :class="r._expanded && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+
+                            <!-- Expanded edit form -->
+                            <div x-show="r._expanded" x-cloak class="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Name</label>
+                                        <input type="text" x-model="r.name" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Cuisine</label>
+                                        <input type="text" x-model="r.cuisine" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Neighborhood</label>
+                                        <input type="text" x-model="r.neighborhood" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">URL Slug</label>
+                                        <input type="text" x-model="r.url_slug" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-1">Image URL</label>
+                                    <input type="text" x-model="r.image_url" placeholder="Paste image URL..." class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500">
+                                </div>
+                                <div class="grid grid-cols-3 md:grid-cols-7 gap-3">
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Slot Interval</label>
+                                        <select x-model.number="r.slot_interval" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                            <option value="15">15 min</option>
+                                            <option value="30">30 min</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Drop Days</label>
+                                        <input type="number" x-model.number="r.drop_days_ahead" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Drop Hour</label>
+                                        <input type="number" x-model.number="r.drop_hour" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Drop Min</label>
+                                        <input type="number" x-model.number="r.drop_minute" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Service Start</label>
+                                        <input type="text" x-model="r.service_start" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Service End</label>
+                                        <input type="text" x-model="r.service_end" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Sort Order</label>
+                                        <input type="number" x-model.number="r.sort_order" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between pt-2">
+                                    <label class="flex items-center gap-2 text-xs text-slate-400">
+                                        <input type="checkbox" x-model="r.is_active" class="rounded">
+                                        Active (visible on browse)
+                                    </label>
+                                    <button @click="saveRestaurant(r)"
+                                        :disabled="restMgr.saving[r.venue_id]"
+                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                        :class="restMgr.saving[r.venue_id]
+                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                            : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30'">
+                                        <span x-show="!restMgr.saving[r.venue_id]">Save Changes</span>
+                                        <span x-show="restMgr.saving[r.venue_id]">Saving...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="restMgr.loaded && restMgr.restaurants.length === 0"
+                    class="glass rounded-xl border border-slate-700/50 p-8 text-center">
+                    <div class="text-4xl mb-3">🍽️</div>
+                    <div class="text-slate-400 text-sm">No restaurants found. Run migration 006 in Supabase SQL Editor.</div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -1143,6 +1289,7 @@
                 { id: 'intel', label: 'Restaurant Intel' },
                 { id: 'drops', label: 'Drop Intel' },
                 { id: 'analytics', label: 'Analytics' },
+                { id: 'restaurants', label: 'Restaurants' },
             ],
             activeTab: 'jobs',
 
@@ -1231,6 +1378,17 @@
                 // Chart.js instances (so we can destroy before re-render)
                 hourChart: null,
                 dayChart: null,
+            },
+
+            // Restaurant Manager
+            restMgr: {
+                restaurants: [],
+                loaded: false,
+                loading: false,
+                saving: {},
+                showAdd: false,
+                addQuery: '',
+                addResults: [],
             },
 
             // Slot Conflicts
@@ -2139,6 +2297,105 @@
                     console.warn('Conflict check failed:', e);
                 }
                 this.slotConflicts.checking = false;
+            },
+
+            // ---- Restaurant Manager ----
+            async loadRestaurantsMgr() {
+                this.restMgr.loading = true;
+                try {
+                    const resp = await fetch('/api/admin/vip/restaurants', { headers: this.headers() });
+                    const data = await resp.json();
+                    this.restMgr.restaurants = (data.restaurants || []).map(r => ({ ...r, _expanded: false }));
+                    this.restMgr.loaded = true;
+                } catch (e) {
+                    console.warn('Failed to load restaurants:', e);
+                }
+                this.restMgr.loading = false;
+            },
+
+            async saveRestaurant(r) {
+                this.restMgr.saving[r.venue_id] = true;
+                try {
+                    const body = {
+                        name: r.name, cuisine: r.cuisine, neighborhood: r.neighborhood,
+                        url_slug: r.url_slug, image_url: r.image_url || null,
+                        slot_interval: r.slot_interval || 15,
+                        drop_days_ahead: r.drop_days_ahead, drop_hour: r.drop_hour, drop_minute: r.drop_minute,
+                        service_start: r.service_start, service_end: r.service_end,
+                        sort_order: r.sort_order, is_active: r.is_active,
+                    };
+                    const resp = await fetch(`/api/admin/vip/restaurants/${r.venue_id}`, {
+                        method: 'PATCH',
+                        headers: { ...this.headers(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                    if (resp.ok) {
+                        const btn = event.target.closest('button');
+                        if (btn) { btn.classList.add('!bg-green-500/30', '!text-green-400'); setTimeout(() => btn.classList.remove('!bg-green-500/30', '!text-green-400'), 1500); }
+                    }
+                } catch (e) {
+                    console.warn('Failed to save restaurant:', e);
+                }
+                this.restMgr.saving[r.venue_id] = false;
+            },
+
+            async searchResyForAdd() {
+                if (!this.restMgr.addQuery.trim()) return;
+                try {
+                    const resp = await fetch('/api/venue/search?query=' + encodeURIComponent(this.restMgr.addQuery) + '&limit=5');
+                    const data = await resp.json();
+                    this.restMgr.addResults = (data.results || []).filter(r => r.locality === 'New York' || r.region === 'NY');
+                } catch (e) {
+                    console.warn('Resy search failed:', e);
+                }
+            },
+
+            async addRestaurantFromSearch(sr) {
+                try {
+                    // Look up the real venue_id via the venue endpoint
+                    const lookupResp = await fetch('/api/venue/lookup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: 'https://resy.com/cities/' + (sr.location_slug || 'new-york-ny') + '/venues/' + sr.url_slug }),
+                    });
+                    const lookupData = await lookupResp.json();
+                    const venueId = lookupData.venue_id || sr.resy_id;
+
+                    const body = {
+                        venue_id: venueId,
+                        name: sr.name,
+                        cuisine: sr.cuisine || '',
+                        neighborhood: sr.neighborhood || '',
+                        url_slug: sr.url_slug || '',
+                        slot_interval: 15,
+                        drop_days_ahead: 14,
+                        drop_hour: 9,
+                        drop_minute: 0,
+                        service_start: '17:00',
+                        service_end: '22:30',
+                        hot_start: '19:00',
+                        hot_end: '20:30',
+                        sort_order: this.restMgr.restaurants.length + 1,
+                        is_active: true,
+                    };
+                    const resp = await fetch('/api/admin/vip/restaurants', {
+                        method: 'POST',
+                        headers: { ...this.headers(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                    });
+                    if (resp.ok) {
+                        this.restMgr.showAdd = false;
+                        this.restMgr.addResults = [];
+                        this.restMgr.addQuery = '';
+                        await this.loadRestaurantsMgr();
+                    } else {
+                        const err = await resp.json();
+                        alert(err.detail || 'Failed to add restaurant');
+                    }
+                } catch (e) {
+                    console.warn('Failed to add restaurant:', e);
+                    alert('Failed to add restaurant: ' + e.message);
+                }
             },
         }
     }

@@ -358,6 +358,50 @@ async def get_curated_restaurant(venue_id: int) -> dict | None:
     return rows[0] if rows else None
 
 
+async def update_restaurant_image(venue_id: int, image_url: str | None) -> dict | None:
+    """Update the image_url for a curated restaurant."""
+    resp = (
+        await get_service_client()
+        .table("curated_restaurants")
+        .update({"image_url": image_url})
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
+    """Update any fields on a curated restaurant."""
+    allowed = {
+        "name", "cuisine", "neighborhood", "url_slug", "image_url",
+        "slot_interval", "drop_days_ahead", "drop_hour", "drop_minute",
+        "service_start", "service_end", "hot_start", "hot_end",
+        "sort_order", "is_active",
+    }
+    data = {k: v for k, v in fields.items() if k in allowed}
+    if not data:
+        return None
+    resp = (
+        await get_service_client()
+        .table("curated_restaurants")
+        .update(data)
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def create_curated_restaurant(data: dict) -> dict:
+    """Insert a new curated restaurant."""
+    resp = (
+        await get_service_client()
+        .table("curated_restaurants")
+        .insert(data)
+        .execute()
+    )
+    return resp.data[0] if resp.data else data
+
+
 # ---------------------------------------------------------------------------
 # Reservation Groups — multi-date cancellation sniping
 # ---------------------------------------------------------------------------

@@ -1362,3 +1362,79 @@ async def analytics_booking_success():
         "avg_time_success_seconds": avg_time_success,
         "top_errors": [{"error": e, "count": c} for e, c in top_errors],
     }
+
+
+# ---------------------------------------------------------------------------
+# Restaurant Image Management
+# ---------------------------------------------------------------------------
+
+
+@router.get("/vip/restaurants")
+async def list_restaurants_admin(token: str = Depends(_require_admin)):
+    """List all curated restaurants for the admin restaurant manager."""
+    rows = await db.list_curated_restaurants(active_only=False)
+    return {
+        "restaurants": [
+            {
+                "venue_id": r["venue_id"],
+                "name": r["name"],
+                "cuisine": r.get("cuisine", ""),
+                "neighborhood": r.get("neighborhood", ""),
+                "url_slug": r.get("url_slug", ""),
+                "image_url": r.get("image_url"),
+                "slot_interval": r.get("slot_interval", 15),
+                "drop_days_ahead": r.get("drop_days_ahead"),
+                "drop_hour": r.get("drop_hour"),
+                "drop_minute": r.get("drop_minute", 0),
+                "service_start": r.get("service_start", "17:00"),
+                "service_end": r.get("service_end", "22:00"),
+                "sort_order": r.get("sort_order", 0),
+                "is_active": r.get("is_active", True),
+            }
+            for r in rows
+        ]
+    }
+
+
+@router.patch("/vip/restaurants/{venue_id}/image")
+async def update_restaurant_image(
+    venue_id: int,
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Update a restaurant's image URL."""
+    image_url = body.get("image_url", "").strip() or None
+    updated = await db.update_restaurant_image(venue_id, image_url)
+    if not updated:
+        raise HTTPException(404, "Restaurant not found")
+    return {"ok": True, "venue_id": venue_id, "image_url": image_url}
+
+
+@router.patch("/vip/restaurants/{venue_id}")
+async def update_restaurant(
+    venue_id: int,
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Update any fields on a curated restaurant."""
+    updated = await db.update_curated_restaurant(venue_id, body)
+    if not updated:
+        raise HTTPException(404, "Restaurant not found")
+    return {"ok": True, "restaurant": updated}
+
+
+@router.post("/vip/restaurants")
+async def create_restaurant(
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Add a new curated restaurant."""
+    venue_id = body.get("venue_id")
+    if not venue_id:
+        raise HTTPException(400, "venue_id is required")
+    # Check if already exists
+    existing = await db.get_curated_restaurant(int(venue_id))
+    if existing:
+        raise HTTPException(409, f"Restaurant with venue_id {venue_id} already exists")
+    created = await db.create_curated_restaurant(body)
+    return {"ok": True, "restaurant": created}
