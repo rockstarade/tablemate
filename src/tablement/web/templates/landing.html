@@ -86,6 +86,20 @@
         .img-placeholder {
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         }
+
+        /* Marquee scroll animation */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-track {
+            display: flex;
+            animation: marquee 20s linear infinite;
+            width: max-content;
+        }
+        .marquee-track:hover {
+            animation-play-state: paused;
+        }
     </style>
 </head>
 <body class="text-slate-200 antialiased" x-data="landingApp()">
@@ -200,20 +214,47 @@
         <!-- ═══════════════════ RESTAURANT SHOWCASE ═══════════════════ -->
         <section class="py-10 sm:py-14">
             <div class="max-w-3xl mx-auto px-6">
-                <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 px-8 py-8 sm:px-12 sm:py-10 text-center">
-                    <p class="text-white text-lg sm:text-xl font-medium mb-6">
+                <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 px-8 py-6 sm:px-12 sm:py-8 text-center overflow-hidden">
+                    <p class="text-white text-lg sm:text-xl font-medium mb-5">
                         Access to <span class="text-brand-400 font-bold">70+ exclusive restaurants</span> in New York
                     </p>
-                    <div class="flex flex-wrap justify-center items-center gap-x-5 sm:gap-x-8 gap-y-2.5 text-white/60 text-xs sm:text-sm font-semibold tracking-widest uppercase">
-                        <span>4 Charles</span>
-                        <span class="text-brand-500/30">·</span>
-                        <span>Atomix</span>
-                        <span class="text-brand-500/30">·</span>
-                        <span>Semma</span>
-                        <span class="text-brand-500/30">·</span>
-                        <span>Coqodaq</span>
-                        <span class="text-brand-500/30">·</span>
-                        <span>Carbone</span>
+                    <!-- Scrolling marquee of restaurant names -->
+                    <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
+                        <div class="marquee-track text-white/50 text-xs sm:text-sm font-semibold tracking-widest uppercase whitespace-nowrap">
+                            <span class="mx-4 sm:mx-6">4 Charles</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Atomix</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Semma</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Coqodaq</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Carbone</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Don Angie</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Torrisi</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Lilia</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <!-- Duplicate for seamless loop -->
+                            <span class="mx-4 sm:mx-6">4 Charles</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Atomix</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Semma</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Coqodaq</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Carbone</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Don Angie</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Torrisi</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                            <span class="mx-4 sm:mx-6">Lilia</span>
+                            <span class="text-brand-500/30 mx-1">·</span>
+                        </div>
                     </div>
                 </div>
             </div>
