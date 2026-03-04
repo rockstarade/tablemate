@@ -106,8 +106,8 @@
     </div>
 
     <!-- ═══════════════════ NAVIGATION ═══════════════════ -->
-    <nav class="fixed top-2 inset-x-0 z-50 transition-all duration-300"
-         :class="scrolled ? 'glass border-b border-slate-700/50' : ''">
+    <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b"
+         :class="scrolled ? 'glass border-slate-700/50' : 'border-transparent'">
         <div class="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
             <!-- Logo -->
             <a href="/" class="flex items-center gap-2.5">
@@ -168,6 +168,17 @@
                                 Our Restaurants
                             </a>
                         </div>
+
+                        <!-- Social proof badge -->
+                        <div class="flex items-center gap-3 mt-10 fade-in-delay-2">
+                            <div class="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-800/50 border border-slate-700/40">
+                                <span class="text-red-400 text-xl">&#10084;&#65039;</span>
+                                <div>
+                                    <span class="text-white font-bold text-xl leading-none">500+</span>
+                                    <p class="text-slate-400 text-xs">happy customers</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <!-- Right: phone mockup image -->
                     <div class="hidden lg:flex flex-1 justify-center fade-in-delay">
@@ -181,9 +192,20 @@
         <!-- ═══════════════════ HOW IT WORKS ═══════════════════ -->
         <section id="how-it-works" class="py-16 sm:py-28 border-t border-slate-800/50">
             <div class="max-w-6xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-5xl font-bold text-white mb-16">How it works</h2>
                 <div class="flex flex-col lg:flex-row gap-16 lg:gap-24">
-                    <!-- Left: vertical steps -->
+                    <!-- Left: descriptive block -->
+                    <div class="flex-1 flex flex-col justify-center">
+                        <h2 class="text-4xl sm:text-6xl font-bold text-white mb-8">How it works</h2>
+                        <h3 class="text-3xl sm:text-4xl font-bold text-white mb-5">We book what others can't.</h3>
+                        <p class="text-white/80 text-lg leading-relaxed mb-8">Link your Resy and OpenTable accounts, tell us exactly which reservations you're after, and we'll take care of everything. Our system monitors availability around the clock and books the instant a slot opens — faster than any human could.</p>
+                        <!-- Fastest on the market badge -->
+                        <div class="inline-flex items-center gap-2.5 px-5 py-3 rounded-full bg-brand-500/10 border border-brand-500/30">
+                            <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span class="text-brand-400 font-bold text-sm tracking-wide uppercase">Fastest on the market</span>
+                        </div>
+                        <p class="text-slate-300 text-sm mt-3">We are cheaper and better than the competition.</p>
+                    </div>
+                    <!-- Right: vertical steps -->
                     <div class="flex-1 space-y-12 relative">
                         <!-- Vertical connector line -->
                         <div class="absolute left-5 top-2 bottom-2 w-px bg-slate-700/50"></div>
@@ -218,53 +240,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Right: descriptive block -->
-                    <div class="flex-1 flex flex-col justify-center">
-                        <h3 class="text-2xl sm:text-3xl font-bold text-white mb-4">We book what others can't.</h3>
-                        <p class="text-slate-400 leading-relaxed mb-8">Link your Resy and OpenTable accounts, tell us exactly which reservations you're after, and we'll take care of everything. Our system monitors availability around the clock and books the instant a slot opens — faster than any human could.</p>
-                        <div class="space-y-3">
-                            <p class="text-brand-400 font-semibold text-lg">The fastest solution on the market.</p>
-                            <p class="text-slate-300 text-sm">We are cheaper and better than the competition.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════════════ OUR RESTAURANTS ═══════════════════ -->
-        <section id="restaurants" class="py-14 sm:py-24 border-t border-slate-800/50">
-            <div class="max-w-6xl mx-auto px-6">
-                <div class="text-center mb-14">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3">Our Restaurants</h2>
-                    <p class="text-slate-400">The spots everyone wants. We get you in.</p>
-                </div>
-                <!-- Restaurant preview grid — show only featured restaurants -->
-                <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto sm:max-w-none sm:mx-0 lg:max-w-2xl lg:mx-auto">
-                    <template x-for="r in featuredRestaurants" :key="r.venue_id">
-                        <div class="restaurant-preview rounded-xl overflow-hidden border border-slate-700/30 bg-slate-800/30 cursor-default">
-                            <div class="relative h-28 sm:h-36 overflow-hidden img-placeholder">
-                                <img :src="r.image_url" :alt="r.name"
-                                    class="w-full h-full object-cover"
-                                    @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-                                <div class="absolute top-2 left-2">
-                                    <span class="px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-[10px] font-medium text-slate-200"
-                                        x-text="r.cuisine"></span>
-                                </div>
-                            </div>
-                            <div class="p-3">
-                                <h3 class="text-sm font-semibold text-white leading-tight" x-text="r.name"></h3>
-                                <p class="text-slate-500 text-xs mt-0.5" x-text="r.neighborhood"></p>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                <!-- See all CTA -->
-                <div class="text-center mt-10">
-                    <button @click="openAuth()"
-                        class="px-6 py-3 rounded-xl bg-brand-500/15 text-brand-400 hover:bg-brand-500/25 font-semibold text-sm transition-all">
-                        Sign up to see all 75 restaurants →
-                    </button>
                 </div>
             </div>
         </section>
@@ -305,16 +280,16 @@
                     </div>
                     <!-- 10-pack -->
                     <div class="glass rounded-2xl border border-brand-500/30 p-7 text-center relative overflow-hidden">
-                        <div class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-400 text-xs font-semibold">Save 17%</div>
+                        <div class="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-brand-500/20 text-brand-400 text-xs font-semibold">Best value</div>
                         <h3 class="text-lg font-semibold text-white mb-2">10 Pack</h3>
                         <div class="mb-5">
-                            <span class="text-5xl font-bold text-brand-400">$100</span>
-                            <span class="text-slate-400 ml-1">/ 10 reservations</span>
+                            <span class="text-5xl font-bold text-brand-400">$10</span>
+                            <span class="text-slate-400 ml-1">/ reservation</span>
                         </div>
                         <ul class="text-slate-300 text-sm space-y-3 mb-7 text-left">
                             <li class="flex items-center gap-3">
                                 <svg class="w-5 h-5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                $10 per reservation
+                                10 reservations for $100
                             </li>
                             <li class="flex items-center gap-3">
                                 <svg class="w-5 h-5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -330,6 +305,44 @@
                             Buy 10 Pack
                         </button>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════ OUR RESTAURANTS ═══════════════════ -->
+        <section id="restaurants" class="py-14 sm:py-24 border-t border-slate-800/50">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-14">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3">Our Restaurants</h2>
+                    <p class="text-slate-400">The spots everyone wants. We get you in.</p>
+                </div>
+                <!-- Restaurant preview grid — show only featured restaurants -->
+                <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto sm:max-w-none sm:mx-0 lg:max-w-2xl lg:mx-auto">
+                    <template x-for="r in featuredRestaurants" :key="r.venue_id">
+                        <div class="restaurant-preview rounded-xl overflow-hidden border border-slate-700/30 bg-slate-800/30 cursor-default">
+                            <div class="relative h-28 sm:h-36 overflow-hidden img-placeholder">
+                                <img :src="r.image_url" :alt="r.name"
+                                    class="w-full h-full object-cover"
+                                    @error="$event.target.style.display='none'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                                <div class="absolute top-2 left-2">
+                                    <span class="px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-[10px] font-medium text-slate-200"
+                                        x-text="r.cuisine"></span>
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <h3 class="text-sm font-semibold text-white leading-tight" x-text="r.name"></h3>
+                                <p class="text-slate-500 text-xs mt-0.5" x-text="r.neighborhood"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <!-- See all CTA -->
+                <div class="text-center mt-10">
+                    <button @click="openAuth()"
+                        class="px-6 py-3 rounded-xl bg-brand-500/15 text-brand-400 hover:bg-brand-500/25 font-semibold text-sm transition-all">
+                        Sign up to see all 75 restaurants →
+                    </button>
                 </div>
             </div>
         </section>
