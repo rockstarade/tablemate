@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dibs — Grab the Impossible NYC Reservations</title>
+    <title>RESR — Grab the Impossible NYC Reservations</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -111,24 +111,28 @@
             <!-- Logo -->
             <a href="/" class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
-                    <span class="text-slate-900 font-black text-sm">D</span>
+                    <span class="text-slate-900 font-black text-sm">R</span>
                 </div>
-                <span class="text-xl font-bold text-white tracking-tight">Dibs</span>
+                <span class="text-xl font-bold text-white tracking-tight">RESR</span>
             </a>
 
             <!-- Nav links (desktop) -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="#how-it-works" class="text-slate-400 hover:text-white text-sm transition-colors">How it Works</a>
-                <a href="#pricing" class="text-slate-400 hover:text-white text-sm transition-colors">Pricing</a>
-                <a href="#faq" class="text-slate-400 hover:text-white text-sm transition-colors">FAQ</a>
+                <a href="#how-it-works" class="text-white font-bold text-base hover:text-brand-400 transition-colors">How it Works</a>
+                <a href="#pricing" class="text-white font-bold text-base hover:text-brand-400 transition-colors">Pricing</a>
+                <a href="#faq" class="text-white font-bold text-base hover:text-brand-400 transition-colors">FAQ</a>
             </div>
 
-            <!-- Login button -->
+            <!-- Auth buttons -->
             <div class="flex items-center gap-3">
                 <a href="/admin/vip" class="text-slate-600 hover:text-slate-400 text-xs transition-colors hidden sm:block">Admin</a>
                 <button @click="openAuth()"
-                    class="px-5 py-2.5 rounded-xl border border-brand-500 text-brand-400 hover:bg-brand-500 hover:text-slate-900 font-semibold transition-all text-sm">
-                    Log In / Sign Up
+                    class="px-5 py-2.5 rounded-xl border border-white text-white hover:bg-white hover:text-slate-900 font-semibold transition-all text-sm">
+                    Log In
+                </button>
+                <button @click="openAuth()"
+                    class="px-5 py-2.5 rounded-xl bg-brand-500 text-slate-900 hover:bg-brand-400 font-semibold transition-all text-sm">
+                    Sign Up
                 </button>
             </div>
         </div>
@@ -137,17 +141,17 @@
     <!-- ═══════════════════ HERO ═══════════════════ -->
     <main>
         <section class="pt-36 sm:pt-44 pb-24 sm:pb-32">
-            <div class="max-w-4xl mx-auto px-6 text-center">
+            <div class="max-w-4xl mx-auto px-6 text-left">
                 <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 fade-in">
                     Grab the <span class="text-brand-400">impossible</span><br>
                     NYC reservations.
                 </h1>
-                <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mx-auto mb-12 fade-in-delay">
+                <p class="text-lg sm:text-xl text-slate-400 max-w-2xl mb-12 fade-in-delay">
                     We book NYC's most competitive restaurants the instant reservations drop. You just show up and eat.
                 </p>
 
                 <!-- Two CTA buttons -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 fade-in-delay-2">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start justify-start gap-4 fade-in-delay-2">
                     <button @click="openAuth()"
                         class="px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-lg transition-all glow-amber w-full sm:w-auto">
                         Get Started
@@ -163,7 +167,7 @@
         <!-- ═══════════════════ HOW IT WORKS ═══════════════════ -->
         <section id="how-it-works" class="py-24 border-t border-slate-800/50">
             <div class="max-w-5xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white text-center mb-16">How it works</h2>
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-16">How it works</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
                     <div class="text-center">
                         <div class="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center text-2xl font-bold mx-auto mb-5">1</div>
@@ -266,7 +270,7 @@
         <!-- ═══════════════════ FAQ ═══════════════════ -->
         <section id="faq" class="py-24 border-t border-slate-800/50">
             <div class="max-w-3xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white text-center mb-14">Frequently asked questions</h2>
+                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-14">Frequently asked questions</h2>
                 <div class="space-y-4">
                     <template x-for="(faq, i) in faqs" :key="i">
                         <div class="glass rounded-xl border border-slate-700/50 overflow-hidden">
@@ -293,9 +297,9 @@
     <footer class="border-t border-slate-800 py-10 text-center text-slate-500 text-sm">
         <div class="flex items-center justify-center gap-2.5 mb-3">
             <div class="w-6 h-6 rounded-md bg-brand-500 flex items-center justify-center">
-                <span class="text-slate-900 font-black text-[10px]">D</span>
+                <span class="text-slate-900 font-black text-[10px]">R</span>
             </div>
-            <span class="font-semibold text-slate-400">Dibs</span>
+            <span class="font-semibold text-slate-400">RESR</span>
         </div>
         <p>NYC restaurant reservations, automated.</p>
     </footer>
@@ -435,11 +439,11 @@
 
             // FAQ accordion
             faqs: [
-                { q: 'How does Dibs actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
-                { q: 'Do I need a Resy account?', a: 'Yes. Dibs books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely. We never store your password in plain text.', open: false },
+                { q: 'How does RESR actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
+                { q: 'Do I need a Resy account?', a: 'Yes. RESR books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely. We never store your password in plain text.', open: false },
                 { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
                 { q: 'Which restaurants do you support?', a: 'We support 35+ of NYC\'s most competitive restaurants on Resy, including Carbone, Don Angie, Torrisi, 4 Charles Prime Rib, Lilia, and more. We\'re adding new restaurants regularly.', open: false },
-                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The Dibs fee is non-refundable once the booking is confirmed.', open: false },
+                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The RESR fee is non-refundable once the booking is confirmed.', open: false },
             ],
 
             // ─── Init ─────────────────────────────────────────
