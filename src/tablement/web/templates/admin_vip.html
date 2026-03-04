@@ -84,11 +84,10 @@
                 <div class="flex items-center gap-3">
                     <span class="text-2xl">&#x1F3AF;</span>
                     <span class="text-lg font-bold text-white">Tablement</span>
-                    <span class="px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400 text-xs font-medium">VIP CONTROL</span>
+                    <span class="px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-xs font-medium">ADMIN</span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="/admin" class="text-slate-400 hover:text-white text-xs">Admin Stats</a>
-                    <a href="/app" class="text-slate-400 hover:text-white text-xs">User Dashboard</a>
+                    <a href="/browse" class="text-slate-400 hover:text-white text-xs">User Dashboard</a>
                     <button @click="logout()" class="text-slate-400 hover:text-red-400 text-xs">Sign Out</button>
                 </div>
             </div>
@@ -110,6 +109,126 @@
         </div>
 
         <main class="pt-28 pb-16 max-w-7xl mx-auto px-6">
+
+            <!-- ==================== OVERVIEW ==================== -->
+            <div x-show="activeTab === 'overview'" class="space-y-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Users</div>
+                        <div class="text-3xl font-bold text-white tabular-nums" x-text="adminStats.users ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Reservations</div>
+                        <div class="text-3xl font-bold text-white tabular-nums" x-text="adminStats.reservations?.total ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Active Jobs</div>
+                        <div class="text-3xl font-bold text-brand-400 tabular-nums" x-text="adminStats.jobs?.active_in_memory ?? '—'"></div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <div class="text-slate-400 text-xs uppercase tracking-wide mb-1">Scheduled</div>
+                        <div class="text-3xl font-bold text-blue-400 tabular-nums" x-text="adminStats.jobs?.scheduled ?? '—'"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Reservations by Status</h3>
+                        <div class="space-y-3">
+                            <template x-for="(count, status) in (adminStats.reservations?.by_status || {})">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full" :class="{'bg-emerald-400': status === 'confirmed', 'bg-red-400': status === 'failed', 'bg-brand-400': status === 'sniping', 'bg-blue-400': status === 'monitoring', 'bg-slate-400': status === 'scheduled' || status === 'pending', 'bg-slate-600': status === 'cancelled'}"></span>
+                                        <span class="text-sm text-slate-300 capitalize" x-text="status"></span>
+                                    </div>
+                                    <span class="text-sm font-medium text-white tabular-nums" x-text="count"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="glass rounded-xl border border-slate-700/50 p-5">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Quick Actions</h3>
+                        <div class="flex gap-3">
+                            <a href="/" target="_blank" class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-sm transition-colors">Landing Page</a>
+                            <a href="/browse" target="_blank" class="px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-sm transition-colors">Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== USERS ==================== -->
+            <div x-show="activeTab === 'users'" class="space-y-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Users <span class="text-slate-400 text-sm font-normal" x-text="'(' + adminUsers.length + ')'"></span></h2>
+                </div>
+                <div class="glass rounded-xl border border-slate-700/50 overflow-hidden" x-show="adminUsers.length > 0">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-700/50">
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase">User ID</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase">Resy</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase">Stripe</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium text-slate-400 uppercase">Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="user in adminUsers" :key="user.id">
+                                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30">
+                                    <td class="px-5 py-3 text-sm text-white font-mono" x-text="user.id.substring(0, 8) + '...'"></td>
+                                    <td class="px-5 py-3">
+                                        <span x-show="user.resy_linked" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">Linked</span>
+                                        <span x-show="user.resy_linked" class="text-slate-400 text-xs ml-2" x-text="user.resy_email"></span>
+                                        <span x-show="!user.resy_linked" class="px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-500 text-xs">Not linked</span>
+                                    </td>
+                                    <td class="px-5 py-3">
+                                        <span class="px-2 py-0.5 rounded-full text-xs" :class="user.stripe_linked ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-600/20 text-slate-500'" x-text="user.stripe_linked ? 'Active' : 'None'"></span>
+                                    </td>
+                                    <td class="px-5 py-3 text-slate-400 text-sm" x-text="formatDate(user.created_at)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <div x-show="adminUsers.length === 0" class="text-center py-12 text-slate-400">No users yet.</div>
+            </div>
+
+            <!-- ==================== RESERVATIONS ==================== -->
+            <div x-show="activeTab === 'reservations'" class="space-y-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-white">Reservations <span class="text-slate-400 text-sm font-normal" x-text="'(' + adminReservations.length + ')'"></span></h2>
+                    <div class="flex gap-2">
+                        <template x-for="f in ['all', 'active', 'confirmed', 'failed']">
+                            <button @click="resFilter = f" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize" :class="resFilter === f ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-700/30 text-slate-400 hover:text-white'" x-text="f"></button>
+                        </template>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <template x-for="res in filteredReservations()" :key="res.id">
+                        <div class="glass rounded-xl border border-slate-700/50 p-5" :class="{'border-emerald-500/30': res.status === 'confirmed', 'border-red-500/30': res.status === 'failed', 'border-brand-500/30': res.status === 'sniping', 'border-blue-500/30': res.status === 'monitoring'}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-1">
+                                        <h3 class="text-base font-semibold text-white" x-text="res.venue_name"></h3>
+                                        <span class="px-2 py-0.5 rounded-full text-xs font-medium" :class="{'bg-emerald-500/20 text-emerald-400': res.status === 'confirmed', 'bg-red-500/20 text-red-400': res.status === 'failed', 'bg-brand-500/20 text-brand-400': res.status === 'sniping', 'bg-blue-500/20 text-blue-400': res.status === 'monitoring', 'bg-slate-500/20 text-slate-400': res.status === 'scheduled' || res.status === 'pending'}" x-text="res.status"></span>
+                                    </div>
+                                    <div class="flex items-center gap-4 text-sm text-slate-400">
+                                        <span x-text="res.target_date"></span>
+                                        <span x-text="res.party_size + ' guests'"></span>
+                                        <span class="font-mono text-xs text-slate-500" x-text="'user: ' + res.user_id.substring(0, 8) + '...'"></span>
+                                    </div>
+                                    <div x-show="res.status === 'confirmed'" class="mt-2 text-emerald-400 text-xs">
+                                        Booked in <span x-text="(res.elapsed_seconds || 0).toFixed(2)"></span>s (<span x-text="res.attempts"></span> attempts)
+                                    </div>
+                                    <div x-show="res.status === 'failed'" class="mt-2 text-red-400 text-xs" x-text="res.error"></div>
+                                </div>
+                                <div class="flex gap-2 ml-4" x-show="['scheduled','monitoring','sniping','pending'].includes(res.status)">
+                                    <button @click="cancelReservation(res.id)" class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="filteredReservations().length === 0" class="text-center py-12 text-slate-400">No reservations match the filter.</div>
+            </div>
 
             <!-- ==================== ACTIVE JOBS ==================== -->
             <div x-show="activeTab === 'jobs'" class="space-y-6">
@@ -1183,7 +1302,7 @@
                             </div>
 
                             <!-- Expanded edit form -->
-                            <div x-show="r._expanded" x-cloak class="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
+                            <form x-show="r._expanded" x-cloak @submit.prevent="saveRestaurant(r, $event)" class="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                                     <div>
                                         <label class="text-[10px] text-slate-500 block mb-1">Name</label>
@@ -1244,10 +1363,9 @@
                                         <input type="checkbox" x-model="r.is_active" class="rounded">
                                         Active (visible on browse)
                                     </label>
-                                    <button type="button" @click.stop="saveRestaurant(r, $event)"
-                                        onclick="console.log('RAW CLICK FIRED')"
+                                    <button type="submit"
                                         :disabled="restMgr.saving[r.venue_id]"
-                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 relative z-50"
+                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
                                         :class="restMgr.saved[r.venue_id]
                                             ? 'bg-green-500/30 text-green-400'
                                             : restMgr.saveError[r.venue_id]
@@ -1261,7 +1379,7 @@
                                         <span x-show="restMgr.saving[r.venue_id]">Saving...</span>
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </template>
                 </div>
@@ -1288,6 +1406,9 @@
 
             // Navigation
             tabs: [
+                { id: 'overview', label: 'Overview' },
+                { id: 'users', label: 'Users' },
+                { id: 'reservations', label: 'Reservations' },
                 { id: 'jobs', label: 'Active Jobs' },
                 { id: 'snipe', label: 'Snipe Launcher' },
                 { id: 'proxy', label: 'Proxy Control' },
@@ -1298,7 +1419,13 @@
                 { id: 'analytics', label: 'Analytics' },
                 { id: 'restaurants', label: 'Restaurants' },
             ],
-            activeTab: 'jobs',
+            activeTab: 'overview',
+
+            // Overview / Users / Reservations (merged from /admin)
+            adminStats: {},
+            adminUsers: [],
+            adminReservations: [],
+            resFilter: 'all',
 
             // Active jobs
             activeJobs: [],
@@ -1464,6 +1591,9 @@
                     this.loadHealth(),
                     this.loadRecentResults(),
                     this.loadDropIntel(),
+                    this.loadAdminStats(),
+                    this.loadAdminUsers(),
+                    this.loadAdminReservations(),
                 ]);
                 // Auto-refresh active jobs every 5s
                 this.jobsRefreshTimer = setInterval(() => this.fetchActiveJobs(), 5000);
@@ -2421,6 +2551,67 @@
                     console.warn('Failed to add restaurant:', e);
                     alert('Failed to add restaurant: ' + e.message);
                 }
+            },
+
+            // ═══════ Merged from /admin — Overview, Users, Reservations ═══════
+
+            async loadAdminStats() {
+                try {
+                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    if (resp.ok) this.adminStats = await resp.json();
+                } catch (e) {}
+            },
+
+            async loadAdminUsers() {
+                try {
+                    const resp = await fetch('/api/admin/users', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.adminUsers = data.users || [];
+                    }
+                } catch (e) {}
+            },
+
+            async loadAdminReservations() {
+                try {
+                    const resp = await fetch('/api/admin/reservations', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.adminReservations = data.reservations || [];
+                    }
+                } catch (e) {}
+            },
+
+            filteredReservations() {
+                if (this.resFilter === 'all') return this.adminReservations;
+                if (this.resFilter === 'active') {
+                    return this.adminReservations.filter(r =>
+                        ['pending', 'scheduled', 'monitoring', 'sniping'].includes(r.status)
+                    );
+                }
+                return this.adminReservations.filter(r => r.status === this.resFilter);
+            },
+
+            async cancelReservation(id) {
+                if (!confirm('Force-cancel this reservation?')) return;
+                try {
+                    const resp = await fetch('/api/admin/reservations/' + id + '/cancel', {
+                        method: 'POST', headers: this.headers(),
+                    });
+                    if (resp.ok) {
+                        await this.loadAdminReservations();
+                        await this.loadAdminStats();
+                    }
+                } catch (e) { console.error('Cancel failed:', e); }
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                try {
+                    return new Date(dateStr).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric',
+                    });
+                } catch { return dateStr; }
             },
         }
     }

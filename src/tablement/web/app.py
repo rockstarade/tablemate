@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -124,11 +125,11 @@ def create_app() -> FastAPI:
 
     @app.get("/admin")
     async def admin_page(request: Request):
-        return templates.TemplateResponse("admin.html", {"request": request})
+        return templates.TemplateResponse("admin_vip.html", {"request": request})
 
     @app.get("/admin/vip")
-    async def admin_vip_page(request: Request):
-        return templates.TemplateResponse("admin_vip.html", {"request": request})
+    async def admin_vip_redirect():
+        return RedirectResponse("/admin", status_code=301)
 
     # --- Consumer-facing pages ---
 
