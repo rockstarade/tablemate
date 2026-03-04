@@ -1244,9 +1244,10 @@
                                         <input type="checkbox" x-model="r.is_active" class="rounded">
                                         Active (visible on browse)
                                     </label>
-                                    <button @click="saveRestaurant(r, $event)"
+                                    <button type="button" @click.stop="saveRestaurant(r, $event)"
+                                        onclick="console.log('RAW CLICK FIRED')"
                                         :disabled="restMgr.saving[r.venue_id]"
-                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 relative z-50"
                                         :class="restMgr.saved[r.venue_id]
                                             ? 'bg-green-500/30 text-green-400'
                                             : restMgr.saveError[r.venue_id]
@@ -1256,7 +1257,7 @@
                                                     : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30'">
                                         <span x-show="restMgr.saved[r.venue_id]">✓ Saved!</span>
                                         <span x-show="restMgr.saveError[r.venue_id]" x-text="'✗ ' + (restMgr.saveError[r.venue_id] || 'Error')"></span>
-                                        <span x-show="!restMgr.saving[r.venue_id] && !restMgr.saved[r.venue_id] && !restMgr.saveError[r.venue_id]">Save Changes</span>
+                                        <span x-show="!restMgr.saving[r.venue_id] && !restMgr.saved[r.venue_id] && !restMgr.saveError[r.venue_id]">💾 Save Now</span>
                                         <span x-show="restMgr.saving[r.venue_id]">Saving...</span>
                                     </button>
                                 </div>
@@ -2348,7 +2349,8 @@
                         alert('✅ Saved successfully! (status ' + resp.status + ')');
                         setTimeout(() => { this.restMgr.saved[r.venue_id] = false; }, 2000);
                     } else {
-                        const data = JSON.parse(respText).catch?.(() => ({})) || {};
+                        let data = {};
+                        try { data = JSON.parse(respText); } catch(_) {}
                         this.restMgr.saving[r.venue_id] = false;
                         const errMsg = data.detail || respText || 'Save failed (status ' + resp.status + ')';
                         this.restMgr.saveError[r.venue_id] = errMsg;
