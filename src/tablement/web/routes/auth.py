@@ -186,13 +186,10 @@ async def dev_mode_check():
 
 @router.post("/dev-skip")
 async def dev_skip():
-    """Create a dev session token without phone verification.
+    """Create a quick-access session token without phone verification.
 
-    Only available when DEV_MODE=true. Creates a fake user ID and
-    in-memory token that works with the /me endpoint.
+    Temporary admin convenience — skip phone auth and go straight to browse.
     """
-    if os.environ.get("DEV_MODE", "").lower() not in ("true", "1", "yes"):
-        raise HTTPException(403, "Dev mode is not enabled")
 
     # Generate a deterministic dev user ID (same across restarts for convenience)
     # Must be a valid UUID since profiles.id is a uuid column

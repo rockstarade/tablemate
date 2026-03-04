@@ -518,6 +518,12 @@
                     class="w-full mt-3 py-2.5 text-slate-500 hover:text-slate-300 text-xs transition-colors">
                     Skip for now (dev mode)
                 </button>
+
+                <!-- Admin skip — always visible -->
+                <button @click="devSkip()"
+                    class="w-full mt-4 py-2.5 rounded-xl border border-slate-700/50 text-slate-400 hover:text-white hover:border-slate-500 text-xs font-medium transition-all">
+                    Skip (Admin) &rarr;
+                </button>
             </div>
 
             <!-- Step 2: OTP Verification -->
