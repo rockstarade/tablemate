@@ -387,9 +387,10 @@ async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
         return None
 
     from postgrest.exceptions import APIError
+    import re
 
     # Retry loop: strip columns that don't exist in the DB yet
-    for _ in range(len(data)):
+    for _ in range(len(data) + 1):
         try:
             resp = (
                 await get_service_client()
@@ -400,12 +401,19 @@ async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
             )
             return resp.data[0] if resp.data else None
         except APIError as e:
-            msg = str(e)
-            # PGRST204 = column not found in schema cache
-            if "PGRST204" in msg:
-                # Extract the missing column name from the error
-                import re
-                m = re.search(r"'(\w+)' column", msg)
+            # Check for PGRST204 (column not found) via all possible
+            # representations — APIError.code, repr(), str(), and args.
+            err_code = getattr(e, "code", "") or ""
+            err_repr = repr(e)
+            err_str = str(e)
+            err_args = str(e.args) if e.args else ""
+            combined = f"{err_code} {err_repr} {err_str} {err_args}"
+
+            if "PGRST204" in combined or "Could not find" in combined:
+                # Extract the missing column name from any part of the error
+                m = re.search(r"'(\w+)'\s*column", combined) or \
+                    re.search(r"column\s*'(\w+)'", combined) or \
+                    re.search(r"'(\w+)'", err_str)
                 if m and m.group(1) in data:
                     bad_col = m.group(1)
                     data.pop(bad_col, None)
