@@ -1226,6 +1226,10 @@
                             this.userName = data.resy_email.split('@')[0];
                             this.userName = this.userName.charAt(0).toUpperCase() + this.userName.slice(1);
                         }
+                        // Generate referral code from user ID
+                        if (data.user_id) {
+                            this.referralCode = 'RESR-' + data.user_id.substring(0, 6).toUpperCase();
+                        }
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
             },

@@ -34,99 +34,116 @@
     <style>
         [x-cloak] { display: none !important; }
 
-        /* ═══════ THEME ═══════ */
         :root {
-            --bg: #fafafa;
+            --bg: #ffffff;
+            --bg-raised: #f8fafc;
             --bg-card: #ffffff;
             --bg-input: #f1f5f9;
             --bg-hover: rgba(0,0,0,0.03);
-            --bg-overlay: rgba(0,0,0,0.4);
             --c1: #0f172a;
             --c2: #475569;
             --c3: #94a3b8;
             --c4: #cbd5e1;
-            --border: rgba(0,0,0,0.08);
-            --accent: #6366f1;
-            --accent-bg: rgba(99,102,241,0.06);
-            --accent-border: rgba(99,102,241,0.12);
-            --search-focus: rgba(14,165,233,0.3);
-            --btn-bg: #0ea5e9;
+            --c5: #e2e8f0;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --accent: #f59e0b;
+            --accent-soft: rgba(245,158,11,0.08);
+            --accent-border: rgba(245,158,11,0.25);
+            --green: #10b981;
+            --green-soft: rgba(16,185,129,0.08);
+            --green-border: rgba(16,185,129,0.2);
+            --amber: #f59e0b;
+            --amber-soft: rgba(245,158,11,0.08);
+            --amber-border: rgba(245,158,11,0.2);
+            --red-soft: rgba(239,68,68,0.06);
+            --red-border: rgba(239,68,68,0.12);
+            --btn-bg: #0f172a;
             --btn-text: #ffffff;
-            --btn-hover: #0284c7;
-            --skeleton-a: rgba(0,0,0,0.04);
-            --skeleton-b: rgba(0,0,0,0.08);
-            --cal-released-bg: rgba(239,68,68,0.06);
-            --cal-released-border: rgba(239,68,68,0.15);
-            --cal-released-hover: rgba(239,68,68,0.12);
-            --cal-unreleased-bg: rgba(245,158,11,0.06);
-            --cal-unreleased-border: rgba(245,158,11,0.2);
-            --cal-unreleased-hover: rgba(245,158,11,0.12);
-            --cal-selected-bg: #f59e0b;
-            --cal-selected-text: #0f172a;
-            --time-hot-border: rgba(249,115,22,0.2);
-            --time-hot-hover: rgba(249,115,22,0.08);
-            --logo-from: #0ea5e9;
-            --logo-to: #0284c7;
-            --logo-text: #fff;
+            --btn-hover: #1e293b;
+            --skeleton-a: #f1f5f9;
+            --skeleton-b: #e2e8f0;
+            --logo-bg: #0f172a;
+            --logo-text: #ffffff;
+            --cal-today-ring: #0f172a;
+            --cal-available-bg: #f0fdf4;
+            --cal-available-border: #bbf7d0;
+            --cal-available-text: #166534;
+            --cal-upcoming-bg: #fffbeb;
+            --cal-upcoming-border: #fde68a;
+            --cal-upcoming-text: #92400e;
+            --cal-selected-bg: #0f172a;
+            --cal-selected-text: #ffffff;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
         }
         .dark {
-            --bg: #06080f;
-            --bg-card: rgba(15,23,42,0.4);
-            --bg-input: rgba(255,255,255,0.04);
+            --bg: #0a0c14;
+            --bg-raised: #111827;
+            --bg-card: #111827;
+            --bg-input: #1e293b;
             --bg-hover: rgba(255,255,255,0.04);
-            --bg-overlay: rgba(0,0,0,0.65);
             --c1: #f1f5f9;
             --c2: #94a3b8;
             --c3: #64748b;
             --c4: #475569;
-            --border: rgba(51,65,85,0.35);
-            --accent: #818cf8;
-            --accent-bg: rgba(99,102,241,0.08);
-            --accent-border: rgba(99,102,241,0.18);
-            --search-focus: rgba(99,102,241,0.35);
-            --btn-bg: #f59e0b;
+            --c5: #334155;
+            --border: #1e293b;
+            --border-light: #1e293b;
+            --accent: #fbbf24;
+            --accent-soft: rgba(251,191,36,0.1);
+            --accent-border: rgba(251,191,36,0.25);
+            --green: #34d399;
+            --green-soft: rgba(52,211,153,0.1);
+            --green-border: rgba(52,211,153,0.2);
+            --amber: #fbbf24;
+            --amber-soft: rgba(251,191,36,0.1);
+            --amber-border: rgba(251,191,36,0.2);
+            --red-soft: rgba(239,68,68,0.1);
+            --red-border: rgba(239,68,68,0.2);
+            --btn-bg: #fbbf24;
             --btn-text: #0f172a;
-            --btn-hover: #d97706;
-            --skeleton-a: rgba(30,41,59,0.3);
-            --skeleton-b: rgba(30,41,59,0.6);
-            --cal-released-bg: rgba(239,68,68,0.08);
-            --cal-released-border: rgba(239,68,68,0.2);
-            --cal-released-hover: rgba(239,68,68,0.15);
-            --cal-unreleased-bg: rgba(245,158,11,0.08);
-            --cal-unreleased-border: rgba(245,158,11,0.25);
-            --cal-unreleased-hover: rgba(245,158,11,0.15);
-            --cal-selected-bg: #f59e0b;
-            --cal-selected-text: #0f172a;
-            --time-hot-border: rgba(249,115,22,0.25);
-            --time-hot-hover: rgba(249,115,22,0.12);
-            --logo-from: #fbbf24;
-            --logo-to: #d97706;
+            --btn-hover: #f59e0b;
+            --skeleton-a: #1e293b;
+            --skeleton-b: #334155;
+            --logo-bg: #fbbf24;
             --logo-text: #0f172a;
+            --cal-today-ring: #fbbf24;
+            --cal-available-bg: rgba(52,211,153,0.08);
+            --cal-available-border: rgba(52,211,153,0.2);
+            --cal-available-text: #34d399;
+            --cal-upcoming-bg: rgba(251,191,36,0.08);
+            --cal-upcoming-border: rgba(251,191,36,0.2);
+            --cal-upcoming-text: #fbbf24;
+            --cal-selected-bg: #fbbf24;
+            --cal-selected-text: #0f172a;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: var(--bg);
-            min-height: 100vh;
-            transition: background 0.3s ease;
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); min-height: 100vh; }
 
-        .card-glass {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            transition: background 0.3s ease;
-        }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; box-shadow: var(--shadow-card); }
 
-        .cal-cell { transition: all 0.15s ease; cursor: pointer; }
-        .cal-cell:hover:not(.cal-past):not(.cal-empty) { transform: scale(1.08); }
-        .time-pill { transition: all 0.15s ease; cursor: pointer; }
-        .time-pill:hover { transform: translateY(-1px); }
+        .cal-cell {
+            transition: all 0.12s ease;
+            cursor: pointer;
+            border-radius: 0.625rem;
+            font-weight: 500;
+        }
+        .cal-cell:hover:not(.cal-past):not(.cal-empty) { transform: scale(1.1); }
+        .cal-cell.cal-selected { font-weight: 700; transform: scale(1.08); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+
+        .time-chip { transition: all 0.12s ease; cursor: pointer; }
+        .time-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(12px); }
+            from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .fade-in { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+        .anim-in { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+        .anim-in-d1 { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) 0.08s both; }
+        .anim-in-d2 { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) 0.16s both; }
 
         @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -134,39 +151,38 @@
         }
         .skeleton {
             background: linear-gradient(90deg, var(--skeleton-a) 25%, var(--skeleton-b) 50%, var(--skeleton-a) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.8s ease-in-out infinite;
-            border-radius: 0.75rem;
+            background-size: 200% 100%; animation: shimmer 1.8s ease-in-out infinite; border-radius: 0.75rem;
         }
 
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .toast-enter { animation: slideInRight 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        .toast-anim { animation: toastIn 0.3s ease-out; }
+
+        .img-placeholder { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); }
 
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.25); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--c4); border-radius: 3px; }
 
-        .img-placeholder { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        /* Step indicator */
+        .step-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all 0.2s ease; }
+        .step-dot.active { background: var(--btn-bg); color: var(--btn-text); }
+        .step-dot.done { background: var(--green); color: white; }
+        .step-dot.pending { background: var(--bg-input); color: var(--c3); border: 1px solid var(--border); }
+        .step-line { height: 2px; flex: 1; background: var(--border); transition: background 0.3s; }
+        .step-line.done { background: var(--green); }
     </style>
 </head>
 <body class="antialiased" style="color: var(--c1);" x-data="restaurantApp()" x-init="init()" x-cloak>
 
-    <!-- Header -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl" style="background: var(--bg); border-bottom: 1px solid var(--border);">
-        <div class="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="/browse" class="flex items-center gap-2 transition-colors" style="color: var(--c3);"
-                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-                <span class="text-sm font-medium">Back</span>
+    <!-- ═══ HEADER ═══ -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl" style="background: color-mix(in srgb, var(--bg) 85%, transparent); border-bottom: 1px solid var(--border);">
+        <div class="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
+            <a href="/browse" class="flex items-center gap-2 transition-colors hover:opacity-70" style="color: var(--c2);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                <span class="text-sm font-semibold">Back</span>
             </a>
             <a href="/browse" class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg flex items-center justify-center"
-                    style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to));">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--logo-bg);">
                     <span class="font-extrabold text-[10px]" style="color: var(--logo-text);">R</span>
                 </div>
                 <span class="text-sm font-bold tracking-tight" style="color: var(--c1);">RESR</span>
@@ -174,143 +190,159 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-lg mx-auto px-4 pt-5 pb-32">
+    <!-- ═══ MAIN ═══ -->
+    <main class="max-w-2xl mx-auto px-5 pt-6 pb-36">
 
-        <!-- Loading skeleton -->
+        <!-- Loading -->
         <template x-if="loading">
             <div>
-                <div class="skeleton h-48 w-full rounded-2xl mb-4"></div>
-                <div class="skeleton h-7 w-48 mb-2"></div>
-                <div class="skeleton h-4 w-32 mb-6"></div>
-                <div class="skeleton h-72 w-full rounded-2xl mb-4"></div>
+                <div class="skeleton h-56 w-full rounded-2xl mb-5"></div>
+                <div class="skeleton h-7 w-48 mb-3"></div>
+                <div class="skeleton h-4 w-32 mb-8"></div>
+                <div class="skeleton h-80 w-full rounded-2xl"></div>
             </div>
         </template>
 
-        <!-- Restaurant content -->
+        <!-- Content -->
         <template x-if="!loading && restaurant">
-            <div class="fade-in">
+            <div>
 
-                <!-- ═══ HERO IMAGE ═══ -->
-                <div class="relative h-48 sm:h-56 rounded-2xl overflow-hidden mb-5 img-placeholder">
-                    <img :src="restaurant.image_url" :alt="restaurant.name"
-                        class="w-full h-full object-cover"
-                        @error="$event.target.style.display='none'">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                    <div class="absolute bottom-4 left-4 right-4">
-                        <h1 class="text-2xl font-extrabold text-white drop-shadow-lg" x-text="restaurant.name"></h1>
-                        <p class="text-sm text-white/70 mt-0.5">
-                            <span x-text="restaurant.cuisine"></span>
-                            <span class="mx-1.5 text-white/30">&bull;</span>
-                            <span x-text="restaurant.neighborhood"></span>
-                        </p>
+                <!-- ═══ RESTAURANT HERO ═══ -->
+                <div class="relative rounded-2xl overflow-hidden mb-6 anim-in" style="aspect-ratio: 16/8;">
+                    <div class="absolute inset-0 img-placeholder">
+                        <img :src="restaurant.image_url" :alt="restaurant.name"
+                            class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight" x-text="restaurant.name"></h1>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="text-sm text-white/80 font-medium" x-text="restaurant.cuisine"></span>
+                            <span class="w-1 h-1 rounded-full bg-white/30"></span>
+                            <span class="text-sm text-white/60" x-text="restaurant.neighborhood"></span>
+                        </div>
+                        <p x-show="restaurant.tagline" class="text-xs text-white/50 mt-1.5" x-text="restaurant.tagline"></p>
                     </div>
                 </div>
 
-                <!-- ═══ DATE COUNTER ═══ -->
-                <div x-show="selectedDates.length > 0" class="mb-4 flex items-center gap-2 px-1">
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                        <span class="text-xs font-bold" style="color: var(--accent);" x-text="selectedDates.length"></span>
-                        <span class="text-xs" style="color: var(--accent);">date<span x-show="selectedDates.length > 1">s</span> selected</span>
+                <!-- ═══ PROGRESS STEPS ═══ -->
+                <div class="flex items-center gap-0 mb-6 px-2 anim-in-d1">
+                    <div class="step-dot" :class="currentStep >= 1 ? (currentStep > 1 ? 'done' : 'active') : 'pending'">
+                        <template x-if="currentStep > 1"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
+                        <template x-if="currentStep <= 1"><span>1</span></template>
                     </div>
-                    <div x-show="selectedTimes.length > 0" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                        <span class="text-xs font-bold" style="color: var(--accent);" x-text="selectedTimes.length"></span>
-                        <span class="text-xs" style="color: var(--accent);">time<span x-show="selectedTimes.length > 1">s</span></span>
+                    <div class="step-line" :class="currentStep > 1 ? 'done' : ''"></div>
+                    <div class="step-dot" :class="currentStep >= 2 ? (currentStep > 2 ? 'done' : 'active') : 'pending'">
+                        <template x-if="currentStep > 2"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
+                        <template x-if="currentStep <= 2"><span>2</span></template>
+                    </div>
+                    <div class="step-line" :class="currentStep > 2 ? 'done' : ''"></div>
+                    <div class="step-dot" :class="currentStep >= 3 ? 'active' : 'pending'">
+                        <span>3</span>
                     </div>
                 </div>
 
-                <!-- ═══ CALENDAR ═══ -->
-                <div class="card-glass rounded-2xl p-4 mb-4">
-                    <!-- Month nav -->
+                <!-- ═══ STEP 1: PICK YOUR DATES ═══ -->
+                <div class="card p-5 sm:p-6 mb-4 anim-in-d1">
                     <div class="flex items-center justify-between mb-4">
-                        <button @click="prevMonth()" class="p-2 rounded-lg transition-all" style="color: var(--c3);"
-                            onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
-                            onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                            </svg>
+                        <div>
+                            <h2 class="text-base font-bold" style="color: var(--c1);">When do you want to go?</h2>
+                            <p class="text-xs mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
+                        </div>
+                        <div x-show="selectedDates.length > 0" class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: var(--accent-soft); color: var(--accent);">
+                            <span x-text="selectedDates.length"></span> selected
+                        </div>
+                    </div>
+
+                    <!-- Month nav -->
+                    <div class="flex items-center justify-between mb-3">
+                        <button @click="prevMonth()" class="p-1.5 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <h2 class="text-base font-bold" style="color: var(--c1);" x-text="monthLabel"></h2>
-                        <button @click="nextMonth()" class="p-2 rounded-lg transition-all" style="color: var(--c3);"
-                            onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
-                            onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
+                        <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="monthLabel"></h3>
+                        <button @click="nextMonth()" class="p-1.5 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
 
                     <!-- Weekday headers -->
-                    <div class="grid grid-cols-7 mb-2">
-                        <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
-                            <div class="text-center text-[11px] font-semibold py-1" style="color: var(--c4);" x-text="d"></div>
+                    <div class="grid grid-cols-7 mb-1">
+                        <template x-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">
+                            <div class="text-center text-[10px] font-semibold py-1.5 uppercase tracking-wider" style="color: var(--c4);" x-text="d"></div>
                         </template>
                     </div>
 
                     <!-- Calendar grid -->
-                    <div class="grid grid-cols-7 gap-1">
+                    <div class="grid grid-cols-7 gap-[3px]">
                         <template x-for="cell in calendarCells" :key="cell.key">
-                            <div class="cal-cell aspect-square flex items-center justify-center rounded-xl text-sm font-medium relative"
+                            <button class="cal-cell aspect-square flex items-center justify-center text-[13px] relative"
                                 :class="cellClasses(cell)"
                                 :style="cellStyles(cell)"
+                                :disabled="!cell.day || cell.isPast"
                                 @click="cell.day && !cell.isPast && toggleDate(cell.dateStr)">
                                 <span x-text="cell.day || ''"></span>
-                                <div x-show="cell.isToday" class="absolute inset-0 rounded-xl pointer-events-none" style="box-shadow: inset 0 0 0 1px var(--c4);"></div>
-                            </div>
+                                <!-- Today ring -->
+                                <div x-show="cell.isToday && !selectedDates.includes(cell.dateStr)" class="absolute inset-[2px] rounded-[9px] pointer-events-none" style="box-shadow: inset 0 0 0 1.5px var(--cal-today-ring);"></div>
+                            </button>
                         </template>
                     </div>
 
                     <!-- Legend -->
-                    <div class="flex items-center gap-5 mt-4 pt-3" style="border-top: 1px solid var(--border);">
+                    <div class="flex items-center gap-4 mt-4 pt-3" style="border-top: 1px solid var(--border-light);">
                         <div class="flex items-center gap-1.5">
-                            <div class="w-3 h-3 rounded" style="background: var(--cal-released-bg); border: 1px solid var(--cal-released-border);"></div>
-                            <span class="text-[11px] font-medium" style="color: var(--c3);">Sold out</span>
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Available now</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            <div class="w-3 h-3 rounded" style="background: var(--cal-unreleased-bg); border: 1px solid var(--cal-unreleased-border);"></div>
-                            <span class="text-[11px] font-medium" style="color: var(--c3);">Not yet released</span>
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Opens soon</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-selected-bg);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Your pick</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- ═══ INFO BANNERS ═══ -->
+                <!-- Info messages -->
                 <template x-if="hasReleasedSelected">
-                    <div class="card-glass rounded-xl p-3 mb-3 fade-in" style="border-color: var(--cal-released-border) !important;">
-                        <div class="flex items-start gap-2.5">
-                            <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: #ef4444;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                            </svg>
-                            <p class="text-sm" style="color: var(--c2);">Sold out &mdash; we'll grab it if someone cancels.</p>
-                        </div>
+                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--green-soft); border: 1px solid var(--green-border);">
+                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--green);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <p class="text-xs font-medium" style="color: var(--c2);">These dates are released but booked up. We'll watch for cancellations and grab one instantly.</p>
                     </div>
                 </template>
                 <template x-if="hasUnreleasedSelected">
-                    <div class="card-glass rounded-xl p-3 mb-3 fade-in" style="border-color: var(--cal-unreleased-border) !important;">
-                        <div class="flex items-start gap-2.5">
-                            <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: #f59e0b;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <p class="text-sm" style="color: var(--c2);">Not yet released &mdash; we'll book the moment it opens.</p>
-                        </div>
+                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--amber-soft); border: 1px solid var(--amber-border);">
+                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--amber);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-xs font-medium" style="color: var(--c2);">These dates haven't opened yet. We'll book the second they drop.</p>
                     </div>
                 </template>
 
-                <!-- ═══ TIME PICKER ═══ -->
+                <!-- ═══ STEP 2: PICK YOUR TIMES ═══ -->
                 <template x-if="selectedDates.length > 0">
-                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-bold" style="color: var(--c1);">Preferred times</h3>
-                            <span class="text-[11px] font-medium" style="color: var(--c3);">Select all that work</span>
+                    <div class="card p-5 sm:p-6 mb-4 anim-in">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick as many as you'd like &mdash; more options = better odds</p>
+                            </div>
+                            <div x-show="selectedTimes.length > 0" class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: var(--accent-soft); color: var(--accent);">
+                                <span x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                            </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="tp in timePills" :key="tp.time">
-                                <button class="time-pill px-3.5 py-2 rounded-xl text-sm font-semibold"
+                                <button class="time-chip px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5"
                                     :style="timeStyles(tp)"
                                     @click="toggleTime(tp.time)">
                                     <span x-text="tp.label"></span>
                                     <template x-if="tp.isHot && !selectedTimes.includes(tp.time)">
-                                        <span class="ml-1 text-orange-400">&#x1F525;</span>
+                                        <span class="text-xs opacity-70">&#x1F525;</span>
                                     </template>
                                 </button>
                             </template>
@@ -318,68 +350,83 @@
                     </div>
                 </template>
 
-                <!-- ═══ PARTY SIZE ═══ -->
+                <!-- ═══ STEP 3: FINALIZE ═══ -->
                 <template x-if="selectedDates.length > 0 && selectedTimes.length > 0">
-                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-sm font-bold" style="color: var(--c1);">Party size</h3>
+                    <div class="card p-5 sm:p-6 mb-4 anim-in">
+                        <h2 class="text-base font-bold mb-4" style="color: var(--c1);">Final details</h2>
+
+                        <!-- Party size -->
+                        <div class="flex items-center justify-between py-3" style="border-bottom: 1px solid var(--border-light);">
+                            <div class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span class="text-sm font-semibold" style="color: var(--c1);">Party size</span>
+                            </div>
                             <div class="flex items-center gap-3">
                                 <button @click="partySize = Math.max(1, partySize - 1)"
                                     class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
                                     style="border: 1px solid var(--border); color: var(--c3);"
-                                    onmouseover="this.style.color='var(--c1)'; this.style.borderColor='var(--c2)';"
-                                    onmouseout="this.style.color='var(--c3)'; this.style.borderColor='var(--border)';">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M20 12H4"/></svg>
+                                    :style="partySize <= 1 ? 'opacity:0.3;pointer-events:none;' : ''">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 12H4"/></svg>
                                 </button>
-                                <span class="text-lg font-bold w-6 text-center tabular-nums" style="color: var(--c1);" x-text="partySize"></span>
+                                <span class="text-base font-bold w-5 text-center tabular-nums" style="color: var(--c1);" x-text="partySize"></span>
                                 <button @click="partySize = Math.min(20, partySize + 1)"
                                     class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                                    style="border: 1px solid var(--border); color: var(--c3);"
-                                    onmouseover="this.style.color='var(--c1)'; this.style.borderColor='var(--c2)';"
-                                    onmouseout="this.style.color='var(--c3)'; this.style.borderColor='var(--border)';">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    style="border: 1px solid var(--border); color: var(--c3);">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
                                 </button>
                             </div>
                         </div>
+
+                        <!-- Book earliest toggle -->
+                        <template x-if="releasedCount >= 2">
+                            <div class="flex items-center justify-between py-3" style="border-bottom: 1px solid var(--border-light);">
+                                <div class="flex items-center gap-2.5">
+                                    <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <div>
+                                        <span class="text-sm font-semibold" style="color: var(--c1);">Grab first available</span>
+                                        <p class="text-[11px]" style="color: var(--c3);">Book the first cancellation across all your dates</p>
+                                    </div>
+                                </div>
+                                <button @click="bookEarliest = !bookEarliest"
+                                    class="relative w-11 h-6 rounded-full transition-all flex-shrink-0"
+                                    :style="bookEarliest ? 'background: var(--green);' : 'background: var(--c5);'">
+                                    <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform" :class="bookEarliest ? 'translate-x-5' : ''"></span>
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Cutoff -->
+                        <template x-if="releasedCount >= 1">
+                            <div class="flex items-center justify-between py-3">
+                                <div class="flex items-center gap-2.5">
+                                    <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <span class="text-sm font-semibold" style="color: var(--c1);">Stop trying</span>
+                                        <p class="text-[11px]" style="color: var(--c3);">If we haven't booked by this time, we'll stop</p>
+                                    </div>
+                                </div>
+                                <select x-model="latestNotify"
+                                    class="rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none"
+                                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);">
+                                    <option value="2">2h before</option>
+                                    <option value="4">4h before</option>
+                                    <option value="6">6h before</option>
+                                    <option value="12">Morning of</option>
+                                    <option value="24">Day before</option>
+                                </select>
+                            </div>
+                        </template>
                     </div>
                 </template>
 
-                <!-- ═══ BOOK EARLIEST TOGGLE ═══ -->
-                <template x-if="releasedCount >= 2">
-                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-sm font-bold" style="color: var(--c1);">Book earliest available</h3>
-                                <p class="text-[11px] mt-0.5" style="color: var(--c3);">We'll book the first cancellation we find</p>
-                            </div>
-                            <button @click="bookEarliest = !bookEarliest"
-                                class="relative w-11 h-6 rounded-full transition-colors"
-                                :style="bookEarliest ? 'background: var(--btn-bg);' : 'background: var(--c4);'">
-                                <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
-                                    :class="bookEarliest ? 'translate-x-5' : ''"></span>
-                            </button>
-                        </div>
-                    </div>
-                </template>
-
-                <!-- ═══ CUTOFF TIME ═══ -->
-                <template x-if="releasedCount >= 1">
-                    <div class="card-glass rounded-2xl p-4 mb-4 fade-in">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-sm font-bold" style="color: var(--c1);">Cancel if not booked by</h3>
-                                <p class="text-[11px] mt-0.5" style="color: var(--c3);">We'll stop searching after this window</p>
-                            </div>
-                            <select x-model="latestNotify"
-                                class="rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none"
-                                style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);">
-                                <option value="2">2h before</option>
-                                <option value="4">4h before</option>
-                                <option value="6">6h before</option>
-                                <option value="12">Same morning</option>
-                                <option value="24">Day before</option>
-                            </select>
-                        </div>
+                <!-- ═══ SUMMARY ═══ -->
+                <template x-if="canSubmit">
+                    <div class="px-4 py-3 rounded-xl mb-4 anim-in text-center" style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
+                        <p class="text-xs font-semibold" style="color: var(--c2);">
+                            Watching <span class="font-bold" style="color: var(--accent);" x-text="selectedDates.length"></span> date<span x-show="selectedDates.length > 1">s</span>
+                            &times; <span class="font-bold" style="color: var(--accent);" x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                            for <span class="font-bold" style="color: var(--accent);" x-text="partySize"></span>
+                        </p>
                     </div>
                 </template>
 
@@ -388,62 +435,60 @@
 
         <!-- Error state -->
         <template x-if="!loading && error">
-            <div class="card-glass rounded-2xl p-6 text-center fade-in" style="border-color: rgba(239,68,68,0.2) !important;">
-                <p class="text-sm" style="color: #ef4444;" x-text="error"></p>
-                <a href="/browse" class="text-sm mt-3 inline-block font-semibold" style="color: var(--accent);">Back to browse</a>
+            <div class="card p-8 text-center anim-in">
+                <p class="text-sm font-medium" style="color: #ef4444;" x-text="error"></p>
+                <a href="/browse" class="text-sm mt-4 inline-block font-semibold" style="color: var(--accent);">Back to restaurants</a>
             </div>
         </template>
-
     </main>
 
-    <!-- Fixed bottom CTA -->
-    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: var(--bg); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
-        <div class="max-w-lg mx-auto">
+    <!-- ═══ FIXED BOTTOM CTA ═══ -->
+    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
+        <div class="max-w-2xl mx-auto">
             <button @click="submitBooking()" :disabled="submitting"
-                class="w-full py-3.5 rounded-2xl font-bold text-base transition-all"
+                class="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all flex items-center justify-center gap-2"
                 :style="submitting
-                    ? 'background: var(--btn-bg); opacity: 0.5; color: var(--btn-text); cursor: wait;'
-                    : 'background: var(--btn-bg); color: var(--btn-text);'"
-                onmouseover="if(!this.disabled) this.style.background='var(--btn-hover)';"
-                onmouseout="this.style.background='var(--btn-bg)';">
-                <span x-show="!submitting">Get This Table</span>
-                <span x-show="submitting" class="flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
-                    </svg>
-                    Setting up...
-                </span>
+                    ? 'background: var(--btn-bg); opacity: 0.6; color: var(--btn-text); cursor: wait;'
+                    : 'background: var(--btn-bg); color: var(--btn-text); box-shadow: var(--shadow-lg);'">
+                <template x-if="!submitting">
+                    <span>Get This Table</span>
+                </template>
+                <template x-if="submitting">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                        Setting up your watch...
+                    </span>
+                </template>
             </button>
         </div>
     </div>
 
     <!-- Toast -->
-    <div x-show="toast" x-transition class="fixed top-16 right-4 z-50 rounded-xl px-5 py-3.5 max-w-xs toast-enter modal-bg shadow-2xl"
-        style="background: var(--bg-card); border: 1px solid var(--border);">
+    <div x-show="toast" x-transition class="fixed top-16 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 toast-anim"
+        style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-lg);">
         <p class="text-sm font-medium" style="color: var(--c1);" x-text="toast"></p>
     </div>
 
     <script>
     function restaurantApp() {
         return {
-            loading: true,
-            error: null,
-            restaurant: null,
+            loading: true, error: null, restaurant: null,
             currentMonth: new Date(),
-            selectedDates: [],
-            selectedTimes: [],
-            partySize: 2,
-            bookEarliest: false,
-            latestNotify: 2,
-            submitting: false,
-            toast: null,
+            selectedDates: [], selectedTimes: [],
+            partySize: 2, bookEarliest: false, latestNotify: 2,
+            submitting: false, toast: null,
             venueId: {{ venue_id }},
             theme: localStorage.getItem('resr_theme') || 'dark',
 
+            get currentStep() {
+                if (this.selectedDates.length > 0 && this.selectedTimes.length > 0) return 3;
+                if (this.selectedDates.length > 0) return 2;
+                return 1;
+            },
+
             async init() {
-                // Apply theme
-                if (this.theme === 'dark') { document.documentElement.classList.add('dark'); }
-                else { document.documentElement.classList.remove('dark'); }
+                if (this.theme === 'dark') document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
 
                 const token = localStorage.getItem('tablement_token');
                 if (!token) { window.location.href = '/'; return; }
@@ -454,12 +499,8 @@
                     if (data.restaurant) {
                         this.restaurant = data.restaurant;
                         document.title = `RESR — ${this.restaurant.name}`;
-                    } else {
-                        this.error = 'Restaurant not found';
-                    }
-                } catch (e) {
-                    this.error = 'Failed to load restaurant data';
-                }
+                    } else { this.error = 'Restaurant not found'; }
+                } catch (e) { this.error = 'Failed to load restaurant data'; }
                 this.loading = false;
             },
 
@@ -468,69 +509,55 @@
                 return this.currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             },
             prevMonth() {
-                const d = new Date(this.currentMonth);
-                d.setMonth(d.getMonth() - 1);
+                const d = new Date(this.currentMonth); d.setMonth(d.getMonth() - 1);
                 const now = new Date();
-                if (d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth())) {
-                    this.currentMonth = d;
-                }
+                if (d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth())) this.currentMonth = d;
             },
             nextMonth() {
-                const d = new Date(this.currentMonth);
-                d.setMonth(d.getMonth() + 1);
-                const limit = new Date();
-                limit.setMonth(limit.getMonth() + 3);
-                if (d <= limit) { this.currentMonth = d; }
+                const d = new Date(this.currentMonth); d.setMonth(d.getMonth() + 1);
+                const limit = new Date(); limit.setMonth(limit.getMonth() + 3);
+                if (d <= limit) this.currentMonth = d;
             },
             get lastReleasedDate() {
                 if (!this.restaurant || !this.restaurant.drop_days_ahead) return null;
-                const d = new Date();
-                d.setDate(d.getDate() + this.restaurant.drop_days_ahead);
-                d.setHours(0, 0, 0, 0);
+                const d = new Date(); d.setDate(d.getDate() + this.restaurant.drop_days_ahead); d.setHours(0,0,0,0);
                 return d;
             },
             isReleasedDate(dateStr) {
                 if (!this.lastReleasedDate) return true;
-                const d = new Date(dateStr + 'T00:00:00');
-                return d <= this.lastReleasedDate;
+                return new Date(dateStr + 'T00:00:00') <= this.lastReleasedDate;
             },
             isUnreleasedDate(dateStr) { return !this.isReleasedDate(dateStr); },
 
             get calendarCells() {
-                const year = this.currentMonth.getFullYear();
-                const month = this.currentMonth.getMonth();
+                const year = this.currentMonth.getFullYear(), month = this.currentMonth.getMonth();
                 const firstDay = new Date(year, month, 1).getDay();
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const today = new Date(); today.setHours(0,0,0,0);
                 const cells = [];
-                for (let i = 0; i < firstDay; i++) {
-                    cells.push({ key: `e${i}`, day: null, dateStr: null, isPast: true, isToday: false, isReleased: false, isUnreleased: false });
-                }
+                for (let i = 0; i < firstDay; i++) cells.push({ key: `e${i}`, day: null, dateStr: null, isPast: true, isToday: false, isReleased: false, isUnreleased: false });
                 for (let d = 1; d <= daysInMonth; d++) {
-                    const cellDate = new Date(year, month, d); cellDate.setHours(0, 0, 0, 0);
-                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                     const isPast = cellDate < today;
-                    cells.push({
-                        key: dateStr, day: d, dateStr, isPast,
-                        isToday: cellDate.getTime() === today.getTime(),
-                        isReleased: !isPast && this.isReleasedDate(dateStr),
-                        isUnreleased: !isPast && this.isUnreleasedDate(dateStr),
-                    });
+                    cells.push({ key: dateStr, day: d, dateStr, isPast, isToday: cellDate.getTime() === today.getTime(),
+                        isReleased: !isPast && this.isReleasedDate(dateStr), isUnreleased: !isPast && this.isUnreleasedDate(dateStr) });
                 }
                 return cells;
             },
 
             cellClasses(cell) {
-                if (!cell.day) return 'cal-empty';
-                if (cell.isPast) return 'cal-past opacity-25 cursor-default pointer-events-none';
+                if (!cell.day) return 'cal-empty pointer-events-none';
+                if (cell.isPast) return 'cal-past opacity-20 pointer-events-none';
+                if (this.selectedDates.includes(cell.dateStr)) return 'cal-selected';
                 return '';
             },
             cellStyles(cell) {
                 if (!cell.day || cell.isPast) return 'color: var(--c4);';
-                const isSelected = this.selectedDates.includes(cell.dateStr);
-                if (isSelected) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700; transform: scale(1.05); box-shadow: 0 4px 12px rgba(245,158,11,0.25);`;
-                if (cell.isReleased) return `background: var(--cal-released-bg); border: 1px solid var(--cal-released-border); color: var(--c1);`;
-                if (cell.isUnreleased) return `background: var(--cal-unreleased-bg); border: 1px solid var(--cal-unreleased-border); color: var(--c1);`;
+                const sel = this.selectedDates.includes(cell.dateStr);
+                if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700;`;
+                if (cell.isReleased) return `background: var(--cal-available-bg); color: var(--cal-available-text);`;
+                if (cell.isUnreleased) return `background: var(--cal-upcoming-bg); color: var(--cal-upcoming-text);`;
                 return `color: var(--c3);`;
             },
 
@@ -539,43 +566,40 @@
                 const idx = this.selectedDates.indexOf(dateStr);
                 if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
                 if (this.isReleasedDate(dateStr)) {
-                    const currentReleased = this.selectedDates.filter(d => this.isReleasedDate(d)).length;
-                    if (currentReleased >= 5) { this.showToast('Max 5 sold-out dates'); return; }
+                    if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates for released slots'); return; }
                 }
-                this.selectedDates.push(dateStr);
-                this.selectedDates.sort();
+                this.selectedDates.push(dateStr); this.selectedDates.sort();
             },
 
-            // ═══ Time Picker ═══
+            // ═══ Times ═══
             get timePills() {
                 if (!this.restaurant) return [];
                 const start = this.parseTime(this.restaurant.service_start || '17:00');
                 const end = this.parseTime(this.restaurant.service_end || '22:00');
                 const hotStart = this.parseTime(this.restaurant.hot_start || '19:00');
                 const hotEnd = this.parseTime(this.restaurant.hot_end || '20:30');
-                const pills = [];
-                let t = start;
+                const pills = []; let t = start;
                 while (t <= end) {
-                    const h = Math.floor(t / 60), m = t % 60;
-                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                    const h12 = h > 12 ? h - 12 : h;
-                    pills.push({ time: timeStr, label: `${h12}:${String(m).padStart(2, '0')}`, isHot: t >= hotStart && t <= hotEnd });
+                    const h = Math.floor(t/60), m = t%60;
+                    const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                    const ampm = h >= 12 ? 'pm' : 'am';
+                    pills.push({ time: timeStr, label: `${h12}:${String(m).padStart(2,'0')} ${ampm}`, isHot: t >= hotStart && t <= hotEnd });
                     t += 30;
                 }
                 return pills;
             },
-            parseTime(str) { const [h, m] = str.split(':').map(Number); return h * 60 + (m || 0); },
+            parseTime(str) { const [h,m] = str.split(':').map(Number); return h*60 + (m||0); },
 
             timeStyles(tp) {
-                const isSelected = this.selectedTimes.includes(tp.time);
-                if (isSelected) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
-                if (tp.isHot) return `background: var(--bg-input); color: var(--c1); border: 1px solid var(--time-hot-border);`;
+                const sel = this.selectedTimes.includes(tp.time);
+                if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
+                if (tp.isHot) return `background: var(--amber-soft); color: var(--c1); border: 1px solid var(--amber-border);`;
                 return `background: var(--bg-input); color: var(--c2); border: 1px solid var(--border);`;
             },
-
             toggleTime(timeStr) {
                 const idx = this.selectedTimes.indexOf(timeStr);
-                if (idx >= 0) { this.selectedTimes.splice(idx, 1); }
+                if (idx >= 0) this.selectedTimes.splice(idx, 1);
                 else { this.selectedTimes.push(timeStr); this.selectedTimes.sort(); }
             },
 
@@ -594,23 +618,12 @@
 
                 let dropTime = null;
                 if (this.restaurant.drop_days_ahead) {
-                    dropTime = {
-                        hour: this.restaurant.drop_hour || 10,
-                        minute: this.restaurant.drop_minute || 0,
-                        second: 0,
-                        timezone: 'America/New_York',
-                        days_ahead: this.restaurant.drop_days_ahead,
-                    };
+                    dropTime = { hour: this.restaurant.drop_hour || 10, minute: this.restaurant.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: this.restaurant.drop_days_ahead };
                 }
                 const payload = {
-                    venue_id: this.venueId,
-                    venue_name: this.restaurant.name,
-                    party_size: this.partySize,
-                    dates: this.selectedDates,
-                    time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
-                    drop_time: dropTime,
-                    book_earliest: this.bookEarliest,
-                    latest_notify_hours: parseFloat(this.latestNotify),
+                    venue_id: this.venueId, venue_name: this.restaurant.name, party_size: this.partySize,
+                    dates: this.selectedDates, time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
+                    drop_time: dropTime, book_earliest: this.bookEarliest, latest_notify_hours: parseFloat(this.latestNotify),
                 };
 
                 try {
@@ -630,20 +643,10 @@
                 }
             },
 
-            showToast(msg) {
-                this.toast = msg;
-                setTimeout(() => { this.toast = null; }, 3000);
-            },
+            showToast(msg) { this.toast = msg; setTimeout(() => { this.toast = null; }, 3000); },
         };
     }
     </script>
-    <!-- Theme anti-flash -->
-    <script>
-    (function() {
-        const theme = localStorage.getItem('resr_theme') || 'dark';
-        if (theme === 'dark') { document.documentElement.classList.add('dark'); }
-        else { document.documentElement.classList.remove('dark'); }
-    })();
-    </script>
+    <script>(function(){ const t = localStorage.getItem('resr_theme') || 'dark'; if (t === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); })();</script>
 </body>
 </html>
