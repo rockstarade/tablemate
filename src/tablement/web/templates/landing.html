@@ -117,12 +117,12 @@
             </a>
 
             <!-- Nav links (desktop) -->
-            <div class="hidden md:flex items-center gap-8">
-                <a href="#how-it-works" class="font-bold text-base transition-colors"
+            <div class="hidden md:flex items-center gap-12">
+                <a href="#how-it-works" class="font-bold text-lg transition-colors"
                     :class="activeSection === 'how-it-works' ? 'text-brand-400' : 'text-white hover:text-brand-400'">How it Works</a>
-                <a href="#pricing" class="font-bold text-base transition-colors"
+                <a href="#pricing" class="font-bold text-lg transition-colors"
                     :class="activeSection === 'pricing' ? 'text-brand-400' : 'text-white hover:text-brand-400'">Pricing</a>
-                <a href="#faq" class="font-bold text-base transition-colors"
+                <a href="#faq" class="font-bold text-lg transition-colors"
                     :class="activeSection === 'faq' ? 'text-brand-400' : 'text-white hover:text-brand-400'">FAQ</a>
             </div>
 
@@ -144,19 +144,18 @@
     <!-- ═══════════════════ HERO ═══════════════════ -->
     <main>
         <section class="min-h-screen flex items-center relative overflow-hidden">
-            <!-- Ombre glows -->
-            <div class="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[120px] opacity-30 pointer-events-none" style="background: radial-gradient(circle, rgba(245,158,11,0.35) 0%, transparent 70%);"></div>
-            <div class="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-25 pointer-events-none" style="background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%);"></div>
-            <div class="absolute top-20 right-0 w-[350px] h-[350px] rounded-full blur-[100px] opacity-20 pointer-events-none" style="background: radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%);"></div>
+            <!-- Ambient ombre glows -->
+            <div class="absolute -bottom-32 -left-32 w-[600px] h-[300px] pointer-events-none opacity-[0.07]" style="background: linear-gradient(135deg, rgba(245,158,11,0.8) 0%, transparent 60%);"></div>
+            <div class="absolute -bottom-32 -right-32 w-[600px] h-[300px] pointer-events-none opacity-[0.06]" style="background: linear-gradient(225deg, rgba(245,158,11,0.7) 0%, transparent 60%);"></div>
+            <div class="absolute -top-20 -right-32 w-[500px] h-[300px] pointer-events-none opacity-[0.05]" style="background: linear-gradient(315deg, rgba(245,158,11,0.6) 0%, transparent 50%);"></div>
 
             <!-- Content -->
-            <div class="max-w-7xl mx-auto px-6 lg:px-20 w-full py-32 sm:py-0">
-                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div class="max-w-7xl mx-auto px-6 lg:px-16 w-full py-32 sm:py-0">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                     <!-- Left: text -->
-                    <div class="flex-1">
+                    <div class="flex-1 lg:max-w-3xl">
                         <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 fade-in">
-                            Grab the <span class="text-brand-400">impossible</span><br>
-                            NYC reservations.
+                            Secure the <span class="text-brand-400">impossible</span> NYC reservations<span class="text-brand-400">.</span>
                         </h1>
                         <p class="text-lg sm:text-xl text-slate-400 max-w-xl mb-12 fade-in-delay">
                             We book NYC's most competitive restaurants the instant reservations drop. You just show up and eat.
@@ -177,31 +176,37 @@
                     <!-- Right: phone mockup image -->
                     <div class="hidden lg:flex flex-1 justify-center fade-in-delay">
                         <img src="/static/hero-phone.jpeg" alt="RESR booking confirmation on iPhone"
-                            class="w-80 xl:w-96 rounded-3xl shadow-2xl shadow-brand-500/10">
+                            class="w-96 xl:w-[440px] rounded-3xl shadow-2xl shadow-brand-500/10">
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ═══════════════════ HOW IT WORKS ═══════════════════ -->
-        <section id="how-it-works" class="py-24 border-t border-slate-800/50">
+        <section id="how-it-works" class="py-28 border-t border-slate-800/50">
             <div class="max-w-5xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-16">How it works</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <h2 class="text-3xl sm:text-5xl font-bold text-white mb-20">How it works</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-14">
                     <div class="text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center text-2xl font-bold mx-auto mb-5">1</div>
-                        <h3 class="text-lg font-semibold text-white mb-2">Pick your restaurant</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Browse our curated list of NYC's hardest-to-book spots. Choose where you want to eat.</p>
+                        <div class="w-16 h-16 rounded-2xl bg-brand-500/15 flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white mb-3">Pick your restaurant</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Browse our curated list of NYC's hardest-to-book spots — from Carbone to Semma to Polo Bar.</p>
                     </div>
                     <div class="text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center text-2xl font-bold mx-auto mb-5">2</div>
-                        <h3 class="text-lg font-semibold text-white mb-2">Set your preferences</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Tell us your date, time, and party size. We handle everything from there.</p>
+                        <div class="w-16 h-16 rounded-2xl bg-brand-500/15 flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white mb-3">Tell us your date</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Tell us your date, time, and party size. We'll handle everything for you.</p>
                     </div>
                     <div class="text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-500/15 text-brand-400 flex items-center justify-center text-2xl font-bold mx-auto mb-5">3</div>
-                        <h3 class="text-lg font-semibold text-white mb-2">We grab it for you</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed">Our system books the instant the slot opens. Sub-second speed. You get a confirmation.</p>
+                        <div class="w-16 h-16 rounded-2xl bg-brand-500/15 flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-white mb-3">We'll text you once we get it</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">Our system books the instant the restaurant releases the reservation or a slot opens up.</p>
                     </div>
                 </div>
             </div>
