@@ -1244,13 +1244,19 @@
                                         <input type="checkbox" x-model="r.is_active" class="rounded">
                                         Active (visible on browse)
                                     </label>
-                                    <button @click="saveRestaurant(r)"
+                                    <button @click="saveRestaurant(r, $event)"
                                         :disabled="restMgr.saving[r.venue_id]"
-                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                        :class="restMgr.saving[r.venue_id]
-                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                            : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30'">
-                                        <span x-show="!restMgr.saving[r.venue_id]">Save Changes</span>
+                                        class="px-4 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                                        :class="restMgr.saved[r.venue_id]
+                                            ? 'bg-green-500/30 text-green-400'
+                                            : restMgr.saveError[r.venue_id]
+                                                ? 'bg-red-500/30 text-red-400'
+                                                : restMgr.saving[r.venue_id]
+                                                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                                    : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30'">
+                                        <span x-show="restMgr.saved[r.venue_id]">✓ Saved!</span>
+                                        <span x-show="restMgr.saveError[r.venue_id]" x-text="'✗ ' + (restMgr.saveError[r.venue_id] || 'Error')"></span>
+                                        <span x-show="!restMgr.saving[r.venue_id] && !restMgr.saved[r.venue_id] && !restMgr.saveError[r.venue_id]">Save Changes</span>
                                         <span x-show="restMgr.saving[r.venue_id]">Saving...</span>
                                     </button>
                                 </div>
@@ -1386,6 +1392,8 @@
                 loaded: false,
                 loading: false,
                 saving: {},
+                saved: {},
+                saveError: {},
                 showAdd: false,
                 addQuery: '',
                 addResults: [],
@@ -2313,8 +2321,10 @@
                 this.restMgr.loading = false;
             },
 
-            async saveRestaurant(r) {
+            async saveRestaurant(r, e) {
                 this.restMgr.saving[r.venue_id] = true;
+                this.restMgr.saved[r.venue_id] = false;
+                this.restMgr.saveError[r.venue_id] = '';
                 try {
                     const body = {
                         name: r.name, cuisine: r.cuisine, neighborhood: r.neighborhood,
@@ -2330,13 +2340,20 @@
                         body: JSON.stringify(body),
                     });
                     if (resp.ok) {
-                        const btn = event.target.closest('button');
-                        if (btn) { btn.classList.add('!bg-green-500/30', '!text-green-400'); setTimeout(() => btn.classList.remove('!bg-green-500/30', '!text-green-400'), 1500); }
+                        this.restMgr.saving[r.venue_id] = false;
+                        this.restMgr.saved[r.venue_id] = true;
+                        setTimeout(() => { this.restMgr.saved[r.venue_id] = false; }, 2000);
+                    } else {
+                        const data = await resp.json().catch(() => ({}));
+                        this.restMgr.saving[r.venue_id] = false;
+                        this.restMgr.saveError[r.venue_id] = data.detail || 'Save failed';
+                        setTimeout(() => { this.restMgr.saveError[r.venue_id] = ''; }, 3000);
                     }
-                } catch (e) {
-                    console.warn('Failed to save restaurant:', e);
+                } catch (err) {
+                    this.restMgr.saving[r.venue_id] = false;
+                    this.restMgr.saveError[r.venue_id] = 'Network error';
+                    setTimeout(() => { this.restMgr.saveError[r.venue_id] = ''; }, 3000);
                 }
-                this.restMgr.saving[r.venue_id] = false;
             },
 
             async searchResyForAdd() {

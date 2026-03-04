@@ -118,9 +118,12 @@
 
             <!-- Nav links (desktop) -->
             <div class="hidden md:flex items-center gap-8">
-                <a href="#how-it-works" class="text-white font-bold text-base hover:text-brand-400 transition-colors">How it Works</a>
-                <a href="#pricing" class="text-white font-bold text-base hover:text-brand-400 transition-colors">Pricing</a>
-                <a href="#faq" class="text-white font-bold text-base hover:text-brand-400 transition-colors">FAQ</a>
+                <a href="#how-it-works" class="font-bold text-base transition-colors"
+                    :class="activeSection === 'how-it-works' ? 'text-brand-400' : 'text-white hover:text-brand-400'">How it Works</a>
+                <a href="#pricing" class="font-bold text-base transition-colors"
+                    :class="activeSection === 'pricing' ? 'text-brand-400' : 'text-white hover:text-brand-400'">Pricing</a>
+                <a href="#faq" class="font-bold text-base transition-colors"
+                    :class="activeSection === 'faq' ? 'text-brand-400' : 'text-white hover:text-brand-400'">FAQ</a>
             </div>
 
             <!-- Auth buttons -->
@@ -140,27 +143,41 @@
 
     <!-- ═══════════════════ HERO ═══════════════════ -->
     <main>
-        <section class="pt-36 sm:pt-44 pb-24 sm:pb-32">
-            <div class="max-w-7xl mx-auto px-6 lg:px-20">
-                <div class="max-w-2xl">
-                    <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 fade-in">
-                        Grab the <span class="text-brand-400">impossible</span><br>
-                        NYC reservations.
-                    </h1>
-                    <p class="text-lg sm:text-xl text-slate-400 mb-12 fade-in-delay">
-                        We book NYC's most competitive restaurants the instant reservations drop. You just show up and eat.
-                    </p>
+        <section class="min-h-screen flex items-center relative overflow-hidden">
+            <!-- Ombre glows -->
+            <div class="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full blur-[120px] opacity-30 pointer-events-none" style="background: radial-gradient(circle, rgba(245,158,11,0.35) 0%, transparent 70%);"></div>
+            <div class="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full blur-[120px] opacity-25 pointer-events-none" style="background: radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%);"></div>
+            <div class="absolute top-20 right-0 w-[350px] h-[350px] rounded-full blur-[100px] opacity-20 pointer-events-none" style="background: radial-gradient(circle, rgba(59,130,246,0.4) 0%, transparent 70%);"></div>
 
-                    <!-- Two CTA buttons -->
-                    <div class="flex flex-col sm:flex-row items-center sm:items-start justify-start gap-4 fade-in-delay-2">
-                        <button @click="openAuth()"
-                            class="px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-lg transition-all glow-amber w-full sm:w-auto">
-                            Get Started
-                        </button>
-                        <a href="#restaurants"
-                            class="px-8 py-4 rounded-2xl border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white font-semibold text-lg transition-all w-full sm:w-auto text-center">
-                            Our Restaurants
-                        </a>
+            <!-- Content -->
+            <div class="max-w-7xl mx-auto px-6 lg:px-20 w-full py-32 sm:py-0">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                    <!-- Left: text -->
+                    <div class="flex-1">
+                        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 fade-in">
+                            Grab the <span class="text-brand-400">impossible</span><br>
+                            NYC reservations.
+                        </h1>
+                        <p class="text-lg sm:text-xl text-slate-400 max-w-xl mb-12 fade-in-delay">
+                            We book NYC's most competitive restaurants the instant reservations drop. You just show up and eat.
+                        </p>
+
+                        <!-- Two CTA buttons -->
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start justify-start gap-4 fade-in-delay-2">
+                            <button @click="openAuth()"
+                                class="px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-lg transition-all glow-amber w-full sm:w-auto">
+                                Get Started
+                            </button>
+                            <a href="#restaurants"
+                                class="px-8 py-4 rounded-2xl border border-slate-600 hover:border-slate-400 text-slate-300 hover:text-white font-semibold text-lg transition-all w-full sm:w-auto text-center">
+                                Our Restaurants
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Right: phone mockup image -->
+                    <div class="hidden lg:flex flex-1 justify-center fade-in-delay">
+                        <img src="/static/hero-phone.jpeg" alt="RESR booking confirmation on iPhone"
+                            class="w-80 xl:w-96 rounded-3xl shadow-2xl shadow-brand-500/10">
                     </div>
                 </div>
             </div>
@@ -436,6 +453,9 @@
             toastMsg: '',
             devMode: false,
 
+            // Scroll spy — active section for nav highlighting
+            activeSection: '',
+
             // Restaurant preview (public, no auth needed)
             restaurants: [],
 
@@ -469,6 +489,20 @@
                     const data = await resp.json();
                     this.restaurants = data.restaurants || [];
                 } catch (e) {}
+
+                // Scroll spy for nav highlighting
+                const spyIds = ['how-it-works', 'restaurants', 'pricing', 'faq'];
+                const onScroll = () => {
+                    const offset = window.scrollY + 120;
+                    let current = '';
+                    for (const id of spyIds) {
+                        const el = document.getElementById(id);
+                        if (el && el.offsetTop <= offset) current = id;
+                    }
+                    this.activeSection = current;
+                };
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
             },
 
             openAuth() {
