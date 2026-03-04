@@ -170,19 +170,27 @@
                         </div>
 
                     </div>
-                    <!-- Right: phone mockup image -->
-                    <div class="hidden lg:flex flex-1 justify-center fade-in-delay">
+                    <!-- Right: phone mockup image + badge overlay -->
+                    <div class="hidden lg:flex flex-1 justify-center fade-in-delay relative">
                         <img src="/static/hero-phone.jpeg" alt="RESR booking confirmation on iPhone"
                             class="w-96 xl:w-[440px] rounded-3xl shadow-2xl shadow-brand-500/10">
+                        <!-- Social proof badge — overlaid at bottom center of phone -->
+                        <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-slate-900/80 backdrop-blur-md border border-slate-700/50 shadow-xl">
+                            <svg class="w-8 h-8 text-brand-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <div>
+                                <span class="text-white font-bold text-3xl leading-none">500+</span>
+                                <p class="text-white/60 text-xs">happy customers</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <!-- Social proof badge — centered at bottom -->
-                <div class="flex justify-center mt-16 sm:mt-24 fade-in-delay-2">
-                    <div class="flex items-center gap-3.5 px-7 py-4 rounded-2xl bg-slate-800/50 border border-slate-700/40">
-                        <svg class="w-9 h-9 text-brand-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        <div>
-                            <span class="text-white font-bold text-4xl leading-none">500+</span>
-                            <p class="text-white/60 text-sm">happy customers</p>
+                    <!-- Mobile-only social proof badge -->
+                    <div class="flex lg:hidden justify-center mt-10 fade-in-delay-2">
+                        <div class="flex items-center gap-3 px-6 py-3.5 rounded-2xl bg-slate-800/50 border border-slate-700/40">
+                            <svg class="w-8 h-8 text-brand-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <div>
+                                <span class="text-white font-bold text-3xl leading-none">500+</span>
+                                <p class="text-white/60 text-xs">happy customers</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -190,21 +198,23 @@
         </section>
 
         <!-- ═══════════════════ RESTAURANT SHOWCASE ═══════════════════ -->
-        <section class="py-12 sm:py-16">
-            <div class="max-w-4xl mx-auto px-6 text-center">
-                <p class="text-white text-xl sm:text-2xl font-medium mb-8">
-                    Access to <span class="text-brand-400 font-bold">70+ exclusive restaurants</span> in New York
-                </p>
-                <div class="flex flex-wrap justify-center items-center gap-x-6 sm:gap-x-10 gap-y-3 text-white/50 text-sm sm:text-base font-semibold tracking-widest uppercase">
-                    <span>4 Charles</span>
-                    <span class="text-white/20">·</span>
-                    <span>Atomix</span>
-                    <span class="text-white/20">·</span>
-                    <span>Semma</span>
-                    <span class="text-white/20">·</span>
-                    <span>Coqodaq</span>
-                    <span class="text-white/20">·</span>
-                    <span>Carbone</span>
+        <section class="py-10 sm:py-14">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="rounded-2xl border border-brand-500/20 bg-brand-500/5 px-8 py-8 sm:px-12 sm:py-10 text-center">
+                    <p class="text-white text-lg sm:text-xl font-medium mb-6">
+                        Access to <span class="text-brand-400 font-bold">70+ exclusive restaurants</span> in New York
+                    </p>
+                    <div class="flex flex-wrap justify-center items-center gap-x-5 sm:gap-x-8 gap-y-2.5 text-white/60 text-xs sm:text-sm font-semibold tracking-widest uppercase">
+                        <span>4 Charles</span>
+                        <span class="text-brand-500/30">·</span>
+                        <span>Atomix</span>
+                        <span class="text-brand-500/30">·</span>
+                        <span>Semma</span>
+                        <span class="text-brand-500/30">·</span>
+                        <span>Coqodaq</span>
+                        <span class="text-brand-500/30">·</span>
+                        <span>Carbone</span>
+                    </div>
                 </div>
             </div>
         </section>
