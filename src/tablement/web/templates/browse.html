@@ -124,50 +124,45 @@
         <!-- Main nav -->
         <nav class="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
             <a href="/browse"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium bg-brand-500/10 text-brand-400 transition-all">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium bg-brand-500/10 text-brand-400 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                 Home
             </a>
             <a href="/reservations"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 My Reservations
             </a>
             <a href="/browse#all-restaurants"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 Our Restaurants
             </a>
         </nav>
 
         <!-- Account section -->
         <div class="px-3 py-3 border-t border-slate-800/40">
-            <div class="px-4 py-2.5 mb-1">
+            <div class="px-4 py-2.5 mb-2">
                 <p class="text-white font-semibold text-sm truncate" x-text="userName || 'Your Account'"></p>
                 <p class="text-slate-500 text-xs">Manage profile</p>
             </div>
+
+            <!-- Reservation bank (inside account) -->
+            <div class="mx-3 mb-3 rounded-xl bg-accent-500/[0.08] border border-accent-500/20 px-4 py-3">
+                <p class="text-accent-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Reservations made</p>
+                <p class="text-white text-2xl font-bold leading-none" x-text="reservationsRemaining">0</p>
+            </div>
+
             <a href="/settings"
                 class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Account Settings
             </a>
             <button
                 class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all text-left">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 Support
             </button>
-        </div>
-
-        <!-- Reservation bank -->
-        <div class="px-4 py-4 border-t border-slate-800/40">
-            <div class="rounded-xl bg-accent-500/[0.08] border border-accent-500/20 px-4 py-3.5">
-                <div class="flex items-center gap-2 mb-1.5">
-                    <svg class="w-3.5 h-3.5 text-accent-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <p class="text-accent-400 text-[11px] font-semibold uppercase tracking-wider">Reservations</p>
-                </div>
-                <p class="text-white text-2xl font-bold leading-none" x-text="reservationsRemaining">0</p>
-                <p class="text-slate-500 text-xs mt-1">remaining</p>
-            </div>
         </div>
 
         <!-- Sign out -->
@@ -210,17 +205,17 @@
             <!-- Nav links -->
             <nav class="flex-1 px-3 py-2 space-y-0.5">
                 <a href="/browse" @click="sidebarOpen = false"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-brand-500/10 text-brand-400">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium bg-brand-500/10 text-brand-400">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                     Home
                 </a>
                 <a href="/reservations"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     My Reservations
                 </a>
                 <a href="/browse#all-restaurants" @click="sidebarOpen = false"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
+                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     Our Restaurants
                 </a>
@@ -228,10 +223,17 @@
 
             <!-- Account -->
             <div class="px-3 py-3 border-t border-slate-800/40">
-                <div class="px-4 py-2.5 mb-1">
+                <div class="px-4 py-2.5 mb-2">
                     <p class="text-white font-semibold text-sm" x-text="userName || 'Your Account'"></p>
                     <p class="text-slate-500 text-xs">Manage profile</p>
                 </div>
+
+                <!-- Reservation bank (inside account) -->
+                <div class="mx-3 mb-3 rounded-xl bg-accent-500/[0.08] border border-accent-500/20 px-4 py-3">
+                    <p class="text-accent-400 text-[11px] font-semibold uppercase tracking-wider mb-1">Reservations made</p>
+                    <p class="text-white text-2xl font-bold leading-none" x-text="reservationsRemaining">0</p>
+                </div>
+
                 <a href="/settings"
                     class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -241,18 +243,6 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     Support
                 </button>
-            </div>
-
-            <!-- Reservation bank -->
-            <div class="px-4 py-4 border-t border-slate-800/40">
-                <div class="rounded-xl bg-accent-500/[0.08] border border-accent-500/20 px-4 py-3.5">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <svg class="w-3.5 h-3.5 text-accent-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                        <p class="text-accent-400 text-[11px] font-semibold uppercase tracking-wider">Reservations</p>
-                    </div>
-                    <p class="text-white text-2xl font-bold leading-none" x-text="reservationsRemaining">0</p>
-                    <p class="text-slate-500 text-xs mt-1">remaining</p>
-                </div>
             </div>
 
             <!-- Sign out -->
@@ -275,30 +265,32 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
 
-            <!-- Search bar -->
-            <div class="flex-1 max-w-xl relative">
-                <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
-                <input type="text" x-model="searchQuery" @input.debounce.300ms="searchVenues()"
-                    @focus="searchFocused = true" @blur="setTimeout(() => searchFocused = false, 200)"
-                    placeholder="Search restaurants..."
-                    class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-slate-800/60 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-accent-500/40 focus:bg-white/[0.06] transition-all">
+            <!-- Search bar (centered) -->
+            <div class="flex-1 flex justify-center">
+                <div class="w-full max-w-xl relative">
+                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" x-model="searchQuery" @input.debounce.300ms="searchVenues()"
+                        @focus="searchFocused = true" @blur="setTimeout(() => searchFocused = false, 200)"
+                        placeholder="Search restaurants..."
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-slate-800/60 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-accent-500/40 focus:bg-white/[0.06] transition-all">
 
-                <!-- Search results dropdown -->
-                <div x-show="searchFocused && searchResults.length > 0" x-cloak
-                    class="absolute top-full left-0 right-0 mt-2 rounded-xl border border-slate-800/60 bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-hidden z-50">
-                    <template x-for="r in searchResults" :key="r.resy_id || r.venue_id">
-                        <button @click="goToRestaurantSearch(r)"
-                            class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.04] transition-colors border-b border-slate-800/30 last:border-b-0">
-                            <div class="w-10 h-10 rounded-lg bg-slate-800/60 overflow-hidden flex-shrink-0">
-                                <img :src="'/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg'"
-                                    class="w-full h-full object-cover" @error="$event.target.style.display='none'">
-                            </div>
-                            <div>
-                                <p class="text-white text-sm font-medium" x-text="r.name"></p>
-                                <p class="text-slate-500 text-xs" x-text="r.neighborhood || r.location || ''"></p>
-                            </div>
-                        </button>
-                    </template>
+                    <!-- Search results dropdown -->
+                    <div x-show="searchFocused && searchResults.length > 0" x-cloak
+                        class="absolute top-full left-0 right-0 mt-2 rounded-xl border border-slate-800/60 bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-hidden z-50">
+                        <template x-for="r in searchResults" :key="r.resy_id || r.venue_id">
+                            <button @click="goToRestaurantSearch(r)"
+                                class="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.04] transition-colors border-b border-slate-800/30 last:border-b-0">
+                                <div class="w-10 h-10 rounded-lg bg-slate-800/60 overflow-hidden flex-shrink-0">
+                                    <img :src="'/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg'"
+                                        class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                                </div>
+                                <div>
+                                    <p class="text-white text-sm font-medium" x-text="r.name"></p>
+                                    <p class="text-slate-500 text-xs" x-text="r.neighborhood || r.location || ''"></p>
+                                </div>
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
 
@@ -308,12 +300,21 @@
                 <svg class="w-[18px] h-[18px] text-accent-400 group-hover:text-accent-300 transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                 <span class="text-accent-400 font-bold text-sm">3</span>
             </button>
+
+            <!-- Admin button (temp) -->
+            <a href="/admin" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/[0.04] border border-slate-800/50 text-slate-500 hover:text-white hover:bg-white/[0.06] transition-all text-xs font-medium">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                Admin
+            </a>
         </div>
     </header>
 
     <!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
     <main class="lg:ml-64 pt-[68px] pb-24 lg:pb-8 min-h-screen">
         <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1400px]">
+
+            <!-- Page heading -->
+            <h1 class="text-2xl sm:text-3xl font-bold text-white mb-8">Where do you want to eat?</h1>
 
             <!-- Loading skeletons -->
             <div x-show="loading" class="space-y-8">
