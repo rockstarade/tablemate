@@ -25,7 +25,7 @@ async def list_curated():
     """
     rows = await db.list_curated_restaurants(active_only=True)
 
-    # Build response with image URL convention
+    # Build response with image URL convention + service hours
     restaurants = []
     for r in rows:
         restaurants.append({
@@ -40,6 +40,10 @@ async def list_curated():
             "drop_hour": r.get("drop_hour"),
             "drop_minute": r.get("drop_minute", 0),
             "sort_order": r.get("sort_order", 0),
+            "service_start": r.get("service_start", "17:00"),
+            "service_end": r.get("service_end", "22:00"),
+            "hot_start": r.get("hot_start", "19:00"),
+            "hot_end": r.get("hot_end", "20:30"),
         })
 
     return {"restaurants": restaurants}
@@ -64,5 +68,9 @@ async def get_curated(venue_id: int):
             "drop_days_ahead": row.get("drop_days_ahead"),
             "drop_hour": row.get("drop_hour"),
             "drop_minute": row.get("drop_minute", 0),
+            "service_start": row.get("service_start", "17:00"),
+            "service_end": row.get("service_end", "22:00"),
+            "hot_start": row.get("hot_start", "19:00"),
+            "hot_end": row.get("hot_end", "20:30"),
         }
     }

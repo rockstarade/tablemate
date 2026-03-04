@@ -21,6 +21,7 @@
         }
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
@@ -48,10 +49,23 @@
                 <span class="text-xl font-bold text-white">VIP Control</span>
                 <span class="px-2 py-0.5 rounded-md bg-brand-500/20 text-brand-400 text-xs font-medium">ADMIN</span>
             </div>
-            <form @submit.prevent="login()">
-                <input type="password" x-model="password" placeholder="Admin password"
-                    class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 mb-4"
-                    required autofocus>
+            <form @submit.prevent="login()" x-data="{ showPw: false }">
+                <div class="relative mb-4">
+                    <input :type="showPw ? 'text' : 'password'" x-model="password" placeholder="Admin password"
+                        class="w-full px-4 py-3 pr-12 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                        required autofocus>
+                    <button type="button" @click="showPw = !showPw"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors p-1"
+                        tabindex="-1">
+                        <svg x-show="!showPw" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <svg x-show="showPw" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+                        </svg>
+                    </button>
+                </div>
                 <button type="submit" :disabled="!password"
                     class="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold transition-all disabled:opacity-50 text-sm">
                     Sign In
@@ -84,7 +98,7 @@
         <div class="fixed top-[53px] inset-x-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6 flex gap-1 overflow-x-auto">
                 <template x-for="tab in tabs">
-                    <button @click="activeTab = tab.id"
+                    <button @click="activeTab = tab.id; if (tab.id === 'analytics' && !analytics.loaded) loadAnalytics();"
                         class="px-4 py-2.5 text-xs font-medium transition-colors border-b-2 whitespace-nowrap"
                         :class="activeTab === tab.id
                             ? 'text-brand-400 border-brand-400'
@@ -96,6 +110,81 @@
         </div>
 
         <main class="pt-28 pb-16 max-w-7xl mx-auto px-6">
+
+            <!-- ==================== ACTIVE JOBS ==================== -->
+            <div x-show="activeTab === 'jobs'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Active Jobs</h2>
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-slate-400">
+                            <span class="text-white font-semibold tabular-nums" x-text="activeJobs.length"></span> running
+                        </span>
+                        <button @click="fetchActiveJobs()"
+                            class="px-3 py-1.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs transition">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="activeJobs.length === 0" class="glass rounded-xl border border-slate-700/50 p-12 text-center">
+                    <p class="text-slate-500 text-sm">No active jobs running</p>
+                </div>
+
+                <!-- Jobs table -->
+                <div x-show="activeJobs.length > 0" class="glass rounded-xl border border-slate-700/50 overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-700/50 text-left">
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Restaurant</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Type</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Date</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Status</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Tier</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Polls</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Created</th>
+                                <th class="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="job in activeJobs" :key="job.reservation_id">
+                                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30">
+                                    <td class="px-4 py-3 text-white font-medium" x-text="job.venue_name || '—'"></td>
+                                    <td class="px-4 py-3">
+                                        <span class="px-2 py-0.5 rounded-md text-xs font-medium"
+                                            :class="{
+                                                'bg-amber-500/20 text-amber-400': job.mode === 'snipe',
+                                                'bg-red-500/20 text-red-400': job.mode === 'monitor',
+                                                'bg-blue-500/20 text-blue-400': job.mode === 'intel',
+                                            }"
+                                            x-text="job.mode === 'snipe' ? 'Release' : job.mode === 'monitor' ? 'Cancel' : 'Intel'">
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-slate-300 tabular-nums" x-text="job.target_date || '—'"></td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-slate-300" x-text="job.message || job.phase || '—'"></span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-xs font-medium"
+                                            :class="job.poll_tier === 'hot' ? 'text-orange-400' : 'text-slate-400'"
+                                            x-text="(job.poll_tier || '—').toUpperCase()">
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-white tabular-nums" x-text="job.attempt || 0"></td>
+                                    <td class="px-4 py-3 text-slate-500 text-xs" x-text="job.created_at ? new Date(job.created_at).toLocaleString() : '—'"></td>
+                                    <td class="px-4 py-3">
+                                        <button
+                                            @click="cancelJob(job.reservation_id)"
+                                            class="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition">
+                                            Cancel
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <!-- ==================== SNIPE LAUNCHER ==================== -->
             <div x-show="activeTab === 'snipe'" class="space-y-6">
@@ -939,6 +1028,99 @@
                 </div>
             </div>
 
+            <!-- ==================== ANALYTICS ==================== -->
+            <div x-show="activeTab === 'analytics'" class="space-y-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white">Cancellation Analytics</h2>
+                    <div class="flex items-center gap-3">
+                        <select x-model="analytics.venueFilter"
+                            @change="loadAnalytics()"
+                            class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                            <option :value="null">All Restaurants</option>
+                            <template x-for="v in dropIntel.venues" :key="v.venue_id">
+                                <option :value="v.venue_id" x-text="v.venue_name"></option>
+                            </template>
+                        </select>
+                        <button @click="loadAnalytics()" class="text-xs text-slate-400 hover:text-white">Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Loading state -->
+                <div x-show="analytics.loading" class="flex items-center justify-center py-12">
+                    <div class="w-6 h-6 border-2 border-brand-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="ml-3 text-sm text-slate-400">Loading analytics...</span>
+                </div>
+
+                <!-- Booking Success Overview -->
+                <div x-show="!analytics.loading && analytics.bookingSuccess" class="glass rounded-xl border border-slate-700/50 p-6">
+                    <h3 class="text-sm font-medium text-slate-300 mb-4">Booking Performance</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-emerald-400" x-text="analytics.bookingSuccess.success_rate + '%'"></div>
+                            <div class="text-xs text-slate-500 mt-1">Success Rate</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-white" x-text="analytics.bookingSuccess.confirmed"></div>
+                            <div class="text-xs text-slate-500 mt-1">Confirmed</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-red-400" x-text="analytics.bookingSuccess.failed"></div>
+                            <div class="text-xs text-slate-500 mt-1">Failed</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-400" x-text="analytics.bookingSuccess.avg_attempts_success"></div>
+                            <div class="text-xs text-slate-500 mt-1">Avg Attempts</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-brand-400" x-text="analytics.bookingSuccess.avg_time_success_seconds + 's'"></div>
+                            <div class="text-xs text-slate-500 mt-1">Avg Time</div>
+                        </div>
+                    </div>
+
+                    <!-- Top Errors -->
+                    <div x-show="analytics.bookingSuccess.top_errors?.length" class="mt-4 pt-4 border-t border-slate-700/30">
+                        <h4 class="text-xs text-slate-500 uppercase tracking-wide mb-2">Top Failure Reasons</h4>
+                        <div class="space-y-1">
+                            <template x-for="e in analytics.bookingSuccess.top_errors" :key="e.error">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-slate-400 truncate mr-3" x-text="e.error"></span>
+                                    <span class="text-red-400 tabular-nums font-medium" x-text="e.count + 'x'"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div x-show="!analytics.loading" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Cancellations by Hour -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Cancellations by Hour of Day (ET)</h3>
+                        <div class="relative" style="height: 280px;">
+                            <canvas id="hourChart"></canvas>
+                        </div>
+                        <p class="text-[10px] text-slate-600 mt-2">When cancellations appear — optimize polling during peak hours.</p>
+                    </div>
+
+                    <!-- Cancellations by Day -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-6">
+                        <h3 class="text-sm font-medium text-slate-300 mb-4">Cancellations by Day of Week</h3>
+                        <div class="relative" style="height: 280px;">
+                            <canvas id="dayChart"></canvas>
+                        </div>
+                        <p class="text-[10px] text-slate-600 mt-2">Which days have the most cancellations — plan polling tiers accordingly.</p>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="!analytics.loading && analytics.loaded && analytics.byHour.every(h => h.count === 0)"
+                    class="glass rounded-xl border border-slate-700/50 p-8 text-center">
+                    <div class="text-4xl mb-3">📊</div>
+                    <div class="text-slate-400 text-sm">No cancellation data collected yet.</div>
+                    <div class="text-slate-600 text-xs mt-1">Data will appear as the monitoring system captures slot availability snapshots.</div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -953,14 +1135,20 @@
 
             // Navigation
             tabs: [
+                { id: 'jobs', label: 'Active Jobs' },
                 { id: 'snipe', label: 'Snipe Launcher' },
                 { id: 'proxy', label: 'Proxy Control' },
                 { id: 'auth', label: 'Token & Auth' },
                 { id: 'ops', label: 'Live Ops' },
                 { id: 'intel', label: 'Restaurant Intel' },
                 { id: 'drops', label: 'Drop Intel' },
+                { id: 'analytics', label: 'Analytics' },
             ],
-            activeTab: 'snipe',
+            activeTab: 'jobs',
+
+            // Active jobs
+            activeJobs: [],
+            jobsRefreshTimer: null,
 
             // Resy users (for impersonation)
             resyUsers: [],
@@ -1032,6 +1220,19 @@
             // Drop Intelligence
             dropIntel: { venues: [], summaries: [], observations: [] },
 
+            // Analytics
+            analytics: {
+                loaded: false,
+                loading: false,
+                byHour: [],
+                byDay: [],
+                bookingSuccess: null,
+                venueFilter: null,
+                // Chart.js instances (so we can destroy before re-render)
+                hourChart: null,
+                dayChart: null,
+            },
+
             // Slot Conflicts
             slotConflicts: { conflicts: [], checking: false, checked: false },
 
@@ -1085,16 +1286,46 @@
                 this.password = '';
                 localStorage.removeItem('tablement_admin_token');
                 if (this.snipeEventSource) this.snipeEventSource.close();
+                if (this.jobsRefreshTimer) clearInterval(this.jobsRefreshTimer);
             },
 
             async loadInitial() {
                 await Promise.all([
+                    this.fetchActiveJobs(),
                     this.loadResyUsers(),
                     this.loadProxyStatus(),
                     this.loadHealth(),
                     this.loadRecentResults(),
                     this.loadDropIntel(),
                 ]);
+                // Auto-refresh active jobs every 5s
+                this.jobsRefreshTimer = setInterval(() => this.fetchActiveJobs(), 5000);
+            },
+
+            // ----- Active Jobs -----
+            async fetchActiveJobs() {
+                try {
+                    const resp = await fetch('/api/admin/vip/active-jobs', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.activeJobs = data.jobs || [];
+                    }
+                } catch (e) {}
+            },
+
+            async cancelJob(reservationId) {
+                if (!confirm('Cancel this job?')) return;
+                try {
+                    const resp = await fetch(`/api/admin/vip/cancel-job/${reservationId}`, {
+                        method: 'POST',
+                        headers: this.headers(),
+                    });
+                    if (resp.ok) {
+                        await this.fetchActiveJobs();
+                    }
+                } catch (e) {
+                    alert('Failed to cancel: ' + e.message);
+                }
             },
 
             // ----- Resy Users -----
@@ -1724,6 +1955,159 @@
                     }
                 } catch (e) {
                     console.warn('Toggle tracking failed:', e);
+                }
+            },
+
+            // ----- Analytics -----
+            async loadAnalytics() {
+                this.analytics.loading = true;
+                const venueParam = this.analytics.venueFilter ? `?venue_id=${this.analytics.venueFilter}` : '';
+                try {
+                    const [hourResp, dayResp, successResp] = await Promise.all([
+                        fetch('/api/admin/vip/analytics/cancellation-by-hour' + venueParam, { headers: this.headers() }),
+                        fetch('/api/admin/vip/analytics/cancellation-by-day' + venueParam, { headers: this.headers() }),
+                        fetch('/api/admin/vip/analytics/booking-success', { headers: this.headers() }),
+                    ]);
+                    if (hourResp.ok) {
+                        const d = await hourResp.json();
+                        this.analytics.byHour = d.hours || [];
+                    }
+                    if (dayResp.ok) {
+                        const d = await dayResp.json();
+                        this.analytics.byDay = d.days || [];
+                    }
+                    if (successResp.ok) {
+                        this.analytics.bookingSuccess = await successResp.json();
+                    }
+                    this.analytics.loaded = true;
+                    // Render charts after data loads (next tick so DOM is ready)
+                    this.$nextTick(() => this.renderAnalyticsCharts());
+                } catch (e) {
+                    console.warn('Failed to load analytics:', e);
+                }
+                this.analytics.loading = false;
+            },
+
+            renderAnalyticsCharts() {
+                if (typeof Chart === 'undefined') return;
+
+                // Shared chart styling
+                const gridColor = 'rgba(148, 163, 184, 0.1)';
+                const tickColor = '#94a3b8';
+
+                // ---- Hour chart ----
+                const hourCanvas = document.getElementById('hourChart');
+                if (hourCanvas && this.analytics.byHour.length) {
+                    if (this.analytics.hourChart) this.analytics.hourChart.destroy();
+                    const ctx = hourCanvas.getContext('2d');
+                    const data = this.analytics.byHour;
+
+                    // Color: hotter hours get warmer colors
+                    const maxCount = Math.max(...data.map(d => d.count), 1);
+                    const colors = data.map(d => {
+                        const intensity = d.count / maxCount;
+                        if (intensity > 0.7) return 'rgba(239, 68, 68, 0.8)';    // red
+                        if (intensity > 0.4) return 'rgba(251, 191, 36, 0.8)';    // amber
+                        if (intensity > 0.1) return 'rgba(59, 130, 246, 0.6)';    // blue
+                        return 'rgba(100, 116, 139, 0.4)';                         // slate
+                    });
+
+                    this.analytics.hourChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(d => {
+                                const h = d.hour % 12 || 12;
+                                return h + (d.hour < 12 ? 'a' : 'p');
+                            }),
+                            datasets: [{
+                                label: 'Cancellations',
+                                data: data.map(d => d.count),
+                                backgroundColor: colors,
+                                borderRadius: 4,
+                                borderSkipped: false,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                    titleColor: '#f1f5f9',
+                                    bodyColor: '#94a3b8',
+                                    borderColor: 'rgba(148, 163, 184, 0.2)',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        title: (items) => {
+                                            const h = this.analytics.byHour[items[0].dataIndex].hour;
+                                            const hour12 = h % 12 || 12;
+                                            const ampm = h < 12 ? 'AM' : 'PM';
+                                            return `${hour12}:00 ${ampm} ET`;
+                                        },
+                                        label: (item) => `${item.raw} cancellations detected`,
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 10 } } },
+                                y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, beginAtZero: true },
+                            },
+                        },
+                    });
+                }
+
+                // ---- Day chart ----
+                const dayCanvas = document.getElementById('dayChart');
+                if (dayCanvas && this.analytics.byDay.length) {
+                    if (this.analytics.dayChart) this.analytics.dayChart.destroy();
+                    const ctx = dayCanvas.getContext('2d');
+                    const data = this.analytics.byDay;
+
+                    const maxCount = Math.max(...data.map(d => d.count), 1);
+                    const colors = data.map(d => {
+                        const intensity = d.count / maxCount;
+                        if (intensity > 0.7) return 'rgba(239, 68, 68, 0.8)';
+                        if (intensity > 0.4) return 'rgba(251, 191, 36, 0.8)';
+                        if (intensity > 0.1) return 'rgba(59, 130, 246, 0.6)';
+                        return 'rgba(100, 116, 139, 0.4)';
+                    });
+
+                    this.analytics.dayChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(d => d.name.substring(0, 3)),
+                            datasets: [{
+                                label: 'Cancellations',
+                                data: data.map(d => d.count),
+                                backgroundColor: colors,
+                                borderRadius: 6,
+                                borderSkipped: false,
+                            }],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                                    titleColor: '#f1f5f9',
+                                    bodyColor: '#94a3b8',
+                                    borderColor: 'rgba(148, 163, 184, 0.2)',
+                                    borderWidth: 1,
+                                    callbacks: {
+                                        title: (items) => this.analytics.byDay[items[0].dataIndex].name,
+                                        label: (item) => `${item.raw} cancellations detected`,
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
+                                y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 10 } }, beginAtZero: true },
+                            },
+                        },
+                    });
                 }
             },
 

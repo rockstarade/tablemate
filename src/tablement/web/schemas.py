@@ -144,6 +144,23 @@ class ReservationCreateRequest(BaseModel):
     dry_run: bool = False
 
 
+class BatchReservationRequest(BaseModel):
+    """Multi-date reservation request for the smart calendar.
+
+    Creates one reservation per date, all sharing a group_id.
+    Released dates → monitor mode (cancellation sniping).
+    Unreleased dates → snipe mode (release sniping at drop time).
+    """
+    venue_id: int
+    venue_name: str
+    party_size: int = Field(ge=1, le=20)
+    dates: list[str] = Field(..., min_length=1, max_length=10)  # YYYY-MM-DD
+    time_preferences: list[TimePreferenceIn]
+    drop_time: DropTimeIn | None = None   # drop policy for unreleased dates
+    book_earliest: bool = False           # "earliest available" toggle
+    latest_notify_hours: float = Field(default=2.0, ge=0.5, le=48.0)
+
+
 class ReservationOut(BaseModel):
     id: str
     venue_id: int
@@ -159,10 +176,19 @@ class ReservationOut(BaseModel):
     elapsed_seconds: float | None = None
     error: str | None = None
     created_at: str | None = None
+    group_id: str | None = None
+    poll_tier: str | None = None
+    latest_notify_hours: float | None = None
 
 
 class ReservationListResponse(BaseModel):
     reservations: list[ReservationOut]
+
+
+class BatchReservationResponse(BaseModel):
+    group_id: str
+    reservation_ids: list[str]
+    count: int
 
 
 # ---------------------------------------------------------------------------

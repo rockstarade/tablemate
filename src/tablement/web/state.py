@@ -110,6 +110,20 @@ class JobManager:
             job.cancel()
         self._jobs.clear()
 
+    def list_all_jobs(self) -> list[dict]:
+        """Return all active jobs with serialized status for admin dashboard."""
+        result = []
+        for rid, job in self._jobs.items():
+            result.append({
+                "reservation_id": rid,
+                "user_id": job.user_id,
+                "phase": job.status.phase.value,
+                "attempt": job.status.attempt,
+                "slots_found": job.status.slots_found,
+                "message": job.status.message,
+            })
+        return result
+
     @property
     def active_count(self) -> int:
         return len(self._jobs)

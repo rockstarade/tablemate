@@ -1125,3 +1125,240 @@ async def create_claim(body: dict):
         reservation_id=body.get("reservation_id"),
     )
     return {"created": True, "claim": claim}
+
+
+# ---------------------------------------------------------------------------
+# Active Jobs Dashboard
+# ---------------------------------------------------------------------------
+
+
+@router.get("/vip/active-jobs", dependencies=[Depends(_require_admin)])
+async def get_active_jobs(request: Request):
+    """List all running jobs with their real-time status.
+
+    Returns in-memory job states enriched with DB data (venue name,
+    target date, mode, group_id, poll tier).
+    """
+    jobs = request.app.state.jobs.list_all_jobs()
+
+    # Enrich each job with DB data
+    enriched = []
+    for j in jobs:
+        try:
+            row = await db.get_reservation_by_id(j["reservation_id"])
+        except Exception:
+            row = None
+
+        if row:
+            j["venue_name"] = row.get("venue_name", "")
+            j["venue_id"] = row.get("venue_id")
+            j["target_date"] = str(row.get("target_date", ""))
+            j["mode"] = row.get("mode", "")
+            j["group_id"] = row.get("group_id")
+            j["created_at"] = str(row.get("created_at", ""))
+            j["poll_tier"] = row.get("poll_tier", "warm")
+            j["status"] = row.get("status", "")
+        enriched.append(j)
+
+    return {"jobs": enriched, "total": len(enriched)}
+
+
+@router.post("/vip/cancel-job/{reservation_id}", dependencies=[Depends(_require_admin)])
+async def admin_cancel_job(reservation_id: str, request: Request):
+    """Cancel a specific job from the admin dashboard."""
+    # Cancel in-memory job
+    job_manager = request.app.state.jobs
+    job = job_manager.get(reservation_id)
+    if job:
+        job.broadcast("snipe_result", {"success": False, "error": "Cancelled by admin"})
+        job_manager.remove(reservation_id)
+
+    # Cancel APScheduler jobs
+    scheduler = request.app.state.scheduler
+    if scheduler:
+        for prefix in ("snipe_", "monitor_"):
+            try:
+                scheduler.remove_job(f"{prefix}{reservation_id}")
+            except Exception:
+                pass
+
+    # Update DB
+    await db.update_reservation(reservation_id, status="cancelled", error="Cancelled by admin")
+    return {"cancelled": True}
+
+
+# ---------------------------------------------------------------------------
+# Cancellation Analytics
+# ---------------------------------------------------------------------------
+
+
+@router.get("/vip/analytics/cancellation-by-hour", dependencies=[Depends(_require_admin)])
+async def analytics_cancellation_by_hour(venue_id: int | None = None):
+    """Aggregate slot snapshots by hour of day to show cancellation patterns.
+
+    Returns slot_count changes (cancellations = slots appearing) by hour.
+    This tells us WHEN cancellations happen — the key competitive intel
+    for optimizing polling schedules.
+    """
+    svc = db.get_service_client()
+    query = svc.table("slot_snapshots").select("captured_at,slot_count,venue_id")
+    if venue_id:
+        query = query.eq("venue_id", venue_id)
+    # Get snapshots where slots appeared (cancellation signal)
+    query = query.gt("slot_count", 0).order("captured_at", desc=True).limit(2000)
+    resp = await query.execute()
+    snapshots = resp.data or []
+
+    # Bucket by hour of day (ET)
+    hours = {h: 0 for h in range(24)}
+    for snap in snapshots:
+        try:
+            ts = snap.get("captured_at", "")
+            # Parse ISO timestamp — captured_at is TIMESTAMPTZ
+            from datetime import datetime as _dt
+            if "T" in ts:
+                # Handle both Z and +00:00 suffixes
+                clean = ts.replace("Z", "+00:00")
+                try:
+                    dt = _dt.fromisoformat(clean)
+                except ValueError:
+                    continue
+                # Convert to ET
+                try:
+                    from zoneinfo import ZoneInfo
+                except ImportError:
+                    from backports.zoneinfo import ZoneInfo
+                dt_et = dt.astimezone(ZoneInfo("America/New_York"))
+                hours[dt_et.hour] += 1
+        except Exception:
+            continue
+
+    return {
+        "hours": [{"hour": h, "count": c} for h, c in sorted(hours.items())],
+        "total_snapshots": len(snapshots),
+        "venue_id": venue_id,
+    }
+
+
+@router.get("/vip/analytics/cancellation-by-day", dependencies=[Depends(_require_admin)])
+async def analytics_cancellation_by_day(venue_id: int | None = None):
+    """Aggregate slot snapshots by day of week (0=Mon, 6=Sun).
+
+    Shows which days have the most cancellations — useful for knowing
+    when to poll more aggressively.
+    """
+    svc = db.get_service_client()
+    query = svc.table("slot_snapshots").select("captured_at,slot_count,venue_id")
+    if venue_id:
+        query = query.eq("venue_id", venue_id)
+    query = query.gt("slot_count", 0).order("captured_at", desc=True).limit(2000)
+    resp = await query.execute()
+    snapshots = resp.data or []
+
+    day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    days = {i: 0 for i in range(7)}
+    for snap in snapshots:
+        try:
+            ts = snap.get("captured_at", "")
+            from datetime import datetime as _dt
+            if "T" in ts:
+                clean = ts.replace("Z", "+00:00")
+                try:
+                    dt = _dt.fromisoformat(clean)
+                except ValueError:
+                    continue
+                try:
+                    from zoneinfo import ZoneInfo
+                except ImportError:
+                    from backports.zoneinfo import ZoneInfo
+                dt_et = dt.astimezone(ZoneInfo("America/New_York"))
+                days[dt_et.weekday()] += 1
+        except Exception:
+            continue
+
+    return {
+        "days": [{"day": i, "name": day_names[i], "count": c} for i, c in sorted(days.items())],
+        "total_snapshots": len(snapshots),
+        "venue_id": venue_id,
+    }
+
+
+@router.get("/vip/analytics/slot-velocity", dependencies=[Depends(_require_admin)])
+async def analytics_slot_velocity(venue_id: int, target_date: str):
+    """Get slot count over time for a specific venue+date.
+
+    Shows how quickly slots disappear after a drop or cancellation.
+    Used for the slot velocity line chart.
+    """
+    snapshots = await db.get_slot_snapshots(venue_id, target_date, limit=500)
+    return {
+        "points": [
+            {
+                "time": s.get("captured_at", ""),
+                "slot_count": s.get("slot_count", 0),
+                "ms_since_drop": s.get("ms_since_drop"),
+                "ms_since_start": s.get("ms_since_start"),
+                "source": s.get("source", "unknown"),
+            }
+            for s in snapshots
+        ],
+        "total": len(snapshots),
+    }
+
+
+@router.get("/vip/analytics/booking-success", dependencies=[Depends(_require_admin)])
+async def analytics_booking_success():
+    """Aggregate booking outcomes across all reservations.
+
+    Returns success vs failure breakdown, average attempts, and
+    time-to-book stats — the core performance metrics.
+    """
+    svc = db.get_service_client()
+    resp = await (
+        svc.table("reservations")
+        .select("status,attempts,elapsed_seconds,venue_name,mode,created_at,error")
+        .in_("status", ["confirmed", "failed", "dry_run", "cancelled"])
+        .order("created_at", desc=True)
+        .limit(500)
+        .execute()
+    )
+    reservations = resp.data or []
+
+    confirmed = [r for r in reservations if r["status"] == "confirmed"]
+    failed = [r for r in reservations if r["status"] == "failed"]
+    dry_runs = [r for r in reservations if r["status"] == "dry_run"]
+    cancelled = [r for r in reservations if r["status"] == "cancelled"]
+
+    avg_attempts_success = (
+        round(sum(r.get("attempts", 0) for r in confirmed) / len(confirmed), 1)
+        if confirmed else 0
+    )
+    avg_time_success = (
+        round(sum(r.get("elapsed_seconds", 0) for r in confirmed) / len(confirmed), 2)
+        if confirmed else 0
+    )
+
+    # Common failure reasons
+    error_counts: dict[str, int] = {}
+    for r in failed:
+        err = r.get("error", "Unknown")
+        # Normalize similar errors
+        if "Retry window" in (err or ""):
+            err = "Retry window exhausted"
+        elif "Max attempts" in (err or ""):
+            err = "Max attempts reached"
+        error_counts[err] = error_counts.get(err, 0) + 1
+
+    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    return {
+        "total": len(reservations),
+        "confirmed": len(confirmed),
+        "failed": len(failed),
+        "dry_runs": len(dry_runs),
+        "cancelled": len(cancelled),
+        "success_rate": round(len(confirmed) / max(len(confirmed) + len(failed), 1) * 100, 1),
+        "avg_attempts_success": avg_attempts_success,
+        "avg_time_success_seconds": avg_time_success,
+        "top_errors": [{"error": e, "count": c} for e, c in top_errors],
+    }

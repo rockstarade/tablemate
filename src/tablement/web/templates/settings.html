@@ -33,15 +33,27 @@
             -webkit-backdrop-filter: blur(16px);
         }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .fade-in { animation: fadeInUp 0.4s ease-out; }
+        .fade-in-d1 { animation: fadeInUp 0.4s ease-out 0.08s both; }
+        .fade-in-d2 { animation: fadeInUp 0.4s ease-out 0.16s both; }
+        .fade-in-d3 { animation: fadeInUp 0.4s ease-out 0.24s both; }
+
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(100%); }
             to { opacity: 1; transform: translateX(0); }
         }
         .toast-enter { animation: slideInRight 0.3s ease-out; }
+
+        /* Toggle switch */
+        .toggle-track {
+            transition: background-color 0.2s ease;
+        }
+        .toggle-thumb {
+            transition: transform 0.2s ease;
+        }
     </style>
 </head>
 <body class="text-slate-200 antialiased" x-data="settingsApp()" x-init="init()">
@@ -63,7 +75,7 @@
                     <span class="text-xl font-bold text-white">Tablement</span>
                 </a>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="hidden sm:flex items-center gap-6">
                 <a href="/browse" class="text-slate-400 hover:text-white text-sm transition-colors">Home</a>
                 <a href="/reservations" class="text-slate-400 hover:text-white text-sm transition-colors">My Reservations</a>
                 <a href="/settings" class="text-white font-medium text-sm">
@@ -83,7 +95,7 @@
             <h1 class="text-3xl font-bold text-white mb-8">Settings</h1>
 
             <!-- Resy Account -->
-            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6">
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in">
                 <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Resy Account</h2>
 
                 <div x-show="resyLinked" class="flex items-center justify-between">
@@ -135,10 +147,87 @@
                 </div>
             </div>
 
+            <!-- Preferences -->
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d1">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Preferences</h2>
+
+                <!-- Default party size -->
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <p class="text-white text-sm font-medium">Default party size</p>
+                        <p class="text-slate-500 text-xs mt-0.5">Pre-filled when booking a new table</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button @click="prefs.defaultPartySize = Math.max(1, prefs.defaultPartySize - 1)"
+                            class="w-8 h-8 rounded-lg border border-slate-600/50 text-slate-400 hover:text-white hover:border-slate-500 flex items-center justify-center transition-all text-sm">
+                            −
+                        </button>
+                        <span class="text-white font-semibold text-sm w-4 text-center" x-text="prefs.defaultPartySize"></span>
+                        <button @click="prefs.defaultPartySize = Math.min(10, prefs.defaultPartySize + 1)"
+                            class="w-8 h-8 rounded-lg border border-slate-600/50 text-slate-400 hover:text-white hover:border-slate-500 flex items-center justify-center transition-all text-sm">
+                            +
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700/20"></div>
+
+                <!-- Time window preference -->
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <p class="text-white text-sm font-medium">Time flexibility</p>
+                        <p class="text-slate-500 text-xs mt-0.5">Accept tables within this range of your preferred time</p>
+                    </div>
+                    <select x-model="prefs.timeWindow"
+                        class="px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                        <option value="exact">Exact time only</option>
+                        <option value="30">± 30 minutes</option>
+                        <option value="60">± 1 hour</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d2">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Notifications</h2>
+
+                <!-- SMS toggle -->
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <p class="text-white text-sm font-medium">Text messages</p>
+                        <p class="text-slate-500 text-xs mt-0.5">Get a text when your reservation is confirmed</p>
+                    </div>
+                    <button @click="prefs.smsEnabled = !prefs.smsEnabled"
+                        class="relative w-11 h-6 rounded-full transition-colors toggle-track"
+                        :class="prefs.smsEnabled ? 'bg-brand-500' : 'bg-slate-700'">
+                        <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow toggle-thumb"
+                            :class="prefs.smsEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                </div>
+
+                <div class="border-t border-slate-700/20"></div>
+
+                <!-- Email toggle -->
+                <div class="flex items-center justify-between py-3">
+                    <div>
+                        <p class="text-white text-sm font-medium">Email notifications</p>
+                        <p class="text-slate-500 text-xs mt-0.5">Confirmation emails and booking receipts</p>
+                    </div>
+                    <button @click="prefs.emailEnabled = !prefs.emailEnabled"
+                        class="relative w-11 h-6 rounded-full transition-colors toggle-track"
+                        :class="prefs.emailEnabled ? 'bg-brand-500' : 'bg-slate-700'">
+                        <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow toggle-thumb"
+                            :class="prefs.emailEnabled ? 'translate-x-5' : 'translate-x-0'"></span>
+                    </button>
+                </div>
+
+                <p class="text-slate-600 text-xs mt-3">Notification delivery is coming soon. Your preferences are saved.</p>
+            </div>
+
             <!-- Account -->
-            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6">
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d3">
                 <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Account</h2>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between py-1">
                     <div>
                         <p class="text-white font-medium text-sm">Signed in</p>
                         <p class="text-slate-400 text-sm" x-text="userPhone || 'Phone authentication'"></p>
@@ -148,9 +237,15 @@
                         Sign Out
                     </button>
                 </div>
+                <div class="border-t border-slate-700/20 mt-4 pt-4">
+                    <a href="mailto:support@tablement.com?subject=Delete my data"
+                        class="text-slate-500 hover:text-slate-400 text-xs transition-colors">
+                        Request data deletion
+                    </a>
+                </div>
             </div>
 
-            <!-- Admin link -->
+            <!-- Admin link (subtle) -->
             <div class="text-center mt-8">
                 <a href="/admin/vip" class="text-slate-600 hover:text-slate-400 text-xs transition-colors">Admin Panel</a>
             </div>
@@ -189,12 +284,25 @@
             relinkError: '',
             toast: { show: false, message: '', icon: '' },
 
+            // User preferences (stored in localStorage for now, will be DB-backed)
+            prefs: {
+                defaultPartySize: parseInt(localStorage.getItem('tablement_pref_party') || '2'),
+                timeWindow: localStorage.getItem('tablement_pref_time_window') || '30',
+                smsEnabled: localStorage.getItem('tablement_pref_sms') !== 'false',
+                emailEnabled: localStorage.getItem('tablement_pref_email') !== 'false',
+            },
+
             async init() {
-                if (!this.token) {
-                    window.location.href = '/';
-                    return;
-                }
+                if (!this.token) { window.location.href = '/'; return; }
                 await this.loadProfile();
+
+                // Watch preferences and save on change
+                this.$watch('prefs', (val) => {
+                    localStorage.setItem('tablement_pref_party', val.defaultPartySize);
+                    localStorage.setItem('tablement_pref_time_window', val.timeWindow);
+                    localStorage.setItem('tablement_pref_sms', val.smsEnabled);
+                    localStorage.setItem('tablement_pref_email', val.emailEnabled);
+                }, { deep: true });
             },
 
             async loadProfile() {
@@ -202,10 +310,7 @@
                     const resp = await fetch('/api/auth/me', {
                         headers: { 'Authorization': 'Bearer ' + this.token },
                     });
-                    if (resp.status === 401) {
-                        window.location.href = '/';
-                        return;
-                    }
+                    if (resp.status === 401) { window.location.href = '/'; return; }
                     const data = await resp.json();
                     this.resyLinked = data.resy_linked || false;
                     this.resyEmail = data.resy_email || '';
@@ -228,7 +333,6 @@
                     });
                     const data = await resp.json();
                     if (!resp.ok) throw new Error(data.detail || 'Failed to link');
-
                     this.resyLinked = true;
                     this.resyEmail = this.newResyEmail;
                     this.showRelink = false;

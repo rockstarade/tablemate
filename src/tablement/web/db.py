@@ -356,3 +356,46 @@ async def get_curated_restaurant(venue_id: int) -> dict | None:
     )
     rows = resp.data
     return rows[0] if rows else None
+
+
+# ---------------------------------------------------------------------------
+# Reservation Groups — multi-date cancellation sniping
+# ---------------------------------------------------------------------------
+
+
+async def get_reservation_by_id(reservation_id: str) -> dict | None:
+    """Fetch a single reservation by ID (no user check — for admin/internal use)."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("*")
+        .eq("id", reservation_id)
+        .execute()
+    )
+    rows = resp.data
+    return rows[0] if rows else None
+
+
+async def get_reservations_by_group(group_id: str) -> list[dict]:
+    """Get all reservations sharing a group_id."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("*")
+        .eq("group_id", group_id)
+        .execute()
+    )
+    return resp.data
+
+
+async def get_active_group_reservations(group_id: str) -> list[dict]:
+    """Get only active (non-terminal) reservations in a group."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("*")
+        .eq("group_id", group_id)
+        .in_("status", ["scheduled", "monitoring", "sniping"])
+        .execute()
+    )
+    return resp.data

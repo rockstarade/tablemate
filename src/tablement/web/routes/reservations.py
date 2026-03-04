@@ -22,6 +22,7 @@ import logging
 import os
 import random
 import time as time_module
+import uuid
 from datetime import date, datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -36,6 +37,8 @@ from tablement.web import db
 from tablement.web.deps import get_user_id
 from tablement.web.encryption import decrypt_password
 from tablement.web.schemas import (
+    BatchReservationRequest,
+    BatchReservationResponse,
     ReservationCreateRequest,
     ReservationListResponse,
     ReservationOut,
@@ -62,9 +65,32 @@ PING_INTERVAL_SECONDS = 10  # Was 15s — more frequent keep-alive
 # Parallel booking: get_details on top N matching slots simultaneously
 PARALLEL_DETAILS_SLOTS = 3
 
-# Monitor polling interval: 30s base ± JITTER_SECONDS
+# Legacy monitor polling (kept for backward compat, not used by new tiered loop)
 MONITOR_INTERVAL_BASE = 30
 MONITOR_JITTER_SECONDS = 5
+
+# ---------------------------------------------------------------------------
+# Cancellation sniping — tiered polling with rest periods
+# ---------------------------------------------------------------------------
+
+# Two tiers only (no cool tier)
+CANCEL_TIER_HOT = (2, 5)            # seconds — 24-48h before reservation, or "earliest" priority
+CANCEL_TIER_WARM = (5, 15)          # seconds — all other active polling
+
+# Rest periods: pause polling to look more natural
+CANCEL_REST_HOT = (60, 180)         # 1-3 min rest after hot burst
+CANCEL_REST_WARM = (180, 300)       # 3-5 min rest after warm burst
+CANCEL_BURST_HOT = (25 * 60, 40 * 60)   # 25-40 min burst before rest (hot)
+CANCEL_BURST_WARM = (25 * 60, 35 * 60)  # 25-35 min burst before rest (warm)
+
+# Active hours (ET)
+CANCEL_ACTIVE_START = 9             # 9 AM ET — start polling
+CANCEL_ACTIVE_END = 22              # 10 PM ET — start slowing down
+CANCEL_SLEEP_START = 1              # 1 AM ET — guaranteed no polling
+CANCEL_SLEEP_END = 9                # 9 AM ET — resume polling
+
+# Late-night slowdown: 10 PM–midnight, add extra seconds to interval
+CANCEL_SLOWDOWN_EXTRA = (3, 8)      # add 3-8s to whatever tier interval
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +216,113 @@ async def create_reservation(
         _schedule_monitor(request.app, reservation_id, user_id, body, profile)
 
     return _row_to_out(row)
+
+
+@router.post("/batch", response_model=BatchReservationResponse)
+async def create_batch_reservations(
+    body: BatchReservationRequest,
+    request: Request,
+    user_id: str = Depends(get_user_id),
+):
+    """Create multiple reservation jobs for the smart calendar.
+
+    One reservation per date, all sharing a group_id. Released dates become
+    cancellation snipes (monitor mode with tiered polling). Unreleased dates
+    become release snipes (scheduled at drop time).
+    """
+    # Check user has linked Resy account
+    profile = await db.get_profile(user_id)
+    if not profile or not profile.get("resy_email"):
+        raise HTTPException(400, "Please link your Resy account first")
+
+    if not body.time_preferences:
+        raise HTTPException(400, "At least one time preference is required")
+
+    # Generate group ID to link all reservations
+    group_id = str(uuid.uuid4())
+    time_prefs_json = [tp.model_dump() for tp in body.time_preferences]
+    drop_time_json = body.drop_time.model_dump() if body.drop_time else None
+
+    # Determine the released/unreleased boundary
+    # If we have drop policy info, compute last released date
+    days_ahead = body.drop_time.days_ahead if body.drop_time else 30
+    today = date.today()
+    last_released = today + timedelta(days=days_ahead)
+
+    reservation_ids = []
+    for date_str in body.dates:
+        target = date.fromisoformat(date_str)
+        is_released = target <= last_released
+
+        if is_released:
+            # Released date → cancellation sniping (monitor mode with tiered polling)
+            mode = "monitor"
+            initial_status = "monitoring"
+        else:
+            # Unreleased date → release sniping (one-shot at drop time)
+            mode = "snipe"
+            initial_status = "scheduled"
+            if not body.drop_time:
+                raise HTTPException(400, f"Drop time required for unreleased date {date_str}")
+
+        # Determine polling tier for cancellation snipes
+        poll_tier = "warm"
+        if is_released:
+            hours_until = (datetime.combine(target, time(19, 0)) - datetime.now()).total_seconds() / 3600
+            if 24 <= hours_until <= 48:
+                poll_tier = "hot"
+            elif body.book_earliest:
+                poll_tier = "hot"  # First date in "earliest" mode gets hot tier
+
+        row = await db.create_reservation(
+            user_id=user_id,
+            venue_id=body.venue_id,
+            venue_name=body.venue_name,
+            party_size=body.party_size,
+            target_date=date_str,
+            mode=mode,
+            status=initial_status,
+            time_preferences=time_prefs_json,
+            drop_time_config=drop_time_json,
+            group_id=group_id,
+            book_earliest=body.book_earliest,
+            latest_notify_hours=body.latest_notify_hours,
+            poll_tier=poll_tier,
+        )
+        reservation_id = row["id"]
+        reservation_ids.append(reservation_id)
+
+        # Schedule the job
+        if mode == "snipe":
+            _schedule_snipe(request.app, reservation_id, user_id,
+                            _mock_create_request(body, date_str, mode), profile, dry_run=False)
+        else:
+            _schedule_cancellation_snipe(
+                request.app, reservation_id, user_id,
+                _mock_create_request(body, date_str, mode), profile,
+                group_id=group_id,
+                poll_tier=poll_tier,
+                latest_notify_hours=body.latest_notify_hours,
+            )
+
+    return BatchReservationResponse(
+        group_id=group_id,
+        reservation_ids=reservation_ids,
+        count=len(reservation_ids),
+    )
+
+
+def _mock_create_request(body: BatchReservationRequest, date_str: str, mode: str) -> ReservationCreateRequest:
+    """Build a ReservationCreateRequest from a batch request for a single date."""
+    return ReservationCreateRequest(
+        venue_id=body.venue_id,
+        venue_name=body.venue_name,
+        party_size=body.party_size,
+        date=date_str,
+        mode=mode,
+        time_preferences=body.time_preferences,
+        drop_time=body.drop_time,
+    )
 
 
 @router.get("/", response_model=ReservationListResponse)
@@ -368,35 +501,42 @@ def _schedule_snipe(app, reservation_id: str, user_id: str, body, profile: dict,
 
 
 def _schedule_monitor(app, reservation_id: str, user_id: str, body, profile: dict):
-    """Schedule a monitor job that polls with jitter around 30 seconds.
+    """Schedule a monitor job — uses new tiered cancellation sniping loop.
 
-    Layer 2 (Behavioral): Uses jittered intervals instead of exact 30s to
-    avoid creating a detectable pattern in request timing.
+    Legacy entry point for single-date monitor creation via POST /reservations/.
+    New batch endpoint uses _schedule_cancellation_snipe() directly.
     """
-    scheduler = app.state.scheduler
+    _schedule_cancellation_snipe(
+        app, reservation_id, user_id, body, profile,
+        group_id=None, poll_tier="warm", latest_notify_hours=2.0,
+    )
 
+
+def _schedule_cancellation_snipe(
+    app, reservation_id: str, user_id: str, body, profile: dict,
+    *, group_id: str | None, poll_tier: str, latest_notify_hours: float,
+):
+    """Launch a tiered cancellation sniping loop as an asyncio task.
+
+    Uses a pure asyncio loop (not APScheduler) for fine-grained control
+    over burst/rest cycles, tier switching, and sleep-hour detection.
+    """
     config = _build_snipe_config(body)
     job = app.state.jobs.create(reservation_id, user_id)
-
-    if scheduler:
-        # Use base interval — jitter is added inside _monitor_poll via sleep
-        scheduler.add_job(
-            _monitor_poll,
-            trigger="interval",
-            seconds=MONITOR_INTERVAL_BASE,
-            id=f"monitor_{reservation_id}",
-            replace_existing=True,
-            args=[app, reservation_id, user_id, config, profile],
-            jitter=MONITOR_JITTER_SECONDS,  # APScheduler built-in jitter
+    job.status.phase = SnipePhase.MONITORING
+    job.status.message = f"Watching for cancellations ({poll_tier} tier)"
+    job.task = asyncio.create_task(
+        _cancellation_snipe_loop(
+            app, reservation_id, user_id, config, profile, job,
+            group_id=group_id,
+            poll_tier=poll_tier,
+            latest_notify_hours=latest_notify_hours,
         )
-        job.status.phase = SnipePhase.MONITORING
-        job.status.message = "Monitoring for cancellations (every ~30s)"
-        logger.info("Monitor %s started (~%ds interval)", reservation_id, MONITOR_INTERVAL_BASE)
-    else:
-        # Fallback: asyncio loop
-        job.task = asyncio.create_task(
-            _monitor_loop(app, reservation_id, user_id, config, profile, job)
-        )
+    )
+    logger.info(
+        "Cancellation snipe %s started (tier=%s, group=%s)",
+        reservation_id, poll_tier, group_id or "none",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -654,6 +794,68 @@ async def _run_snipe(
             except Exception as flush_err:
                 logger.warning("Intel buffer flush failed (non-critical): %s", flush_err)
 
+            # ---- POST-TIMEOUT VERIFICATION ----
+            # When the snipe loop reports failure (timeout/max attempts),
+            # the booking request may have ACTUALLY succeeded on Resy's side.
+            # This is the Semma scenario: our retry window expired before we
+            # got the HTTP response, but Resy processed the booking.
+            # Check the user's Resy reservations to verify before marking failed.
+            if not result.success and not dry_run:
+                try:
+                    logger.info(
+                        "Snipe %s reported failure (%s). "
+                        "Verifying with Resy before marking as failed...",
+                        reservation_id, result.error,
+                    )
+                    _set_phase(SnipePhase.DONE, "Verifying with Resy...")
+                    job.broadcast("snipe_attempt", {
+                        "attempt": result.attempts,
+                        "slots_found": 0,
+                        "message": "Double-checking with Resy...",
+                    })
+
+                    # Small delay — give Resy's backend time to finalize
+                    await asyncio.sleep(2.0)
+
+                    existing = await client.check_booking_exists(
+                        venue_id=config.venue_id,
+                        target_date=day_str,
+                        party_size=config.party_size,
+                    )
+
+                    if existing:
+                        logger.info(
+                            "VERIFICATION SUCCESS: Booking exists on Resy "
+                            "despite snipe loop timeout! Overriding to confirmed. "
+                            "reservation=%s venue=%s date=%s",
+                            reservation_id, config.venue_id, day_str,
+                        )
+                        # Override the result — the booking DID go through
+                        result = SnipeResult(
+                            success=True,
+                            resy_token=existing.get("resy_token", "verified"),
+                            slot=result.slot,
+                            attempts=result.attempts,
+                            elapsed_seconds=result.elapsed_seconds,
+                            error=None,
+                        )
+                        job.broadcast("snipe_attempt", {
+                            "attempt": result.attempts,
+                            "slots_found": 0,
+                            "message": "Booking confirmed on Resy! (verified after timeout)",
+                        })
+                    else:
+                        logger.info(
+                            "Verification: no booking found on Resy for "
+                            "venue=%s date=%s — confirming failure.",
+                            config.venue_id, day_str,
+                        )
+                except Exception as verify_err:
+                    logger.warning(
+                        "Post-timeout verification failed (non-critical, "
+                        "keeping original result): %s", verify_err,
+                    )
+
             # Update DB with result
             is_dry_run_success = dry_run and result.success
             update_fields = {
@@ -717,214 +919,302 @@ async def _run_snipe(
 # ---------------------------------------------------------------------------
 
 
-async def _monitor_poll(
-    app, reservation_id: str, user_id: str, config: SnipeConfig, profile: dict,
+async def _cancellation_snipe_loop(
+    app,
+    reservation_id: str,
+    user_id: str,
+    config: SnipeConfig,
+    profile: dict,
+    job: JobState,
+    *,
+    group_id: str | None,
+    poll_tier: str,
+    latest_notify_hours: float,
 ):
-    """Single poll iteration for monitor mode. Called by APScheduler ~every 30s.
+    """Continuous cancellation polling with tiered intervals and rest periods.
+
+    Two tiers:
+      Hot (2-5s): reservation is 24-48h away, OR has "earliest available" priority
+      Warm (5-15s): everything else during active hours
+
+    Rest periods: after 25-40 min of polling, rest for 1-3 min (hot)
+    or 3-5 min (warm). Looks like a real person stepping away.
+
+    Time-of-day schedule (ET):
+      9 AM - 10 PM:   active polling
+      10 PM - midnight: slow polling (add 3-8s to interval)
+      1 AM - 9 AM:    sleep (no polling)
 
     Layer 2 (Behavioral — Scout/Booking Separation):
-    The monitoring phase uses a "scout" client (no auth token) for find_slots().
-    This means Resy sees unauthenticated API-key-only requests checking availability,
-    which is exactly what their website does for anonymous users browsing venues.
-
-    When a matching slot is found, we create a SEPARATE authenticated client
-    for the 3-call booking burst (authenticate → get_details → book). From
-    Resy's perspective, the user's account activity looks like:
-    1. User opens the page (auth)
-    2. User gets slot details (get_details)
-    3. User books (book)
-    — perfectly normal behavior, not a bot.
+    Polling uses scout mode (no auth token) through residential proxy.
+    Booking burst uses authenticated client on the same proxy IP.
+    From Resy's perspective: anonymous user browsing → logs in → books.
     """
     selector = SlotSelector(window_minutes=config.window_minutes)
     day_str = config.date.isoformat()
-    job = app.state.jobs.get(reservation_id)
+    attempt = 0
 
-    # Check if target date has passed
-    if date.fromisoformat(day_str) < date.today():
-        logger.info("Monitor %s: target date passed, cancelling", reservation_id)
-        await db.update_reservation(reservation_id, status="failed", error="Target date passed")
-        if job:
-            job.broadcast("snipe_result", {"success": False, "error": "Target date passed"})
-            app.state.jobs.remove(reservation_id)
-        scheduler = app.state.scheduler
-        if scheduler:
-            try:
-                scheduler.remove_job(f"monitor_{reservation_id}")
-            except Exception:
-                pass
-        return
-
-    try:
-        resy_email = profile["resy_email"]
-        resy_password = decrypt_password(profile["resy_password_encrypted"])
-
-        # Assign a consistent fingerprint for this user across scout + booking
-        fp = fingerprint_pool.get_fingerprint(user_id)
-
-        # ---- SCOUT PHASE: unauthenticated find_slots() ----
-        # Uses scout=True → no auth token in headers → looks like anonymous browsing
-        async with ResyApiClient(scout=True, user_id=user_id, fingerprint=fp) as scout:
-            slots = await scout.find_slots(
-                config.venue_id, day_str, config.party_size, fast=True,
-            )
-
-        # Update attempt count
-        attempt = (await db.get_reservation(reservation_id, user_id) or {}).get("attempts", 0) + 1
-        await db.update_reservation(reservation_id, attempts=attempt)
-
-        if job:
-            job.status.attempt = attempt
-            job.status.slots_found = len(slots)
-            job.broadcast("snipe_attempt", {
-                "attempt": attempt, "slots_found": len(slots),
-                "message": f"Poll {attempt}: {len(slots)} slots",
-            })
-
-        if not slots:
-            return
-
-        # Select best slot
-        selected = selector.select(
-            slots, config.time_preferences, config.date,
-        )
-        if not selected:
-            return
-
-        logger.info("Monitor %s: found matching slot! Booking...", reservation_id)
-
-        # ---- BOOKING PHASE: authenticated burst (auth → details → book) ----
-        # Layer 2: Fresh authenticated client, same fingerprint + proxy as scout.
-        # From Resy's view: user opens page → picks slot → books. Normal behavior.
-        async with ResyApiClient(user_id=user_id, fingerprint=fp) as booker:
-            # Small realistic delay (human would take 0.5-2s to click "book")
-            await asyncio.sleep(random.uniform(0.3, 1.0))
-
-            auth_resp = await booker.authenticate(resy_email, resy_password)
-            booker.set_auth_token(auth_resp.token)
-            pm = next(
-                (p for p in auth_resp.payment_methods if p.is_default),
-                auth_resp.payment_methods[0],
-            )
-
-            # Pre-build book template for speed
-            booker.prepare_book_template(pm.id)
-
-            # Warm direct client in parallel with human delay
-            await asyncio.gather(
-                booker.warmup_direct(),
-                asyncio.sleep(random.uniform(0.2, 0.8)),
-            )
-
-            # Fast book_token extraction
-            book_token = await booker.get_details_fast(
-                config_id=selected.config.token,
-                day=day_str,
-                party_size=config.party_size,
-            )
-
-            await asyncio.sleep(random.uniform(0.1, 0.5))
-
-            # Dual-path booking (direct + proxy race)
-            result = await booker.dual_book(
-                book_token=book_token,
-                payment_method_id=pm.id,
-            )
-
-        # Success!
-        await db.update_reservation(
-            reservation_id,
-            status="confirmed",
-            resy_token=result.resy_token,
-            attempts=attempt,
-        )
-
-        if job:
-            job.broadcast("snipe_result", {
-                "success": True,
-                "resy_token": result.resy_token,
-                "slot_time": selected.date.start,
-                "slot_type": selected.config.type,
-                "attempts": attempt,
-                "elapsed_seconds": 0,
-            })
-            app.state.jobs.remove(reservation_id)
-
-        # Remove the interval job
-        scheduler = app.state.scheduler
-        if scheduler:
-            try:
-                scheduler.remove_job(f"monitor_{reservation_id}")
-            except Exception:
-                pass
-
-        # Capture Stripe payment
-        snipe_result = SnipeResult(
-            success=True, resy_token=result.resy_token,
-            slot=selected, attempts=attempt, elapsed_seconds=0,
-        )
-        _handle_stripe_result(reservation_id, snipe_result)
-
-    except Exception as e:
-        logger.warning("Monitor %s poll failed: %s", reservation_id, e)
-
-
-def _get_poll_interval(target_date: str, now: datetime | None = None) -> float:
-    """Variable polling frequency based on cancellation probability.
-
-    Polls faster during peak cancellation windows:
-    - 24-48h before reservation: highest cancellation rate
-    - 2-6h before (day-of morning): day-of cancellations
-    - Lunch/dinner decision hours (11-12, 17-18)
-    """
-    if now is None:
-        now = datetime.now()
-    try:
-        target = datetime.combine(date.fromisoformat(target_date), time(0, 0))
-    except (ValueError, TypeError):
-        return MONITOR_INTERVAL_BASE
-
-    hours_until = (target - now).total_seconds() / 3600
-
-    # Peak cancellation windows — poll at 15s instead of 30s
-    if 24 <= hours_until <= 48:
-        return MONITOR_INTERVAL_BASE * 0.5  # 15s
-    if 2 <= hours_until <= 6:
-        return MONITOR_INTERVAL_BASE * 0.5  # 15s
-    # Lunch/dinner decision time — poll at ~21s
-    if now.hour in (11, 12, 17, 18):
-        return MONITOR_INTERVAL_BASE * 0.7  # 21s
-
-    return MONITOR_INTERVAL_BASE
-
-
-async def _monitor_loop(
-    app, reservation_id: str, user_id: str, config: SnipeConfig, profile: dict, job: JobState,
-):
-    """Fallback monitor loop using asyncio.sleep (no APScheduler).
-
-    Layer 2 (Behavioral): Uses jittered sleep intervals to avoid creating
-    a detectable polling pattern. Variable frequency based on cancellation
-    probability (faster during peak cancellation windows).
-    """
-    job.status.phase = SnipePhase.MONITORING
-    job.status.message = "Monitoring for cancellations..."
-    day_str = config.date.isoformat()
+    # Burst/rest tracking
+    burst_start = time_module.monotonic()
+    tier_range = CANCEL_TIER_HOT if poll_tier == "hot" else CANCEL_TIER_WARM
+    burst_config = CANCEL_BURST_HOT if poll_tier == "hot" else CANCEL_BURST_WARM
+    rest_config = CANCEL_REST_HOT if poll_tier == "hot" else CANCEL_REST_WARM
+    burst_duration = random.uniform(*burst_config)
 
     try:
         while True:
-            await _monitor_poll(app, reservation_id, user_id, config, profile)
-            # Check if job was completed
-            row = await db.get_reservation(reservation_id, user_id)
-            if row and row["status"] in ("confirmed", "failed", "cancelled"):
+            # ---- 1. Check stop conditions ----
+            target_date = date.fromisoformat(day_str)
+
+            # Date passed
+            if target_date < date.today():
+                logger.info("Cancel snipe %s: target date passed", reservation_id)
+                await db.update_reservation(reservation_id, status="failed", error="Target date passed")
+                job.broadcast("snipe_result", {"success": False, "error": "Target date passed"})
                 break
-            # Variable interval based on cancellation probability + jitter
-            base = _get_poll_interval(day_str)
-            jitter = random.uniform(-MONITOR_JITTER_SECONDS, MONITOR_JITTER_SECONDS)
-            await asyncio.sleep(base + jitter)
+
+            # Check if cancelled by group logic or user
+            row = await db.get_reservation_by_id(reservation_id)
+            if row and row["status"] in ("confirmed", "cancelled", "failed"):
+                logger.info("Cancel snipe %s: status=%s, stopping", reservation_id, row["status"])
+                break
+
+            # Check latest_notify_hours: stop polling X hours before reservation
+            target_dt = datetime.combine(target_date, time(19, 0))  # assume 7pm dinner
+            hours_until = (target_dt - datetime.now()).total_seconds() / 3600
+            if hours_until < latest_notify_hours:
+                logger.info(
+                    "Cancel snipe %s: within %.1fh of reservation (limit=%.1fh), stopping",
+                    reservation_id, hours_until, latest_notify_hours,
+                )
+                await db.update_reservation(
+                    reservation_id, status="failed",
+                    error=f"Stopped {latest_notify_hours}h before reservation (still sold out)",
+                )
+                job.broadcast("snipe_result", {
+                    "success": False,
+                    "error": f"No cancellation found within {latest_notify_hours}h of reservation",
+                })
+                break
+
+            # ---- 2. Check time-of-day (ET) ----
+            try:
+                from zoneinfo import ZoneInfo
+            except ImportError:
+                from backports.zoneinfo import ZoneInfo
+            et_now = datetime.now(ZoneInfo("America/New_York"))
+            et_hour = et_now.hour
+
+            # Sleep hours: 1 AM - 9 AM ET — no polling
+            if CANCEL_SLEEP_START <= et_hour < CANCEL_SLEEP_END:
+                # Calculate seconds until 9 AM ET
+                wake_time = et_now.replace(hour=CANCEL_SLEEP_END, minute=0, second=0, microsecond=0)
+                sleep_seconds = (wake_time - et_now).total_seconds()
+                if sleep_seconds > 0:
+                    job.status.message = f"Sleeping until 9 AM ET ({int(sleep_seconds // 60)}m)"
+                    logger.info("Cancel snipe %s: sleeping %dm until 9 AM ET", reservation_id, int(sleep_seconds // 60))
+                    await asyncio.sleep(sleep_seconds)
+                continue
+
+            # ---- 3. Determine current tier (may change dynamically) ----
+            current_tier = _get_cancel_tier(day_str, poll_tier == "hot")
+            tier_range = CANCEL_TIER_HOT if current_tier == "hot" else CANCEL_TIER_WARM
+            burst_config = CANCEL_BURST_HOT if current_tier == "hot" else CANCEL_BURST_WARM
+            rest_config = CANCEL_REST_HOT if current_tier == "hot" else CANCEL_REST_WARM
+
+            # ---- 4. Scout poll (unauthenticated find_slots) ----
+            attempt += 1
+            try:
+                fp = fingerprint_pool.get_fingerprint(user_id)
+
+                async with ResyApiClient(scout=True, user_id=user_id, fingerprint=fp) as scout:
+                    slots = await scout.find_slots(
+                        config.venue_id, day_str, config.party_size, fast=True,
+                    )
+
+                # Update attempt count (non-blocking)
+                asyncio.create_task(db.update_reservation(reservation_id, attempts=attempt))
+
+                job.status.attempt = attempt
+                job.status.slots_found = len(slots)
+                job.status.message = f"Poll {attempt}: {len(slots)} slots ({current_tier})"
+                # Broadcast every 10th attempt to avoid SSE flood
+                if attempt <= 3 or attempt % 10 == 0 or len(slots) > 0:
+                    job.broadcast("snipe_attempt", {
+                        "attempt": attempt, "slots_found": len(slots),
+                        "message": f"Poll {attempt}: {len(slots)} slots",
+                    })
+
+                # ---- 5. If slot found → booking burst ----
+                if slots:
+                    selected = selector.select(slots, config.time_preferences, config.date)
+                    if selected:
+                        logger.info("Cancel snipe %s: found matching slot! Booking...", reservation_id)
+
+                        resy_email = profile["resy_email"]
+                        resy_password = decrypt_password(profile["resy_password_encrypted"])
+
+                        # Booking burst: same proxy IP + fingerprint as scout
+                        async with ResyApiClient(user_id=user_id, fingerprint=fp) as booker:
+                            await asyncio.sleep(random.uniform(0.3, 1.0))  # human delay
+
+                            auth_resp = await booker.authenticate(resy_email, resy_password)
+                            booker.set_auth_token(auth_resp.token)
+                            pm = next(
+                                (p for p in auth_resp.payment_methods if p.is_default),
+                                auth_resp.payment_methods[0],
+                            )
+                            booker.prepare_book_template(pm.id)
+
+                            await asyncio.gather(
+                                booker.warmup_direct(),
+                                asyncio.sleep(random.uniform(0.2, 0.8)),
+                            )
+
+                            book_token = await booker.get_details_fast(
+                                config_id=selected.config.token,
+                                day=day_str,
+                                party_size=config.party_size,
+                            )
+
+                            await asyncio.sleep(random.uniform(0.1, 0.5))
+
+                            result = await booker.dual_book(
+                                book_token=book_token,
+                                payment_method_id=pm.id,
+                            )
+
+                        # SUCCESS — update DB and cancel group
+                        await db.update_reservation(
+                            reservation_id,
+                            status="confirmed",
+                            resy_token=result.resy_token,
+                            attempts=attempt,
+                        )
+
+                        job.broadcast("snipe_result", {
+                            "success": True,
+                            "resy_token": result.resy_token,
+                            "slot_time": selected.date.start,
+                            "slot_type": selected.config.type,
+                            "attempts": attempt,
+                            "elapsed_seconds": 0,
+                        })
+
+                        # Auto-cancel all other reservations in the group
+                        if group_id:
+                            await _cancel_group_members(app, group_id, reservation_id)
+
+                        # Capture Stripe payment
+                        snipe_result = SnipeResult(
+                            success=True, resy_token=result.resy_token,
+                            slot=selected, attempts=attempt, elapsed_seconds=0,
+                        )
+                        _handle_stripe_result(reservation_id, snipe_result)
+                        break
+
+            except Exception as e:
+                logger.warning("Cancel snipe %s poll %d failed: %s", reservation_id, attempt, e)
+
+            # ---- 6. Check if burst exceeded → rest period ----
+            elapsed_burst = time_module.monotonic() - burst_start
+            if elapsed_burst > burst_duration:
+                rest_seconds = random.uniform(*rest_config)
+                job.status.message = f"Resting {int(rest_seconds)}s (stealth pause)"
+                logger.info(
+                    "Cancel snipe %s: burst %.0fs done, resting %.0fs",
+                    reservation_id, elapsed_burst, rest_seconds,
+                )
+                await asyncio.sleep(rest_seconds)
+                burst_start = time_module.monotonic()
+                burst_duration = random.uniform(*burst_config)
+
+            # ---- 7. Sleep for tier interval ----
+            interval = random.uniform(*tier_range)
+
+            # Late-night slowdown: 10 PM–midnight, add extra seconds
+            if CANCEL_ACTIVE_END <= et_hour < 24:
+                interval += random.uniform(*CANCEL_SLOWDOWN_EXTRA)
+
+            await asyncio.sleep(interval)
+
     except asyncio.CancelledError:
         await db.update_reservation(reservation_id, status="cancelled", error="Cancelled")
     finally:
         app.state.jobs.remove(reservation_id)
+
+
+def _get_cancel_tier(target_date: str, is_priority: bool) -> str:
+    """Determine polling tier for a cancellation snipe.
+
+    Hot: 24-48h before reservation, or has "earliest available" priority.
+    Warm: everything else.
+    """
+    if is_priority:
+        return "hot"
+
+    try:
+        target = date.fromisoformat(target_date)
+        hours_until = (datetime.combine(target, time(19, 0)) - datetime.now()).total_seconds() / 3600
+        if 24 <= hours_until <= 48:
+            return "hot"
+    except (ValueError, TypeError):
+        pass
+
+    return "warm"
+
+
+async def _cancel_group_members(app, group_id: str, except_reservation_id: str):
+    """Cancel all other reservations in the same group.
+
+    Called when ANY reservation in a group confirms. Ensures the user
+    NEVER ends up with multiple reservations at the same restaurant.
+    Works regardless of the "book earliest" toggle state.
+    """
+    try:
+        group_rows = await db.get_reservations_by_group(group_id)
+    except Exception as e:
+        logger.warning("Failed to fetch group %s: %s", group_id, e)
+        return
+
+    cancelled_count = 0
+    for row in group_rows:
+        rid = row["id"]
+        if rid == except_reservation_id:
+            continue
+        if row["status"] in ("confirmed", "cancelled", "failed"):
+            continue
+
+        # Cancel the in-memory job
+        job = app.state.jobs.get(rid)
+        if job:
+            job.broadcast("snipe_result", {
+                "success": False,
+                "error": "Another date in your group was confirmed",
+            })
+            app.state.jobs.remove(rid)
+
+        # Cancel APScheduler job if any (release snipes)
+        scheduler = app.state.scheduler
+        if scheduler:
+            for prefix in ("snipe_", "monitor_"):
+                try:
+                    scheduler.remove_job(f"{prefix}{rid}")
+                except Exception:
+                    pass
+
+        # Update DB
+        await db.update_reservation(
+            rid, status="cancelled",
+            error="Group auto-cancelled: another date confirmed",
+        )
+        cancelled_count += 1
+
+    if cancelled_count:
+        logger.info(
+            "Group %s: cancelled %d other reservations after %s confirmed",
+            group_id, cancelled_count, except_reservation_id,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1251,6 +1541,9 @@ def _row_to_out(row: dict) -> ReservationOut:
         elapsed_seconds=row.get("elapsed_seconds"),
         error=row.get("error"),
         created_at=str(row.get("created_at", "")),
+        group_id=row.get("group_id"),
+        poll_tier=row.get("poll_tier"),
+        latest_notify_hours=row.get("latest_notify_hours"),
     )
 
 

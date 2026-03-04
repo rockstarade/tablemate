@@ -32,11 +32,18 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
         }
+        .glass-light {
+            background: rgba(51, 65, 85, 0.35);
+            backdrop-filter: blur(10px);
+        }
+
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
         .fade-in { animation: fadeInUp 0.4s ease-out; }
+        .fade-in-delay-1 { animation: fadeInUp 0.4s ease-out 0.1s both; }
+        .fade-in-delay-2 { animation: fadeInUp 0.4s ease-out 0.2s both; }
 
         @keyframes shimmer {
             0% { background-position: -200% 0; }
@@ -50,17 +57,35 @@
         }
 
         @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
         }
         .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
 
-        /* Toast */
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(100%); }
             to { opacity: 1; transform: translateX(0); }
         }
         .toast-enter { animation: slideInRight 0.3s ease-out; }
+
+        @keyframes celebrateIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(10px); }
+            60% { opacity: 1; transform: scale(1.02) translateY(-2px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .celebrate-in { animation: celebrateIn 0.5s ease-out; }
+
+        .confirmed-glow {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.12), 0 0 60px rgba(16, 185, 129, 0.04);
+        }
+
+        /* Card hover */
+        .reservation-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+        }
+        .reservation-card:hover {
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body class="text-slate-200 antialiased" x-data="reservationsApp()" x-init="init()">
@@ -82,7 +107,7 @@
                     <span class="text-xl font-bold text-white">Tablement</span>
                 </a>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="hidden sm:flex items-center gap-6">
                 <a href="/browse" class="text-slate-400 hover:text-white text-sm transition-colors">Home</a>
                 <a href="/reservations" class="text-white font-medium text-sm">My Reservations</a>
                 <a href="/settings" class="text-slate-400 hover:text-white text-sm transition-colors">
@@ -99,37 +124,92 @@
     <!-- Main Content -->
     <main class="pt-28 pb-20 fade-in">
         <div class="max-w-3xl mx-auto px-6">
-            <h1 class="text-3xl font-bold text-white mb-8">My Reservations</h1>
+            <h1 class="text-3xl font-bold text-white mb-2">My Reservations</h1>
+            <p class="text-slate-400 text-sm mb-8" x-text="summaryText()"></p>
 
             <!-- Filter tabs -->
             <div class="flex gap-1 mb-8 bg-slate-800/40 rounded-xl p-1 w-fit">
-                <template x-for="tab in ['all', 'active', 'confirmed', 'failed']" :key="tab">
-                    <button @click="filter = tab"
-                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize"
-                        :class="filter === tab ? 'bg-brand-500 text-slate-900' : 'text-slate-400 hover:text-white'">
-                        <span x-text="tab"></span>
-                        <span x-show="tab !== 'all'" class="ml-1 text-xs opacity-70"
-                            x-text="'(' + filteredReservations(tab).length + ')'"></span>
+                <template x-for="tab in tabs" :key="tab.key">
+                    <button @click="filter = tab.key"
+                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                        :class="filter === tab.key ? 'bg-brand-500 text-slate-900' : 'text-slate-400 hover:text-white'">
+                        <span x-text="tab.label"></span>
+                        <span x-show="tab.key !== 'all'" class="ml-1 text-xs opacity-70"
+                            x-text="'(' + filteredReservations(tab.key).length + ')'"></span>
                     </button>
                 </template>
             </div>
 
-            <!-- Loading -->
+            <!-- Loading skeletons -->
             <div x-show="loading">
-                <template x-for="i in 3">
-                    <div class="skeleton h-28 w-full mb-4"></div>
-                </template>
+                <div class="skeleton h-32 w-full mb-4"></div>
+                <div class="skeleton h-32 w-full mb-4"></div>
+                <div class="skeleton h-32 w-full"></div>
             </div>
 
             <!-- Reservation cards -->
             <div x-show="!loading" x-cloak class="space-y-4">
-                <template x-for="r in filteredReservations(filter)" :key="r.id">
-                    <div class="glass rounded-2xl border border-slate-700/30 p-6 transition-all hover:border-slate-600/50">
+                <template x-for="(r, idx) in filteredReservations(filter)" :key="r.id">
+
+                    <!-- ===== CONFIRMED BOOKING — Premium Confirmation Card ===== -->
+                    <div x-show="r.status === 'confirmed'" class="reservation-card glass rounded-2xl border border-emerald-500/30 confirmed-glow overflow-hidden celebrate-in">
+                        <!-- Green top accent bar -->
+                        <div class="h-1 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
+                        <div class="p-6">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2.5 mb-1">
+                                        <span class="text-emerald-400 text-lg">✓</span>
+                                        <span class="text-emerald-400 text-sm font-semibold uppercase tracking-wide">You're in!</span>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-white mb-3" x-text="r.venue_name"></h3>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-3 text-slate-300">
+                                            <svg class="w-4.5 h-4.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                            <span class="text-sm" x-text="formatDateFull(r.target_date)"></span>
+                                        </div>
+                                        <div class="flex items-center gap-3 text-slate-300">
+                                            <svg class="w-4.5 h-4.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            <span class="text-sm" x-text="'Party of ' + r.party_size"></span>
+                                        </div>
+                                        <div x-show="r.time_preferences && r.time_preferences.length" class="flex items-center gap-3 text-slate-300">
+                                            <svg class="w-4.5 h-4.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            <span class="text-sm" x-text="formatTimePrefs(r.time_preferences)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-semibold">Confirmed</span>
+                                </div>
+                            </div>
+
+                            <!-- Booking receipt -->
+                            <div x-show="r.elapsed_seconds" class="mt-4 pt-4 border-t border-slate-700/30">
+                                <p class="text-slate-500 text-xs" x-text="bookingReceipt(r)"></p>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="mt-4 flex gap-3">
+                                <a :href="calendarLink(r)" target="_blank"
+                                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-600/50 text-slate-300 text-sm hover:text-white hover:border-slate-500 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    Add to Calendar
+                                </a>
+                                <a :href="'/restaurant/' + r.venue_id"
+                                    class="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-brand-500/30 text-brand-400 text-sm hover:bg-brand-500/10 transition-all">
+                                    Book Again
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== ACTIVE RESERVATION — Live tracking ===== -->
+                    <div x-show="isActive(r.status)" class="reservation-card glass rounded-2xl border border-slate-700/30 p-6 hover:border-slate-600/50">
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-2">
                                     <h3 class="text-lg font-semibold text-white" x-text="r.venue_name"></h3>
-                                    <span class="status-badge px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium"
                                         :class="statusClass(r.status)"
                                         x-text="statusLabel(r.status)"></span>
                                 </div>
@@ -142,61 +222,81 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                         <span x-text="'Party of ' + r.party_size"></span>
                                     </span>
-                                    <span class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        <span x-text="r.mode === 'snipe' ? 'Snipe' : 'Monitor'" class="capitalize"></span>
-                                    </span>
                                 </div>
 
                                 <!-- Time preferences -->
-                                <div x-show="r.time_preferences && r.time_preferences.length > 0" class="flex gap-2 mt-3">
+                                <div x-show="r.time_preferences && r.time_preferences.length > 0" class="flex gap-2 mt-3 flex-wrap">
                                     <template x-for="tp in (r.time_preferences || [])" :key="tp.time">
-                                        <span class="px-2 py-0.5 rounded-md bg-slate-800/60 text-xs text-slate-400"
+                                        <span class="px-2.5 py-1 rounded-lg bg-slate-800/60 text-xs text-slate-400"
                                             x-text="formatTime(tp.time)"></span>
                                     </template>
                                 </div>
 
-                                <!-- SSE live status for active reservations -->
+                                <!-- Live status -->
                                 <div x-show="r._live" class="mt-3 flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-brand-400 pulse-dot"></span>
-                                    <span class="text-brand-400 text-xs font-medium" x-text="r._liveMessage || 'Live'"></span>
-                                </div>
-
-                                <!-- Error message -->
-                                <div x-show="r.error && r.status === 'failed'" class="mt-3">
-                                    <p class="text-red-400/80 text-xs" x-text="r.error"></p>
-                                </div>
-
-                                <!-- Attempts & timing -->
-                                <div x-show="r.attempts > 0" class="mt-2 text-xs text-slate-500">
-                                    <span x-text="r.attempts + ' attempts'"></span>
-                                    <span x-show="r.elapsed_seconds" x-text="' · ' + r.elapsed_seconds.toFixed(1) + 's'"></span>
+                                    <span class="w-2 h-2 rounded-full pulse-dot"
+                                        :class="r.status === 'sniping' ? 'bg-brand-400' : 'bg-blue-400'"></span>
+                                    <span class="text-xs font-medium"
+                                        :class="r.status === 'sniping' ? 'text-brand-400' : 'text-blue-400'"
+                                        x-text="r._liveMessage || statusLabel(r.status)"></span>
                                 </div>
                             </div>
 
-                            <!-- Actions -->
-                            <div class="flex flex-col gap-2">
-                                <button x-show="['scheduled', 'monitoring', 'sniping'].includes(r.status)"
-                                    @click="cancelReservation(r.id)"
-                                    class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition-colors">
-                                    Cancel
-                                </button>
-                                <a x-show="r.status === 'confirmed'"
-                                    :href="`/restaurant/${r.venue_id}`"
-                                    class="px-3 py-1.5 rounded-lg border border-brand-500/30 text-brand-400 text-xs hover:bg-brand-500/10 transition-colors text-center">
-                                    View
-                                </a>
+                            <!-- Cancel button -->
+                            <button @click="cancelReservation(r.id)"
+                                class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition-colors flex-shrink-0">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===== FAILED RESERVATION ===== -->
+                    <div x-show="r.status === 'failed'" class="reservation-card glass rounded-2xl border border-red-500/20 p-6">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-white" x-text="r.venue_name"></h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">No luck this time</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-2">
+                                    <span x-text="formatDate(r.target_date)"></span>
+                                    <span x-text="'Party of ' + r.party_size"></span>
+                                </div>
+                                <p x-show="r.error" class="text-red-400/70 text-xs" x-text="friendlyError(r.error)"></p>
+                            </div>
+                            <a :href="'/restaurant/' + r.venue_id"
+                                class="px-4 py-2 rounded-lg border border-brand-500/30 text-brand-400 text-xs hover:bg-brand-500/10 transition-colors flex-shrink-0 whitespace-nowrap">
+                                Try Again
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ===== CANCELLED / DRY RUN / OTHER ===== -->
+                    <div x-show="r.status === 'cancelled' || r.status === 'dry_run'" class="reservation-card glass rounded-2xl border border-slate-700/20 p-6 opacity-60">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-white" x-text="r.venue_name"></h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                        :class="r.status === 'dry_run' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-500/20 text-slate-400'"
+                                        x-text="r.status === 'dry_run' ? 'Test Run' : 'Cancelled'"></span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                                    <span x-text="formatDate(r.target_date)"></span>
+                                    <span x-text="'Party of ' + r.party_size"></span>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </template>
             </div>
 
             <!-- Empty state -->
             <div x-show="!loading && reservations.length === 0" x-cloak class="text-center py-20">
-                <div class="text-5xl mb-4">📋</div>
+                <div class="text-5xl mb-4">🍽</div>
                 <h3 class="text-xl font-semibold text-white mb-2">No reservations yet</h3>
-                <p class="text-slate-400 mb-6">Browse restaurants and set up your first snipe.</p>
+                <p class="text-slate-400 mb-6">Browse restaurants and let us handle the hard part.</p>
                 <a href="/browse"
                     class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all">
                     Browse Restaurants
@@ -205,7 +305,7 @@
 
             <!-- Empty filtered state -->
             <div x-show="!loading && reservations.length > 0 && filteredReservations(filter).length === 0" x-cloak class="text-center py-12">
-                <p class="text-slate-400 text-sm">No <span x-text="filter"></span> reservations.</p>
+                <p class="text-slate-400 text-sm">No <span x-text="currentTabLabel()"></span> reservations.</p>
             </div>
         </div>
     </main>
@@ -238,6 +338,13 @@
             eventSources: {},
             toast: { show: false, message: '', icon: '' },
 
+            tabs: [
+                { key: 'all', label: 'All' },
+                { key: 'active', label: 'Active' },
+                { key: 'confirmed', label: 'Confirmed' },
+                { key: 'history', label: 'History' },
+            ],
+
             async init() {
                 if (!this.token) {
                     window.location.href = '/';
@@ -264,7 +371,7 @@
 
                     // Connect SSE for active reservations
                     this.reservations.forEach(r => {
-                        if (['scheduled', 'monitoring', 'sniping'].includes(r.status)) {
+                        if (this.isActive(r.status)) {
                             this.connectSSE(r);
                         }
                     });
@@ -286,22 +393,30 @@
 
                 es.addEventListener('snipe_phase', (e) => {
                     const data = JSON.parse(e.data);
-                    reservation._liveMessage = data.message || data.phase;
+                    reservation._liveMessage = this.friendlyPhaseMessage(data);
                     reservation.status = this.mapPhaseToStatus(data.phase);
                 });
 
                 es.addEventListener('snipe_attempt', (e) => {
                     const data = JSON.parse(e.data);
-                    reservation._liveMessage = data.message;
+                    reservation._liveMessage = this.friendlyAttemptMessage(data);
                     reservation.attempts = data.attempt;
                 });
 
                 es.addEventListener('countdown_tick', (e) => {
                     const data = JSON.parse(e.data);
                     const secs = Math.ceil(data.seconds_remaining);
-                    const mins = Math.floor(secs / 60);
-                    const s = secs % 60;
-                    reservation._liveMessage = `T-${mins}:${String(s).padStart(2, '0')}`;
+                    if (secs > 3600) {
+                        const h = Math.floor(secs / 3600);
+                        const m = Math.floor((secs % 3600) / 60);
+                        reservation._liveMessage = `Ready in ${h}h ${m}m`;
+                    } else if (secs > 60) {
+                        const m = Math.floor(secs / 60);
+                        const s = secs % 60;
+                        reservation._liveMessage = `Ready in ${m}m ${s}s`;
+                    } else {
+                        reservation._liveMessage = `Almost there... ${secs}s`;
+                    }
                 });
 
                 es.addEventListener('snipe_result', (e) => {
@@ -310,11 +425,16 @@
                     if (data.success) {
                         reservation.status = 'confirmed';
                         reservation._liveMessage = '';
-                        this.showToast('Reservation confirmed!', '🎉');
+                        reservation.elapsed_seconds = data.elapsed_seconds || reservation.elapsed_seconds;
+                        reservation.attempts = data.attempts || reservation.attempts;
+                        this.showToast("You're in! Reservation confirmed.", '🎉');
                     } else {
                         reservation.status = data.dry_run ? 'dry_run' : 'failed';
                         reservation.error = data.error;
                         reservation._liveMessage = '';
+                        if (data.dry_run) {
+                            this.showToast('Test run complete', '✅');
+                        }
                     }
                     es.close();
                     delete this.eventSources[id];
@@ -325,6 +445,25 @@
                     es.close();
                     delete this.eventSources[id];
                 };
+            },
+
+            // --- Consumer-friendly message mapping ---
+
+            friendlyPhaseMessage(data) {
+                const phase = data.phase;
+                if (phase === 'waiting') return 'Getting ready...';
+                if (phase === 'authenticating') return 'Connecting to Resy...';
+                if (phase === 'warming') return 'Warming up...';
+                if (phase === 'sniping') return 'Looking for your table...';
+                if (phase === 'monitoring') return 'Watching for openings...';
+                return data.message || 'Working on it...';
+            },
+
+            friendlyAttemptMessage(data) {
+                if (data.slots_found > 0) {
+                    return `Found ${data.slots_found} opening${data.slots_found > 1 ? 's' : ''} — booking now!`;
+                }
+                return 'Watching for openings...';
             },
 
             mapPhaseToStatus(phase) {
@@ -339,14 +478,31 @@
                 return map[phase] || phase;
             },
 
+            isActive(status) {
+                return ['scheduled', 'monitoring', 'sniping'].includes(status);
+            },
+
             filteredReservations(tab) {
                 if (tab === 'all') return this.reservations;
-                if (tab === 'active') return this.reservations.filter(r =>
-                    ['scheduled', 'monitoring', 'sniping'].includes(r.status));
+                if (tab === 'active') return this.reservations.filter(r => this.isActive(r.status));
                 if (tab === 'confirmed') return this.reservations.filter(r => r.status === 'confirmed');
-                if (tab === 'failed') return this.reservations.filter(r =>
-                    ['failed', 'cancelled'].includes(r.status));
+                if (tab === 'history') return this.reservations.filter(r =>
+                    ['failed', 'cancelled', 'dry_run'].includes(r.status));
                 return this.reservations;
+            },
+
+            currentTabLabel() {
+                const tab = this.tabs.find(t => t.key === this.filter);
+                return tab ? tab.label.toLowerCase() : '';
+            },
+
+            summaryText() {
+                const active = this.reservations.filter(r => this.isActive(r.status)).length;
+                const confirmed = this.reservations.filter(r => r.status === 'confirmed').length;
+                const parts = [];
+                if (active > 0) parts.push(`${active} active`);
+                if (confirmed > 0) parts.push(`${confirmed} confirmed`);
+                return parts.length ? parts.join(' · ') : 'No active reservations';
             },
 
             async cancelReservation(id) {
@@ -361,12 +517,18 @@
                             r.status = 'cancelled';
                             r._live = false;
                         }
+                        if (this.eventSources[id]) {
+                            this.eventSources[id].close();
+                            delete this.eventSources[id];
+                        }
                         this.showToast('Reservation cancelled', '✅');
                     }
                 } catch (e) {
                     console.error('Cancel failed:', e);
                 }
             },
+
+            // --- Status display ---
 
             statusClass(status) {
                 const map = {
@@ -384,20 +546,76 @@
             statusLabel(status) {
                 const map = {
                     'scheduled': 'Scheduled',
-                    'monitoring': 'Monitoring',
-                    'sniping': 'Sniping',
-                    'confirmed': 'Confirmed',
-                    'failed': 'Failed',
+                    'monitoring': 'Watching for openings',
+                    'sniping': 'Finding your table',
+                    'confirmed': "You're in!",
+                    'failed': 'No luck this time',
                     'cancelled': 'Cancelled',
-                    'dry_run': 'Dry Run',
+                    'dry_run': 'Test Run',
                 };
                 return map[status] || status;
             },
+
+            // --- Friendly error messages ---
+
+            friendlyError(error) {
+                if (!error) return '';
+                if (error.includes('Retry window exhausted')) return 'The restaurant was fully booked before we could grab a spot.';
+                if (error.includes('No matching slots')) return 'No tables were available at your preferred times.';
+                if (error.includes('auto-cancelled')) return 'Another date in your group was confirmed instead.';
+                if (error.includes('Book token')) return 'A table appeared but was taken before we could confirm it.';
+                return 'We couldn\'t get this one. The restaurant may have been fully booked.';
+            },
+
+            // --- Booking receipt ---
+
+            bookingReceipt(r) {
+                if (!r.elapsed_seconds) return '';
+                const secs = r.elapsed_seconds;
+                if (secs < 1) {
+                    return `Booked in ${Math.round(secs * 1000)}ms`;
+                }
+                return `Booked in ${secs.toFixed(1)}s`;
+            },
+
+            // --- Google Calendar link ---
+
+            calendarLink(r) {
+                const dateStr = r.target_date.replace(/-/g, '');
+                // Default to 7 PM if no time preferences
+                let timeStr = '190000';
+                if (r.time_preferences && r.time_preferences.length > 0) {
+                    const t = r.time_preferences[0].time.replace(/:/g, '') + '00';
+                    timeStr = t.padStart(6, '0');
+                }
+                const startDT = dateStr + 'T' + timeStr;
+                // End = start + 2 hours
+                const startH = parseInt(timeStr.substring(0, 2));
+                const endH = String(Math.min(startH + 2, 23)).padStart(2, '0');
+                const endDT = dateStr + 'T' + endH + timeStr.substring(2);
+
+                const params = new URLSearchParams({
+                    action: 'TEMPLATE',
+                    text: `Dinner at ${r.venue_name}`,
+                    dates: `${startDT}/${endDT}`,
+                    details: `Party of ${r.party_size}\nBooked via Tablement`,
+                    ctz: 'America/New_York',
+                });
+                return `https://calendar.google.com/calendar/render?${params.toString()}`;
+            },
+
+            // --- Formatting ---
 
             formatDate(dateStr) {
                 if (!dateStr) return '';
                 const d = new Date(dateStr + 'T12:00:00');
                 return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            },
+
+            formatDateFull(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
             },
 
             formatTime(timeStr) {
@@ -408,13 +626,17 @@
                 return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
             },
 
+            formatTimePrefs(prefs) {
+                if (!prefs || prefs.length === 0) return '';
+                return prefs.map(p => this.formatTime(p.time)).join(', ');
+            },
+
             showToast(message, icon = '✅') {
                 this.toast = { show: true, message, icon };
-                setTimeout(() => { this.toast.show = false; }, 2500);
+                setTimeout(() => { this.toast.show = false; }, 3000);
             },
 
             signOut() {
-                // Close all SSE connections
                 Object.values(this.eventSources).forEach(es => es.close());
                 localStorage.removeItem('tablement_token');
                 localStorage.removeItem('tablement_refresh');

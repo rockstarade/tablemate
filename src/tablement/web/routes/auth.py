@@ -10,6 +10,8 @@ Flow:
 from __future__ import annotations
 
 import logging
+import os
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -29,6 +31,9 @@ from tablement.web.schemas import (
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Dev mode token store (in-memory, lost on restart — that's fine for dev)
+_dev_tokens: dict[str, str] = {}  # token -> user_id
 
 
 @router.post("/send-otp", response_model=OtpSendResponse)
@@ -147,6 +152,15 @@ async def link_resy(
 @router.get("/me", response_model=UserProfileResponse)
 async def me(user_id: str = Depends(get_user_id)):
     """Return the current user's profile."""
+    # Dev users don't exist in Supabase auth.users, so skip DB entirely
+    if user_id == "00000000-0000-0000-0000-000000000001":
+        return UserProfileResponse(
+            user_id=user_id,
+            resy_linked=False,
+            resy_email=None,
+            stripe_linked=False,
+        )
+
     profile = await db.get_profile(user_id)
     if not profile:
         profile = await db.upsert_profile(user_id)
@@ -157,3 +171,42 @@ async def me(user_id: str = Depends(get_user_id)):
         resy_email=profile.get("resy_email"),
         stripe_linked=bool(profile.get("stripe_customer_id")),
     )
+
+
+# ---------------------------------------------------------------------------
+# Dev Mode — skip phone auth during development
+# ---------------------------------------------------------------------------
+
+
+@router.get("/dev-mode")
+async def dev_mode_check():
+    """Check if dev mode is enabled. Frontend uses this to show the skip button."""
+    return {"dev": os.environ.get("DEV_MODE", "").lower() in ("true", "1", "yes")}
+
+
+@router.post("/dev-skip")
+async def dev_skip():
+    """Create a dev session token without phone verification.
+
+    Only available when DEV_MODE=true. Creates a fake user ID and
+    in-memory token that works with the /me endpoint.
+    """
+    if os.environ.get("DEV_MODE", "").lower() not in ("true", "1", "yes"):
+        raise HTTPException(403, "Dev mode is not enabled")
+
+    # Generate a deterministic dev user ID (same across restarts for convenience)
+    # Must be a valid UUID since profiles.id is a uuid column
+    dev_user_id = "00000000-0000-0000-0000-000000000001"
+    dev_token = f"dev-token-{uuid.uuid4().hex[:16]}"
+
+    # Store in memory
+    _dev_tokens[dev_token] = dev_user_id
+
+    # Note: dev user doesn't exist in Supabase auth.users, so we skip
+    # profile creation. The /me endpoint handles dev users specially.
+
+    logger.info("Dev skip: created token for user %s", dev_user_id)
+    return {
+        "access_token": dev_token,
+        "user_id": dev_user_id,
+    }

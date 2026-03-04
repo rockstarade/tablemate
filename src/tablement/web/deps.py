@@ -10,6 +10,7 @@ works with both legacy HS256 and newer ECC (P-256) JWT signing keys.
 from __future__ import annotations
 
 import logging
+import os
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -30,6 +31,8 @@ async def get_current_user(
     This works with any JWT signing algorithm (HS256, ES256, etc.)
     and doesn't require storing the JWT secret locally.
 
+    Also accepts dev tokens when DEV_MODE=true (for local testing without SMS).
+
     Returns a dict with at minimum:
         - "id": user UUID (same as auth.users.id)
 
@@ -38,9 +41,24 @@ async def get_current_user(
     if not creds:
         raise HTTPException(status_code=401, detail="Authentication required")
 
+    token = creds.credentials
+
+    # Dev token check — skip Supabase validation for dev tokens
+    if token.startswith("dev-token-") and os.environ.get("DEV_MODE", "").lower() in ("true", "1", "yes"):
+        from tablement.web.routes.auth import _dev_tokens
+        dev_user_id = _dev_tokens.get(token)
+        if dev_user_id:
+            return {
+                "sub": dev_user_id,
+                "id": dev_user_id,
+                "phone": None,
+                "email": None,
+                "role": "dev",
+            }
+
     try:
         client = db.get_client()
-        resp = await client.auth.get_user(creds.credentials)
+        resp = await client.auth.get_user(token)
         if not resp or not resp.user:
             raise HTTPException(status_code=401, detail="Invalid token")
         # Return a dict with user info for downstream use

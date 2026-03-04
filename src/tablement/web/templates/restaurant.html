@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablement — Restaurant</title>
+    <title>Tablement</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -49,554 +49,604 @@
             border-radius: 0.75rem;
         }
 
-        /* Slot pill styling */
-        .slot-pill {
+        /* Calendar date cell */
+        .cal-cell {
             transition: all 0.15s ease;
+            cursor: pointer;
         }
-        .slot-pill:hover:not(.slot-claimed) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-        }
-        .slot-claimed {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .cal-cell:hover:not(.cal-past):not(.cal-empty) {
+            transform: scale(1.08);
         }
 
-        /* Horizontal scroll pills */
-        .scroll-pills {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+        /* Time pill */
+        .time-pill {
+            transition: all 0.15s ease;
+            cursor: pointer;
         }
-        .scroll-pills::-webkit-scrollbar { display: none; }
+        .time-pill:hover {
+            transform: translateY(-1px);
+        }
 
         /* Toast */
         @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         .toast-enter { animation: slideInRight 0.3s ease-out; }
-        @keyframes slideOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(100%); }
-        }
-        .toast-exit { animation: slideOutRight 0.3s ease-in forwards; }
-
-        .img-placeholder {
-            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-        }
-
-        /* Pulse animation for loading slot pills */
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.7; }
-        }
-        .pulse-soft { animation: pulse-soft 1.5s ease-in-out infinite; }
     </style>
 </head>
-<body class="text-slate-200 antialiased" x-data="restaurantApp()" x-init="init()">
+<body class="text-slate-200 antialiased" x-data="restaurantApp()" x-init="init()" x-cloak>
 
-    <!-- Toast -->
-    <div x-show="toast.show" x-cloak
-        class="fixed top-6 right-6 z-[100] max-w-sm"
-        :class="toast.exiting ? 'toast-exit' : 'toast-enter'">
-        <div class="glass rounded-xl border border-slate-700/50 px-5 py-3.5 flex items-center gap-3 shadow-2xl">
-            <span class="text-lg" x-text="toast.icon"></span>
-            <p class="text-sm text-slate-200" x-text="toast.message"></p>
-        </div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="fixed top-0 inset-x-0 z-50 border-b border-slate-700/50 glass">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <a href="/browse" class="flex items-center gap-2">
-                    <span class="text-2xl">🍽</span>
-                    <span class="text-xl font-bold text-white">Tablement</span>
-                </a>
-            </div>
-            <div class="flex items-center gap-6">
-                <a href="/browse" class="text-slate-400 hover:text-white text-sm transition-colors">Home</a>
-                <a href="/reservations" class="text-slate-400 hover:text-white text-sm transition-colors">My Reservations</a>
-                <a href="/settings" class="text-slate-400 hover:text-white text-sm transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main -->
-    <main class="pt-24 pb-20 fade-in">
-        <div class="max-w-4xl mx-auto px-6">
-
-            <!-- Back button -->
-            <a href="/browse" class="inline-flex items-center gap-1.5 text-slate-400 hover:text-white text-sm mb-6 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                Back to restaurants
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+        <div class="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+            <a href="/browse" class="flex items-center gap-2 text-slate-400 hover:text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span class="text-sm">Back</span>
             </a>
+            <span class="text-sm font-medium text-brand-400">tablement</span>
+        </div>
+    </header>
 
-            <!-- Restaurant Header -->
-            <div class="glass rounded-2xl border border-slate-700/30 overflow-hidden mb-8">
-                <!-- Hero image -->
-                <div class="relative h-56 sm:h-72 img-placeholder">
-                    <img :src="restaurant.image_url || `/static/restaurants/${venueId}.jpg`"
-                        :alt="restaurant.name"
-                        class="w-full h-full object-cover"
-                        @error="$event.target.style.display='none'">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    <div class="absolute bottom-6 left-6 right-6">
-                        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-2" x-text="restaurant.name || 'Loading...'"></h1>
-                        <div class="flex items-center gap-3 text-sm">
-                            <span class="px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-sm text-slate-200 font-medium" x-text="restaurant.cuisine"></span>
-                            <span class="text-slate-300" x-text="restaurant.neighborhood"></span>
-                        </div>
-                    </div>
-                </div>
+    <!-- Main Content -->
+    <main class="max-w-lg mx-auto px-4 pt-6 pb-32">
 
-                <!-- Tagline + booking policy -->
-                <div class="p-6 flex items-center justify-between flex-wrap gap-4">
-                    <p class="text-brand-400 font-medium text-sm" x-text="restaurant.tagline"></p>
-                    <div x-show="restaurant.drop_days_ahead" class="flex items-center gap-2 text-slate-400 text-xs">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Releases <span x-text="restaurant.drop_days_ahead"></span> days ahead at <span x-text="formatDropTime()"></span></span>
-                    </div>
-                </div>
+        <!-- Loading skeleton -->
+        <template x-if="loading">
+            <div>
+                <div class="skeleton h-8 w-48 mb-3"></div>
+                <div class="skeleton h-5 w-32 mb-6"></div>
+                <div class="skeleton h-72 w-full mb-4"></div>
+                <div class="skeleton h-12 w-full"></div>
             </div>
+        </template>
 
-            <!-- Date & Party Size Picker -->
-            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-8">
-                <div class="flex flex-wrap items-end gap-6">
-                    <!-- Date picker -->
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Date</label>
-                        <input type="date" x-model="selectedDate" @change="loadSlots()"
-                            :min="todayStr"
-                            class="w-full px-4 py-3 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 text-sm">
-                    </div>
-                    <!-- Party size -->
-                    <div class="min-w-[140px]">
-                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Party Size</label>
-                        <div class="flex items-center gap-3">
-                            <button @click="if(partySize > 1) { partySize--; loadSlots(); }"
-                                class="w-10 h-10 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white flex items-center justify-center hover:border-brand-500 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                            </button>
-                            <span class="text-2xl font-semibold text-white w-8 text-center" x-text="partySize"></span>
-                            <button @click="if(partySize < 20) { partySize++; loadSlots(); }"
-                                class="w-10 h-10 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white flex items-center justify-center hover:border-brand-500 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Available Slots -->
-            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-8">
-                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Available Times</h2>
-
-                <!-- Loading -->
-                <div x-show="slotsLoading" class="flex gap-3">
-                    <template x-for="i in 6">
-                        <div class="skeleton h-10 w-20 pulse-soft"></div>
-                    </template>
-                </div>
-
-                <!-- Slot groups by seating type -->
-                <div x-show="!slotsLoading && totalSlots > 0" x-cloak>
-                    <template x-for="(slots, seatType) in slotGroups" :key="seatType">
-                        <div class="mb-6 last:mb-0">
-                            <h3 class="text-sm font-medium text-slate-300 mb-3" x-text="seatType"></h3>
-                            <div class="scroll-pills flex gap-2 pb-2">
-                                <template x-for="slot in slots" :key="slot.time + slot.type">
-                                    <button
-                                        @click="!slot.claimed && selectSlot(slot)"
-                                        class="slot-pill px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap border transition-all"
-                                        :class="slot.claimed
-                                            ? 'slot-claimed bg-slate-800/30 border-slate-700/30 text-slate-600'
-                                            : selectedSlot?.time === slot.time && selectedSlot?.type === slot.type
-                                                ? 'bg-brand-500 border-brand-400 text-slate-900'
-                                                : 'bg-slate-800/40 border-brand-500/30 text-brand-400 hover:bg-brand-500/10'"
-                                        :title="slot.claimed ? 'Another Tablement user is targeting this slot' : ''">
-                                        <span x-text="formatTime(slot.time)"></span>
-                                        <span x-show="slot.claimed" class="ml-1 text-xs">🔒</span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- No slots -->
-                <div x-show="!slotsLoading && totalSlots === 0 && !slotsError" x-cloak>
-                    <div class="text-center py-8">
-                        <div class="text-4xl mb-3">🔒</div>
-                        <h3 class="text-lg font-semibold text-white mb-2">No slots available</h3>
-                        <p class="text-slate-400 text-sm mb-5" x-text="isUnreleasedDate() ? 'This date hasn\'t been released yet.' : 'All slots are booked for this date.'"></p>
-
-                        <!-- Snipe CTA for unreleased dates -->
-                        <div x-show="isUnreleasedDate()">
-                            <button @click="showSnipeSetup = true"
-                                class="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all inline-flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                Set Up a Snipe
-                            </button>
-                            <p class="text-slate-500 text-xs mt-3">We'll auto-book the instant this date is released.</p>
-                        </div>
-
-                        <!-- Monitor CTA for sold-out dates -->
-                        <div x-show="!isUnreleasedDate()">
-                            <button @click="showSnipeSetup = true"
-                                class="px-6 py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-semibold text-sm transition-all inline-flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                Watch for Cancellations
-                            </button>
-                            <p class="text-slate-500 text-xs mt-3">We'll grab it instantly if someone cancels.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Error -->
-                <div x-show="slotsError" x-cloak class="text-center py-8">
-                    <p class="text-red-400 text-sm" x-text="slotsError"></p>
-                </div>
-            </div>
-
-            <!-- Book Selected Slot -->
-            <div x-show="selectedSlot" x-cloak
-                class="glass rounded-2xl border border-brand-500/30 p-6 mb-8"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 translate-y-2"
-                x-transition:enter-end="opacity-100 translate-y-0">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <h3 class="text-white font-semibold mb-1">
-                            <span x-text="formatTime(selectedSlot?.time)"></span>
-                            <span class="text-slate-400 font-normal text-sm ml-2" x-text="selectedSlot?.type"></span>
-                        </h3>
-                        <p class="text-slate-400 text-sm" x-text="formatDateNice(selectedDate) + ' · Party of ' + partySize"></p>
-                    </div>
-                    <button @click="bookSlot()"
-                        :disabled="booking"
-                        class="px-8 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-sm transition-all">
-                        <span x-show="!booking">Book Now</span>
-                        <span x-show="booking" class="flex items-center gap-2">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
-                            Booking...
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Snipe/Monitor Setup Modal -->
-            <div x-show="showSnipeSetup" x-cloak
-                class="fixed inset-0 z-[80] flex items-center justify-center"
-                @keydown.escape.window="showSnipeSetup = false">
-                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="showSnipeSetup = false"></div>
-                <div class="relative z-10 w-full max-w-md mx-4 glass rounded-2xl border border-slate-700/50 p-8 shadow-2xl">
-                    <button @click="showSnipeSetup = false" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-
-                    <div class="flex items-center gap-2 mb-1">
-                        <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        <h2 class="text-xl font-semibold text-white" x-text="isUnreleasedDate() ? 'Set Up a Snipe' : 'Watch for Cancellations'"></h2>
-                    </div>
-                    <p class="text-slate-400 text-sm mb-6" x-text="isUnreleasedDate()
-                        ? `We'll auto-book ${restaurant.name} on ${formatDateNice(selectedDate)} the instant slots are released.`
-                        : `We'll watch ${restaurant.name} on ${formatDateNice(selectedDate)} for cancellations and book instantly.`">
+        <!-- Restaurant header -->
+        <template x-if="!loading && restaurant">
+            <div class="fade-in">
+                <!-- Name + meta -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-white" x-text="restaurant.name"></h1>
+                    <p class="text-sm text-slate-400 mt-1">
+                        <span x-text="restaurant.cuisine"></span>
+                        <span class="mx-1.5 text-slate-600">&bull;</span>
+                        <span x-text="restaurant.neighborhood"></span>
                     </p>
+                </div>
 
-                    <!-- Time preferences -->
-                    <div class="mb-5">
-                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Preferred Time</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <template x-for="t in ['18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30']" :key="t">
-                                <button @click="toggleTimePref(t)"
-                                    class="py-2 rounded-lg text-xs font-medium border transition-all"
-                                    :class="snipeTimePrefs.includes(t)
-                                        ? 'bg-brand-500 border-brand-400 text-slate-900'
-                                        : 'bg-slate-800/40 border-slate-600/30 text-slate-400 hover:border-brand-500/50'">
-                                    <span x-text="formatTime(t)"></span>
+                <!-- ==================== CALENDAR ==================== -->
+                <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4">
+                    <!-- Month nav -->
+                    <div class="flex items-center justify-between mb-4">
+                        <button @click="prevMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition text-slate-400 hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                        <h2 class="text-lg font-semibold text-white" x-text="monthLabel"></h2>
+                        <button @click="nextMonth()" class="p-2 rounded-lg hover:bg-slate-700/50 transition text-slate-400 hover:text-white">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Weekday headers -->
+                    <div class="grid grid-cols-7 mb-2">
+                        <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                            <div class="text-center text-xs font-medium text-slate-500 py-1" x-text="d"></div>
+                        </template>
+                    </div>
+
+                    <!-- Calendar grid -->
+                    <div class="grid grid-cols-7 gap-1">
+                        <template x-for="cell in calendarCells" :key="cell.key">
+                            <div
+                                class="cal-cell aspect-square flex items-center justify-center rounded-xl text-sm font-medium relative"
+                                :class="cellClasses(cell)"
+                                @click="cell.day && !cell.isPast && toggleDate(cell.dateStr)"
+                            >
+                                <span x-text="cell.day || ''"></span>
+                                <!-- Today indicator -->
+                                <div x-show="cell.isToday" class="absolute inset-0 rounded-xl ring-1 ring-white/30 pointer-events-none"></div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center gap-4 mt-4 pt-3 border-t border-slate-700/30">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded bg-red-500/20 border border-red-400/30"></div>
+                            <span class="text-xs text-slate-400">Sold out</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded bg-amber-500/20 border border-amber-400/30"></div>
+                            <span class="text-xs text-slate-400">Not yet released</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== INFO BANNERS ==================== -->
+                <template x-if="hasReleasedSelected">
+                    <div class="glass rounded-xl border border-red-500/20 p-3 mb-3 fade-in">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                            <p class="text-sm text-slate-300">Sold out &mdash; we'll grab it if someone cancels.</p>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="hasUnreleasedSelected">
+                    <div class="glass rounded-xl border border-amber-500/20 p-3 mb-3 fade-in">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-sm text-slate-300">Not yet released &mdash; we'll book it the moment it opens.</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ==================== TIME PICKER ==================== -->
+                <template x-if="selectedDates.length > 0">
+                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-slate-300">Preferred times</h3>
+                            <span class="text-xs text-slate-500">Select all that work</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="tp in timePills" :key="tp.time">
+                                <button
+                                    class="time-pill px-3.5 py-2 rounded-xl text-sm font-medium border"
+                                    :class="timeClasses(tp)"
+                                    @click="toggleTime(tp.time)"
+                                >
+                                    <span x-text="tp.label"></span>
+                                    <template x-if="tp.isHot && !selectedTimes.includes(tp.time)">
+                                        <span class="ml-1 text-orange-400">&#x1F525;</span>
+                                    </template>
                                 </button>
                             </template>
                         </div>
-                        <p class="text-slate-500 text-xs mt-2">Select one or more. We'll book the best available match.</p>
                     </div>
+                </template>
 
-                    <!-- Submit -->
-                    <button @click="createSnipe()"
-                        :disabled="snipeCreating || snipeTimePrefs.length === 0"
-                        class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
-                        :class="snipeTimePrefs.length > 0 ? 'bg-brand-500 hover:bg-brand-400 text-slate-900' : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'">
-                        <span x-show="!snipeCreating" x-text="isUnreleasedDate() ? 'Activate Snipe' : 'Start Monitoring'"></span>
-                        <span x-show="snipeCreating" class="flex items-center justify-center gap-2">
-                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
-                            Setting up...
-                        </span>
-                    </button>
+                <!-- ==================== PARTY SIZE ==================== -->
+                <template x-if="selectedDates.length > 0 && selectedTimes.length > 0">
+                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-medium text-slate-300">Party size</h3>
+                            <div class="flex items-center gap-3">
+                                <button
+                                    @click="partySize = Math.max(1, partySize - 1)"
+                                    class="w-8 h-8 rounded-lg border border-slate-600 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-width="2" d="M20 12H4"/>
+                                    </svg>
+                                </button>
+                                <span class="text-lg font-semibold text-white w-6 text-center tabular-nums" x-text="partySize"></span>
+                                <button
+                                    @click="partySize = Math.min(20, partySize + 1)"
+                                    class="w-8 h-8 rounded-lg border border-slate-600 flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-500 transition"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
-                    <p x-show="snipeError" x-cloak class="mt-3 text-red-400 text-sm" x-text="snipeError"></p>
-                </div>
+                <!-- ==================== EARLIEST AVAILABLE TOGGLE ==================== -->
+                <template x-if="releasedCount >= 2">
+                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-medium text-slate-300">Book earliest available</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">We'll book the first cancellation we find</p>
+                            </div>
+                            <button
+                                @click="bookEarliest = !bookEarliest"
+                                class="relative w-11 h-6 rounded-full transition-colors"
+                                :class="bookEarliest ? 'bg-brand-500' : 'bg-slate-600'"
+                            >
+                                <span
+                                    class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform"
+                                    :class="bookEarliest ? 'translate-x-5' : ''"
+                                ></span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ==================== LATEST NOTIFY ==================== -->
+                <template x-if="releasedCount >= 1">
+                    <div class="glass rounded-2xl border border-slate-700/50 p-4 mb-4 fade-in">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-medium text-slate-300">Stop watching</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Latest you'd want a reservation</p>
+                            </div>
+                            <select
+                                x-model="latestNotify"
+                                class="bg-slate-700/50 border border-slate-600 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-brand-500"
+                            >
+                                <option value="2">2h before</option>
+                                <option value="4">4h before</option>
+                                <option value="6">6h before</option>
+                                <option value="12">Same day morning</option>
+                                <option value="24">Day before</option>
+                            </select>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ==================== SELECTED SUMMARY ==================== -->
+                <template x-if="selectedDates.length > 0">
+                    <div class="mb-4 px-1">
+                        <p class="text-xs text-slate-500">
+                            <span x-text="selectedDates.length"></span> date<span x-show="selectedDates.length > 1">s</span>,
+                            <span x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                        </p>
+                    </div>
+                </template>
+
             </div>
-        </div>
+        </template>
+
+        <!-- Error state -->
+        <template x-if="!loading && error">
+            <div class="glass rounded-2xl border border-red-500/20 p-6 text-center fade-in">
+                <p class="text-red-400 text-sm" x-text="error"></p>
+                <a href="/browse" class="text-brand-400 text-sm mt-3 inline-block hover:text-brand-300">Back to browse</a>
+            </div>
+        </template>
+
     </main>
 
-    <!-- Mobile bottom nav -->
-    <nav class="fixed bottom-0 inset-x-0 z-50 glass border-t border-slate-700/50 sm:hidden">
-        <div class="flex items-center justify-around py-3">
-            <a href="/browse" class="flex flex-col items-center gap-1 text-slate-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
-                <span class="text-[10px] font-medium">Home</span>
-            </a>
-            <a href="/reservations" class="flex flex-col items-center gap-1 text-slate-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span class="text-[10px] font-medium">Reservations</span>
-            </a>
-            <a href="/settings" class="flex flex-col items-center gap-1 text-slate-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                <span class="text-[10px] font-medium">Settings</span>
-            </a>
+    <!-- Fixed bottom CTA -->
+    <div class="fixed bottom-0 inset-x-0 z-40 glass border-t border-slate-700/50 p-4 pb-safe" x-show="canSubmit" x-transition>
+        <div class="max-w-lg mx-auto">
+            <button
+                @click="submitBooking()"
+                :disabled="submitting"
+                class="w-full py-3.5 rounded-2xl font-semibold text-base transition-all"
+                :class="submitting
+                    ? 'bg-brand-500/50 text-white/50 cursor-wait'
+                    : 'bg-brand-500 text-white hover:bg-brand-400 active:scale-[0.98]'"
+            >
+                <span x-show="!submitting">Get This Table</span>
+                <span x-show="submitting" class="flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                    </svg>
+                    Setting up...
+                </span>
+            </button>
         </div>
-    </nav>
+    </div>
+
+    <!-- Toast -->
+    <div
+        x-show="toast" x-transition
+        class="fixed top-16 right-4 z-50 glass border border-slate-700/50 rounded-xl px-4 py-3 max-w-xs toast-enter"
+    >
+        <p class="text-sm text-white" x-text="toast"></p>
+    </div>
 
     <script>
     function restaurantApp() {
         return {
-            venueId: {{ venue_id }},
-            restaurant: {},
-            token: localStorage.getItem('tablement_token'),
-
-            // Date & party
-            selectedDate: '',
-            todayStr: '',
+            // State
+            loading: true,
+            error: null,
+            restaurant: null,
+            currentMonth: new Date(),
+            selectedDates: [],
+            selectedTimes: [],
             partySize: 2,
-
-            // Slots
-            slotGroups: {},
-            totalSlots: 0,
-            slotsLoading: false,
-            slotsError: '',
-            selectedSlot: null,
-            booking: false,
-
-            // Snipe setup
-            showSnipeSetup: false,
-            snipeTimePrefs: ['19:00', '19:30', '20:00'],
-            snipeCreating: false,
-            snipeError: '',
-
-            // Toast
-            toast: { show: false, message: '', icon: '', exiting: false },
+            bookEarliest: false,
+            latestNotify: 2,
+            submitting: false,
+            toast: null,
+            venueId: {{ venue_id }},
 
             async init() {
-                if (!this.token) {
+                const token = localStorage.getItem('tablement_token');
+                if (!token) {
                     window.location.href = '/';
                     return;
                 }
 
-                // Set default date to tomorrow
-                const now = new Date();
-                const tomorrow = new Date(now);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                this.todayStr = now.toISOString().split('T')[0];
-                this.selectedDate = tomorrow.toISOString().split('T')[0];
-
-                // Load restaurant info
-                await this.loadRestaurant();
-                // Load slots
-                await this.loadSlots();
-            },
-
-            async loadRestaurant() {
                 try {
-                    // Try curated first
                     const resp = await fetch(`/api/curated/${this.venueId}`);
                     const data = await resp.json();
                     if (data.restaurant) {
                         this.restaurant = data.restaurant;
-                        document.title = `Tablement — ${this.restaurant.name}`;
-                        return;
+                    } else {
+                        this.error = 'Restaurant not found';
                     }
-                    // Fallback: search by venue ID
-                    this.restaurant = {
-                        venue_id: this.venueId,
-                        name: 'Restaurant',
-                        cuisine: '',
-                        neighborhood: '',
-                        tagline: '',
-                        image_url: `/static/restaurants/${this.venueId}.jpg`,
-                    };
                 } catch (e) {
-                    console.error('Failed to load restaurant:', e);
+                    this.error = 'Failed to load restaurant data';
+                }
+                this.loading = false;
+            },
+
+            // ==================== Calendar Logic ====================
+
+            get monthLabel() {
+                return this.currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            },
+
+            prevMonth() {
+                const d = new Date(this.currentMonth);
+                d.setMonth(d.getMonth() - 1);
+                // Don't go before current month
+                const now = new Date();
+                if (d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth())) {
+                    this.currentMonth = d;
                 }
             },
 
-            async loadSlots() {
-                if (!this.selectedDate) return;
-                this.slotsLoading = true;
-                this.slotsError = '';
-                this.selectedSlot = null;
-                this.slotGroups = {};
-                this.totalSlots = 0;
-
-                try {
-                    const resp = await fetch(
-                        `/api/slots/available?venue_id=${this.venueId}&date=${this.selectedDate}&party_size=${this.partySize}`,
-                        { headers: { 'Authorization': 'Bearer ' + this.token } }
-                    );
-                    if (resp.status === 401) {
-                        window.location.href = '/';
-                        return;
-                    }
-                    const data = await resp.json();
-                    if (!resp.ok) throw new Error(data.detail || 'Failed to load slots');
-
-                    this.slotGroups = data.slot_groups || {};
-                    this.totalSlots = data.total_slots || 0;
-                } catch (e) {
-                    this.slotsError = e.message;
-                } finally {
-                    this.slotsLoading = false;
+            nextMonth() {
+                const d = new Date(this.currentMonth);
+                d.setMonth(d.getMonth() + 1);
+                // Don't go more than 3 months ahead
+                const limit = new Date();
+                limit.setMonth(limit.getMonth() + 3);
+                if (d <= limit) {
+                    this.currentMonth = d;
                 }
             },
 
-            selectSlot(slot) {
-                if (this.selectedSlot?.time === slot.time && this.selectedSlot?.type === slot.type) {
-                    this.selectedSlot = null;
-                } else {
-                    this.selectedSlot = slot;
-                }
+            get lastReleasedDate() {
+                if (!this.restaurant || !this.restaurant.drop_days_ahead) return null;
+                const d = new Date();
+                d.setDate(d.getDate() + this.restaurant.drop_days_ahead);
+                // Normalize to midnight
+                d.setHours(0, 0, 0, 0);
+                return d;
             },
 
-            async bookSlot() {
-                if (!this.selectedSlot) return;
-                this.booking = true;
-
-                try {
-                    const resp = await fetch('/api/reservations/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + this.token,
-                        },
-                        body: JSON.stringify({
-                            venue_id: this.venueId,
-                            venue_name: this.restaurant.name || 'Restaurant',
-                            party_size: this.partySize,
-                            date: this.selectedDate,
-                            mode: 'monitor',
-                            time_preferences: [{ time: this.selectedSlot.time, seating_type: this.selectedSlot.type }],
-                        }),
-                    });
-                    const data = await resp.json();
-                    if (!resp.ok) throw new Error(data.detail || 'Booking failed');
-
-                    this.showToast('Booking initiated!', '🎉');
-                    setTimeout(() => { window.location.href = '/reservations'; }, 1000);
-                } catch (e) {
-                    this.showToast(e.message, '❌');
-                } finally {
-                    this.booking = false;
-                }
+            isReleasedDate(dateStr) {
+                if (!this.lastReleasedDate) return true; // If no drop policy, assume all released
+                const d = new Date(dateStr + 'T00:00:00');
+                return d <= this.lastReleasedDate;
             },
 
-            isUnreleasedDate() {
-                if (!this.restaurant.drop_days_ahead || !this.selectedDate) return false;
+            isUnreleasedDate(dateStr) {
+                return !this.isReleasedDate(dateStr);
+            },
+
+            get calendarCells() {
+                const year = this.currentMonth.getFullYear();
+                const month = this.currentMonth.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
                 const today = new Date();
-                const selected = new Date(this.selectedDate + 'T00:00:00');
-                const daysOut = Math.ceil((selected - today) / (1000 * 60 * 60 * 24));
-                return daysOut > this.restaurant.drop_days_ahead;
+                today.setHours(0, 0, 0, 0);
+
+                const cells = [];
+
+                // Empty cells before first day
+                for (let i = 0; i < firstDay; i++) {
+                    cells.push({ key: `e${i}`, day: null, dateStr: null, isPast: true, isToday: false, isReleased: false, isUnreleased: false });
+                }
+
+                // Day cells
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const cellDate = new Date(year, month, d);
+                    cellDate.setHours(0, 0, 0, 0);
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const isPast = cellDate < today;
+                    const isToday = cellDate.getTime() === today.getTime();
+
+                    cells.push({
+                        key: dateStr,
+                        day: d,
+                        dateStr,
+                        isPast,
+                        isToday,
+                        isReleased: !isPast && this.isReleasedDate(dateStr),
+                        isUnreleased: !isPast && this.isUnreleasedDate(dateStr),
+                    });
+                }
+
+                return cells;
             },
 
-            toggleTimePref(t) {
-                const idx = this.snipeTimePrefs.indexOf(t);
+            cellClasses(cell) {
+                if (!cell.day) return 'cal-empty';
+                if (cell.isPast) return 'cal-past opacity-25 cursor-default pointer-events-none text-slate-600';
+
+                const isSelected = this.selectedDates.includes(cell.dateStr);
+
+                if (isSelected) {
+                    return 'bg-brand-500 text-white font-bold scale-105 shadow-lg shadow-brand-500/20';
+                }
+
+                if (cell.isReleased) {
+                    return 'bg-red-500/10 border border-red-400/20 text-slate-200 hover:bg-red-500/20 hover:border-red-400/40';
+                }
+
+                if (cell.isUnreleased) {
+                    return 'bg-amber-500/10 border border-amber-400/30 text-slate-200 hover:bg-amber-500/20 hover:border-amber-400/50';
+                }
+
+                return 'text-slate-400';
+            },
+
+            toggleDate(dateStr) {
+                if (!dateStr) return;
+
+                const idx = this.selectedDates.indexOf(dateStr);
                 if (idx >= 0) {
-                    this.snipeTimePrefs.splice(idx, 1);
+                    this.selectedDates.splice(idx, 1);
+                    return;
+                }
+
+                // Enforce limits: max 5 released dates
+                if (this.isReleasedDate(dateStr)) {
+                    const currentReleased = this.selectedDates.filter(d => this.isReleasedDate(d)).length;
+                    if (currentReleased >= 5) {
+                        this.showToast('Max 5 sold-out dates');
+                        return;
+                    }
+                }
+
+                this.selectedDates.push(dateStr);
+                this.selectedDates.sort();
+            },
+
+            // ==================== Time Picker Logic ====================
+
+            get timePills() {
+                if (!this.restaurant) return [];
+                const start = this.parseTime(this.restaurant.service_start || '17:00');
+                const end = this.parseTime(this.restaurant.service_end || '22:00');
+                const hotStart = this.parseTime(this.restaurant.hot_start || '19:00');
+                const hotEnd = this.parseTime(this.restaurant.hot_end || '20:30');
+
+                const pills = [];
+                let t = start;
+                while (t <= end) {
+                    const h = Math.floor(t / 60);
+                    const m = t % 60;
+                    const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                    const h12 = h > 12 ? h - 12 : h;
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    const label = `${h12}:${String(m).padStart(2, '0')}`;
+
+                    pills.push({
+                        time: timeStr,
+                        label,
+                        isHot: t >= hotStart && t <= hotEnd,
+                    });
+                    t += 30;
+                }
+                return pills;
+            },
+
+            parseTime(str) {
+                // Parse "HH:MM" to minutes since midnight
+                const [h, m] = str.split(':').map(Number);
+                return h * 60 + (m || 0);
+            },
+
+            timeClasses(tp) {
+                const isSelected = this.selectedTimes.includes(tp.time);
+                if (isSelected) {
+                    return 'bg-brand-500 text-white border-brand-500';
+                }
+                if (tp.isHot) {
+                    return 'bg-slate-800/50 text-slate-200 border-orange-400/30 hover:bg-orange-500/10 hover:border-orange-400/50';
+                }
+                return 'bg-slate-800/50 text-slate-300 border-slate-600/50 hover:bg-slate-700/50 hover:border-slate-500';
+            },
+
+            toggleTime(timeStr) {
+                const idx = this.selectedTimes.indexOf(timeStr);
+                if (idx >= 0) {
+                    this.selectedTimes.splice(idx, 1);
                 } else {
-                    this.snipeTimePrefs.push(t);
+                    this.selectedTimes.push(timeStr);
+                    this.selectedTimes.sort();
                 }
             },
 
-            async createSnipe() {
-                if (this.snipeTimePrefs.length === 0) return;
-                this.snipeCreating = true;
-                this.snipeError = '';
+            // ==================== Computed Properties ====================
 
-                const mode = this.isUnreleasedDate() ? 'snipe' : 'monitor';
-                const dropTime = this.restaurant.drop_days_ahead ? {
-                    hour: this.restaurant.drop_hour || 10,
-                    minute: this.restaurant.drop_minute || 0,
-                    second: 0,
-                    timezone: 'America/New_York',
-                    days_ahead: this.restaurant.drop_days_ahead,
-                } : null;
+            get releasedCount() {
+                return this.selectedDates.filter(d => this.isReleasedDate(d)).length;
+            },
+
+            get hasReleasedSelected() {
+                return this.releasedCount > 0;
+            },
+
+            get hasUnreleasedSelected() {
+                return this.selectedDates.some(d => this.isUnreleasedDate(d));
+            },
+
+            get canSubmit() {
+                return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading;
+            },
+
+            // ==================== Submit ====================
+
+            async submitBooking() {
+                if (this.submitting || !this.canSubmit) return;
+                this.submitting = true;
+
+                const token = localStorage.getItem('tablement_token');
+                if (!token) {
+                    window.location.href = '/';
+                    return;
+                }
+
+                // Build drop_time from restaurant data (for unreleased dates)
+                let dropTime = null;
+                if (this.restaurant.drop_days_ahead) {
+                    dropTime = {
+                        hour: this.restaurant.drop_hour || 10,
+                        minute: this.restaurant.drop_minute || 0,
+                        second: 0,
+                        timezone: 'America/New_York',
+                        days_ahead: this.restaurant.drop_days_ahead,
+                    };
+                }
+
+                const payload = {
+                    venue_id: this.venueId,
+                    venue_name: this.restaurant.name,
+                    party_size: this.partySize,
+                    dates: this.selectedDates,
+                    time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
+                    drop_time: dropTime,
+                    book_earliest: this.bookEarliest,
+                    latest_notify_hours: parseFloat(this.latestNotify),
+                };
 
                 try {
-                    const resp = await fetch('/api/reservations/', {
+                    const resp = await fetch('/api/reservations/batch', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + this.token,
+                            'Authorization': `Bearer ${token}`,
                         },
-                        body: JSON.stringify({
-                            venue_id: this.venueId,
-                            venue_name: this.restaurant.name || 'Restaurant',
-                            party_size: this.partySize,
-                            date: this.selectedDate,
-                            mode: mode,
-                            time_preferences: this.snipeTimePrefs.map(t => ({ time: t, seating_type: null })),
-                            drop_time: mode === 'snipe' ? dropTime : null,
-                        }),
+                        body: JSON.stringify(payload),
                     });
-                    const data = await resp.json();
-                    if (!resp.ok) throw new Error(data.detail || 'Failed to create snipe');
 
-                    this.showSnipeSetup = false;
-                    this.showToast(mode === 'snipe' ? 'Snipe activated!' : 'Monitoring started!', '⚡');
-                    setTimeout(() => { window.location.href = '/reservations'; }, 1000);
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        throw new Error(err.detail || 'Failed to create reservations');
+                    }
+
+                    const data = await resp.json();
+                    // Redirect to reservations page with success toast
+                    window.location.href = '/reservations?toast=' + encodeURIComponent("We're on it! Watching " + this.selectedDates.length + " date" + (this.selectedDates.length > 1 ? 's' : ''));
+
                 } catch (e) {
-                    this.snipeError = e.message;
-                } finally {
-                    this.snipeCreating = false;
+                    this.showToast(e.message || 'Something went wrong');
+                    this.submitting = false;
                 }
             },
 
-            formatTime(timeStr) {
-                if (!timeStr) return '';
-                const [h, m] = timeStr.split(':').map(Number);
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-                return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
-            },
+            // ==================== Toast ====================
 
-            formatDropTime() {
-                if (!this.restaurant.drop_hour && this.restaurant.drop_hour !== 0) return '';
-                const h = this.restaurant.drop_hour;
-                const m = this.restaurant.drop_minute || 0;
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                const hour = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-                return `${hour}:${String(m).padStart(2, '0')} ${ampm} ET`;
+            showToast(msg) {
+                this.toast = msg;
+                setTimeout(() => { this.toast = null; }, 3000);
             },
-
-            formatDateNice(dateStr) {
-                if (!dateStr) return '';
-                const d = new Date(dateStr + 'T12:00:00');
-                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-            },
-
-            showToast(message, icon = '✅') {
-                this.toast = { show: true, message, icon, exiting: false };
-                setTimeout(() => {
-                    this.toast.exiting = true;
-                    setTimeout(() => { this.toast.show = false; }, 300);
-                }, 2000);
-            },
-        }
+        };
     }
     </script>
+
 </body>
 </html>

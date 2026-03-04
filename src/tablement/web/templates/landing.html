@@ -175,6 +175,13 @@
                             </button>
                         </form>
                         <p x-show="error" x-transition class="mt-4 text-red-400 text-sm" x-text="error"></p>
+
+                        <!-- Dev skip button (only in dev mode) -->
+                        <button x-show="devMode" x-cloak
+                            @click="devSkip()"
+                            class="w-full mt-3 py-2.5 text-slate-500 hover:text-slate-300 text-xs transition-colors">
+                            Skip for now (dev mode)
+                        </button>
                     </div>
 
                     <!-- Step 2: OTP Verification (6 digit boxes) -->
@@ -299,37 +306,54 @@
             resendCooldown: 0,
             _resendTimer: null,
             toastMsg: '',
+            devMode: false,
 
             // ─── Phone formatting ───────────────────────────────
+            _formatPhone(raw) {
+                let f = '';
+                if (raw.length > 0) f += '(' + raw.slice(0, 3);
+                if (raw.length >= 3) f += ') ';
+                if (raw.length > 3) f += raw.slice(3, 6);
+                if (raw.length > 6) f += '-' + raw.slice(6);
+                return f;
+            },
+
             formatPhoneInput(e) {
-                // Strip non-digits
-                let raw = e.target.value.replace(/\D/g, '');
-                // Limit to 10 digits
-                if (raw.length > 10) raw = raw.slice(0, 10);
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
                 this.phoneDigits = raw;
-
-                // Format as (XXX) XXX-XXXX
-                let formatted = '';
-                if (raw.length > 0) formatted += '(' + raw.slice(0, 3);
-                if (raw.length >= 3) formatted += ') ';
-                else if (raw.length > 0) formatted += '';
-                if (raw.length > 3) formatted += raw.slice(3, 6);
-                if (raw.length > 6) formatted += '-' + raw.slice(6);
-
+                const formatted = this._formatPhone(raw);
                 this.phoneDisplay = formatted;
 
-                // Update the actual input value
-                this.$nextTick(() => { e.target.value = this.phoneDisplay; });
+                // Calculate cursor position: place cursor at end of meaningful content
+                const cursorPos = formatted.length;
+                this.$nextTick(() => {
+                    e.target.value = formatted;
+                    e.target.setSelectionRange(cursorPos, cursorPos);
+                });
             },
 
             phoneKeydown(e) {
-                // Allow: backspace, delete, tab, escape, enter, arrow keys
-                const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-                                 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
-                if (allowed.includes(e.key)) return;
+                // Allow: tab, escape, enter, arrow keys
+                const passthrough = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (passthrough.includes(e.key)) return;
 
                 // Allow Ctrl/Cmd+A, C, V, X
                 if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+
+                // Backspace/Delete: operate on raw digits, not formatted chars
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    if (this.phoneDigits.length > 0) {
+                        this.phoneDigits = this.phoneDigits.slice(0, -1);
+                        const formatted = this._formatPhone(this.phoneDigits);
+                        this.phoneDisplay = formatted;
+                        this.$nextTick(() => {
+                            e.target.value = formatted;
+                            e.target.setSelectionRange(formatted.length, formatted.length);
+                        });
+                    }
+                    return;
+                }
 
                 // Block non-digits
                 if (!/^\d$/.test(e.key)) {
@@ -512,11 +536,33 @@
                 }, 1000);
             },
 
-            init() {
+            async devSkip() {
+                try {
+                    const resp = await fetch('/api/auth/dev-skip', { method: 'POST' });
+                    if (!resp.ok) throw new Error('Dev skip failed');
+                    const data = await resp.json();
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_dev_user', 'true');
+                    window.location.href = '/browse';
+                } catch (e) {
+                    this.error = 'Dev skip failed: ' + e.message;
+                }
+            },
+
+            async init() {
                 // If already logged in, redirect to browse
                 if (localStorage.getItem('tablement_token')) {
                     window.location.href = '/browse';
+                    return;
                 }
+                // Check if dev mode is enabled
+                try {
+                    const resp = await fetch('/api/auth/dev-mode');
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.devMode = data.dev === true;
+                    }
+                } catch (e) {}
             }
         }
     }

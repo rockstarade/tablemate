@@ -105,7 +105,7 @@
                     <span class="text-xl font-bold text-white">Tablement</span>
                 </a>
             </div>
-            <div class="flex items-center gap-6">
+            <div class="hidden sm:flex items-center gap-6">
                 <a href="/browse" class="text-white font-medium text-sm">Home</a>
                 <a href="/reservations" class="text-slate-400 hover:text-white text-sm transition-colors">My Reservations</a>
                 <a href="/settings" class="text-slate-400 hover:text-white text-sm transition-colors">
@@ -120,55 +120,24 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="pt-28 pb-20 fade-in">
-        <div class="max-w-6xl mx-auto px-6">
+    <main class="pt-20 sm:pt-28 pb-20 fade-in">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6">
 
-            <!-- Header + Search -->
-            <div class="mb-12">
-                <h1 class="text-4xl sm:text-5xl font-bold text-white mb-3">Where do you want to eat?</h1>
-                <p class="text-slate-400 text-lg mb-8">NYC's hardest reservations. We book them the instant they drop.</p>
-
-                <!-- Search bar -->
-                <div class="relative max-w-lg">
-                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input type="text"
-                        x-model="searchQuery"
-                        @input.debounce.300ms="searchVenues()"
-                        placeholder="Search any restaurant on Resy..."
-                        class="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-800/60 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 search-glow transition-all text-sm">
-
-                    <!-- Search results dropdown -->
-                    <div x-show="searchResults.length > 0 && searchQuery.length > 1" x-cloak
-                        class="absolute top-full left-0 right-0 mt-2 glass rounded-xl border border-slate-700/50 overflow-hidden z-50 shadow-2xl">
-                        <template x-for="result in searchResults" :key="result.resy_id">
-                            <button @click="goToRestaurant(result)"
-                                class="w-full px-4 py-3 text-left hover:bg-slate-700/40 transition-colors flex items-center justify-between border-b border-slate-700/30 last:border-b-0">
-                                <div>
-                                    <span class="text-white font-medium text-sm" x-text="result.name"></span>
-                                    <span class="text-slate-500 text-xs ml-2" x-text="result.cuisine"></span>
-                                </div>
-                                <span class="text-slate-500 text-xs" x-text="result.neighborhood"></span>
-                            </button>
-                        </template>
-                    </div>
-                </div>
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-2xl sm:text-4xl font-bold text-white">Where do you want to eat?</h1>
             </div>
 
             <!-- Restaurant Grid -->
             <div>
-                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-6">Featured Restaurants</h2>
-
                 <!-- Loading skeleton -->
-                <div x-show="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <template x-for="i in 9">
-                        <div class="rounded-2xl overflow-hidden">
-                            <div class="skeleton h-48 w-full"></div>
-                            <div class="p-5 bg-slate-800/40 rounded-b-2xl">
-                                <div class="skeleton h-5 w-3/4 mb-3"></div>
-                                <div class="skeleton h-4 w-1/2 mb-2"></div>
-                                <div class="skeleton h-3 w-full"></div>
+                <div x-show="loading" class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                    <template x-for="i in 8">
+                        <div class="rounded-xl overflow-hidden">
+                            <div class="skeleton h-28 w-full"></div>
+                            <div class="p-3 bg-slate-800/40 rounded-b-xl">
+                                <div class="skeleton h-4 w-3/4 mb-2"></div>
+                                <div class="skeleton h-3 w-1/2"></div>
                             </div>
                         </div>
                     </template>
@@ -176,12 +145,12 @@
 
                 <!-- Actual grid -->
                 <div x-show="!loading" x-cloak
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    class="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     <template x-for="r in restaurants" :key="r.venue_id">
                         <button @click="goToRestaurant(r)"
-                            class="restaurant-card rounded-2xl overflow-hidden text-left border border-slate-700/30 bg-slate-800/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/50">
+                            class="restaurant-card rounded-xl overflow-hidden text-left border border-slate-700/30 bg-slate-800/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/50">
                             <!-- Image -->
-                            <div class="relative h-48 overflow-hidden img-placeholder">
+                            <div class="relative h-28 overflow-hidden img-placeholder">
                                 <img :src="r.image_url"
                                     :alt="r.name"
                                     class="w-full h-full object-cover"
@@ -189,16 +158,16 @@
                                 <!-- Dark gradient overlay -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                                 <!-- Cuisine pill -->
-                                <div class="absolute top-3 left-3">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/50 backdrop-blur-sm text-xs font-medium text-slate-200"
+                                <div class="absolute top-2 left-2">
+                                    <span class="px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-[10px] font-medium text-slate-200"
                                         x-text="r.cuisine"></span>
                                 </div>
                             </div>
                             <!-- Info -->
-                            <div class="p-5">
-                                <h3 class="text-lg font-semibold text-white mb-1" x-text="r.name"></h3>
-                                <p class="text-slate-400 text-sm mb-2" x-text="r.neighborhood"></p>
-                                <p class="text-brand-400 text-xs font-medium" x-text="r.tagline"></p>
+                            <div class="p-3">
+                                <h3 class="text-sm font-semibold text-white mb-0.5 leading-tight" x-text="r.name"></h3>
+                                <p class="text-slate-400 text-xs mb-1" x-text="r.neighborhood"></p>
+                                <p class="text-brand-400 text-[10px] font-medium leading-tight line-clamp-2" x-text="r.tagline"></p>
                             </div>
                         </button>
                     </template>
@@ -208,7 +177,7 @@
                 <div x-show="!loading && restaurants.length === 0" x-cloak class="text-center py-20">
                     <div class="text-5xl mb-4">🍽</div>
                     <h3 class="text-xl font-semibold text-white mb-2">No restaurants found</h3>
-                    <p class="text-slate-400">Try searching for a restaurant above.</p>
+                    <p class="text-slate-400">Check back soon — we're adding more restaurants.</p>
                 </div>
             </div>
         </div>
@@ -260,6 +229,7 @@
                         <input type="tel"
                             x-model="resyPhoneDisplay"
                             @input="formatResyPhone($event)"
+                            @keydown="resyPhoneKeydown($event)"
                             placeholder="(555) 123-4567"
                             maxlength="14"
                             inputmode="numeric"
@@ -431,7 +401,9 @@
                 this.searchResults = [];
                 this.searchQuery = '';
 
-                if (!this.resyLinked) {
+                // Dev users can browse without Resy linked (they'll link when booking)
+                const isDevUser = localStorage.getItem('tablement_dev_user') === 'true';
+                if (!this.resyLinked && !isDevUser) {
                     this.pendingVenueId = venueId;
                     this.showResyLink = true;
                     return;
@@ -440,16 +412,44 @@
             },
 
             // --- Resy Phone OTP ---
-            formatResyPhone(e) {
-                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
-                this.resyPhoneDigits = raw;
+            _fmtPhone(raw) {
                 let f = '';
                 if (raw.length > 0) f += '(' + raw.slice(0, 3);
                 if (raw.length >= 3) f += ') ';
                 if (raw.length > 3) f += raw.slice(3, 6);
                 if (raw.length > 6) f += '-' + raw.slice(6);
+                return f;
+            },
+
+            formatResyPhone(e) {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+                this.resyPhoneDigits = raw;
+                const f = this._fmtPhone(raw);
                 this.resyPhoneDisplay = f;
-                this.$nextTick(() => { e.target.value = f; });
+                this.$nextTick(() => {
+                    e.target.value = f;
+                    e.target.setSelectionRange(f.length, f.length);
+                });
+            },
+
+            resyPhoneKeydown(e) {
+                const passthrough = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (passthrough.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    if (this.resyPhoneDigits.length > 0) {
+                        this.resyPhoneDigits = this.resyPhoneDigits.slice(0, -1);
+                        const f = this._fmtPhone(this.resyPhoneDigits);
+                        this.resyPhoneDisplay = f;
+                        this.$nextTick(() => {
+                            e.target.value = f;
+                            e.target.setSelectionRange(f.length, f.length);
+                        });
+                    }
+                    return;
+                }
+                if (!/^\d$/.test(e.key)) e.preventDefault();
             },
 
             async sendResyOtp() {

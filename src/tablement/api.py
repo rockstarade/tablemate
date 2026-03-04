@@ -754,3 +754,84 @@ class ResyApiClient:
                 type(get_err).__name__, get_err,
             )
             raise
+
+    # ------------------------------------------------------------------
+    # User Reservations — for post-booking verification
+    # ------------------------------------------------------------------
+
+    async def get_user_reservations(self) -> list[dict]:
+        """GET /3/user/reservations — returns user's upcoming reservations.
+
+        Used for post-snipe verification: when the snipe loop times out,
+        we check if Resy actually processed the booking before marking
+        it as failed. This prevents the Semma false-failure scenario
+        where the booking went through but our retry window had already
+        expired before we got the confirmation response.
+
+        Requires auth token to be set (X-Resy-Auth-Token header).
+        """
+        assert self._client is not None
+        assert self._auth_token, "Auth token required for user reservations"
+        try:
+            resp = await self._client.get("/3/user/reservations")
+            resp.raise_for_status()
+            data = orjson.loads(resp.content)
+            # Resy returns reservations under a key (structure may vary)
+            # Common response: {"reservations": [...]} or just a list
+            if isinstance(data, list):
+                return data
+            if isinstance(data, dict):
+                return data.get("reservations", data.get("results", []))
+            return []
+        except Exception as e:
+            logger.warning("Failed to fetch user reservations: %s", e)
+            return []
+
+    async def check_booking_exists(
+        self,
+        venue_id: int,
+        target_date: str,
+        party_size: int,
+    ) -> dict | None:
+        """Check if a reservation exists for the given venue/date/party.
+
+        Returns the matching reservation dict if found, None otherwise.
+        Used for post-timeout verification — catches the case where Resy
+        processed the booking but our response timed out.
+        """
+        reservations = await self.get_user_reservations()
+        for res in reservations:
+            try:
+                # Resy reservation objects have nested venue + date info
+                # Navigate the structure to find a match
+                res_venue_id = (
+                    res.get("venue", {}).get("id", {}).get("resy")
+                    or res.get("venue_id")
+                    or res.get("venue", {}).get("id")
+                )
+                res_date = (
+                    res.get("day", "")
+                    or res.get("date", {}).get("start", "")[:10]
+                    or res.get("reservation", {}).get("day", "")
+                )
+                res_party = (
+                    res.get("num_seats")
+                    or res.get("party_size")
+                    or res.get("reservation", {}).get("num_seats")
+                )
+
+                # Venue ID may be int or string
+                vid = int(res_venue_id) if res_venue_id else None
+
+                if vid == venue_id and str(res_date) == target_date:
+                    logger.info(
+                        "VERIFICATION: Found booking on Resy! "
+                        "venue=%s date=%s party=%s resy_token=%s",
+                        venue_id, target_date, res_party,
+                        res.get("resy_token", "?"),
+                    )
+                    return res
+            except (ValueError, TypeError, AttributeError) as e:
+                logger.debug("Skipping reservation during verification: %s", e)
+                continue
+        return None
