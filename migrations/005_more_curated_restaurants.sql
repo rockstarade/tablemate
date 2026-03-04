@@ -1,6 +1,7 @@
 -- Migration 005: Add more curated restaurants
+-- NOTE: Superseded by migration 006 which includes all these restaurants
+-- plus 8 more and adds the slot_interval column. Both are idempotent.
 -- Run in Supabase SQL Editor after migrations 003 and 004
--- This is schema #6 in Supabase (after the 5 existing schemas)
 
 INSERT INTO curated_restaurants
     (venue_id, name, cuisine, neighborhood, url_slug, tagline,
