@@ -108,7 +108,7 @@
     <!-- ═══════════════════ NAVIGATION ═══════════════════ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b"
          :class="scrolled ? 'glass border-slate-700/50' : 'border-transparent'">
-        <div class="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
             <!-- Logo -->
             <a href="/" class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
@@ -117,13 +117,13 @@
                 <span class="text-xl font-bold text-white tracking-tight">RESR</span>
             </a>
 
-            <!-- Nav links (desktop) -->
-            <div class="hidden md:flex items-center gap-16">
-                <a href="#how-it-works" class="font-bold text-lg transition-colors"
+            <!-- Nav links (desktop) — centered -->
+            <div class="hidden md:flex items-center gap-12">
+                <a href="#how-it-works" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'how-it-works' ? 'text-brand-400' : 'text-white hover:text-brand-400'">How it Works</a>
-                <a href="#pricing" class="font-bold text-lg transition-colors"
+                <a href="#pricing" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'pricing' ? 'text-brand-400' : 'text-white hover:text-brand-400'">Pricing</a>
-                <a href="#faq" class="font-bold text-lg transition-colors"
+                <a href="#faq" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'faq' ? 'text-brand-400' : 'text-white hover:text-brand-400'">FAQ</a>
             </div>
 
@@ -131,11 +131,11 @@
             <div class="flex items-center gap-3">
                 <a href="/admin/vip" class="text-slate-600 hover:text-slate-400 text-xs transition-colors hidden sm:block">Admin</a>
                 <button @click="openAuth()"
-                    class="px-7 py-3 rounded-xl border border-white text-white hover:bg-white hover:text-slate-900 font-semibold transition-all text-base">
+                    class="px-6 py-2.5 rounded-xl border border-white text-white hover:bg-white hover:text-slate-900 font-semibold transition-all text-base">
                     Log In
                 </button>
                 <button @click="openAuth()"
-                    class="px-7 py-3 rounded-xl bg-brand-500 text-slate-900 hover:bg-brand-400 font-semibold transition-all text-base">
+                    class="px-6 py-2.5 rounded-xl bg-brand-500 text-slate-900 hover:bg-brand-400 font-semibold transition-all text-base">
                     Sign Up
                 </button>
             </div>
@@ -153,7 +153,7 @@
                         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6 fade-in">
                             Secure the <span class="text-brand-400">impossible</span> NYC reservations<span class="text-brand-400">.</span>
                         </h1>
-                        <p class="text-lg sm:text-xl text-slate-400 max-w-xl mb-12 fade-in-delay">
+                        <p class="text-lg sm:text-xl text-white/70 max-w-xl mb-12 fade-in-delay">
                             We book NYC's most competitive restaurants the instant reservations drop. You just show up and eat.
                         </p>
 
@@ -177,85 +177,99 @@
                     </div>
                 </div>
                 <!-- Social proof badge — centered at bottom -->
-                <div class="flex justify-center mt-12 sm:mt-16 fade-in-delay-2">
-                    <div class="flex items-center gap-3 px-6 py-4 rounded-2xl bg-slate-800/50 border border-slate-700/40">
-                        <svg class="w-7 h-7 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                <div class="flex justify-center mt-16 sm:mt-24 fade-in-delay-2">
+                    <div class="flex items-center gap-3.5 px-7 py-4 rounded-2xl bg-slate-800/50 border border-slate-700/40">
+                        <svg class="w-9 h-9 text-brand-400 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                         <div>
-                            <span class="text-white font-bold text-3xl leading-none">500+</span>
-                            <p class="text-slate-400 text-sm">happy customers</p>
+                            <span class="text-white font-bold text-4xl leading-none">500+</span>
+                            <p class="text-white/60 text-sm">happy customers</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
+        <!-- ═══════════════════ RESTAURANT SHOWCASE ═══════════════════ -->
+        <section class="py-12 sm:py-16">
+            <div class="max-w-4xl mx-auto px-6 text-center">
+                <p class="text-white text-xl sm:text-2xl font-medium mb-8">
+                    Access to <span class="text-brand-400 font-bold">70+ exclusive restaurants</span> in New York
+                </p>
+                <div class="flex flex-wrap justify-center items-center gap-x-6 sm:gap-x-10 gap-y-3 text-white/50 text-sm sm:text-base font-semibold tracking-widest uppercase">
+                    <span>4 Charles</span>
+                    <span class="text-white/20">·</span>
+                    <span>Atomix</span>
+                    <span class="text-white/20">·</span>
+                    <span>Semma</span>
+                    <span class="text-white/20">·</span>
+                    <span>Coqodaq</span>
+                    <span class="text-white/20">·</span>
+                    <span>Carbone</span>
+                </div>
+            </div>
+        </section>
+
         <!-- ═══════════════════ HOW IT WORKS ═══════════════════ -->
-        <section id="how-it-works" class="py-16 sm:py-28 border-t border-slate-800/50">
+        <section id="how-it-works" class="py-20 sm:py-28 border-t border-slate-800/50">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="flex flex-col lg:flex-row gap-16 lg:gap-24">
                     <!-- Left: vertical steps -->
-                    <div class="flex-1 space-y-6 relative">
+                    <div class="flex-1 space-y-10 relative">
+                        <!-- Vertical connector line -->
+                        <div class="absolute left-7 top-4 bottom-4 w-px bg-slate-700/50"></div>
                         <!-- Step 1 -->
                         <div class="flex items-start gap-6 relative">
                             <div class="w-14 h-14 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0 z-10">
-                                <span class="text-slate-900 font-bold text-lg">1</span>
+                                <span class="text-slate-900 font-bold text-xl">1</span>
                             </div>
                             <div class="pt-1">
-                                <h3 class="text-3xl font-semibold text-white mb-1.5">Link your accounts</h3>
-                                <p class="text-slate-400 text-lg leading-relaxed">Connect your Resy and OpenTable accounts securely.</p>
+                                <h3 class="text-2xl sm:text-3xl font-semibold text-white mb-1.5">Link your accounts</h3>
+                                <p class="text-white/70 text-base sm:text-lg leading-relaxed">Connect your Resy and OpenTable accounts securely.</p>
                             </div>
-                        </div>
-                        <!-- Arrow 1→2 -->
-                        <div class="flex justify-start pl-5">
-                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
                         </div>
                         <!-- Step 2 -->
                         <div class="flex items-start gap-6 relative">
                             <div class="w-14 h-14 rounded-full bg-brand-600 flex items-center justify-center flex-shrink-0 z-10">
-                                <span class="text-slate-900 font-bold text-lg">2</span>
+                                <span class="text-slate-900 font-bold text-xl">2</span>
                             </div>
                             <div class="pt-1">
-                                <h3 class="text-3xl font-semibold text-white mb-1.5">Tell us what you want</h3>
-                                <p class="text-slate-400 text-lg leading-relaxed">Specify the exact restaurants, dates, times, and party sizes.</p>
+                                <h3 class="text-2xl sm:text-3xl font-semibold text-white mb-1.5">Tell us what you want</h3>
+                                <p class="text-white/70 text-base sm:text-lg leading-relaxed">Specify the exact restaurants, dates, times, and party sizes.</p>
                             </div>
-                        </div>
-                        <!-- Arrow 2→3 -->
-                        <div class="flex justify-start pl-5">
-                            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
                         </div>
                         <!-- Step 3 -->
                         <div class="flex items-start gap-6 relative">
                             <div class="w-14 h-14 rounded-full bg-brand-700 flex items-center justify-center flex-shrink-0 z-10">
-                                <span class="text-slate-900 font-bold text-lg">3</span>
+                                <span class="text-slate-900 font-bold text-xl">3</span>
                             </div>
                             <div class="pt-1">
-                                <h3 class="text-3xl font-semibold text-white mb-1.5">We handle the rest</h3>
-                                <p class="text-slate-400 text-lg leading-relaxed">Our system books the instant a slot opens. We'll text you when it's confirmed.</p>
+                                <h3 class="text-2xl sm:text-3xl font-semibold text-white mb-1.5">We handle the rest</h3>
+                                <p class="text-white/70 text-base sm:text-lg leading-relaxed">Our system books the instant a slot opens. We'll text you when it's confirmed.</p>
                             </div>
                         </div>
                     </div>
                     <!-- Right: descriptive block -->
                     <div class="flex-1 flex flex-col justify-center">
-                        <h2 class="text-4xl sm:text-6xl font-bold text-white mb-8">How it works</h2>
-                        <h3 class="text-3xl sm:text-4xl font-bold text-brand-400 mb-5">We book what others can't.</h3>
-                        <p class="text-white text-lg leading-relaxed mb-8">Link your Resy and OpenTable accounts, tell us exactly which reservations you're after, and we'll take care of everything. Our system monitors availability around the clock and books the instant a slot opens — faster than any human could.</p>
+                        <h2 class="text-3xl sm:text-5xl font-bold text-white mb-6">How it works</h2>
+                        <h3 class="text-2xl sm:text-3xl font-bold text-brand-400 mb-5">We book what others can't.</h3>
+                        <p class="text-white/80 text-base sm:text-lg leading-relaxed mb-8">Link your Resy and OpenTable accounts, tell us exactly which reservations you're after, and we'll take care of everything. Our system monitors availability around the clock and books the instant a slot opens — faster than any human could.</p>
                         <!-- Fastest on the market badge -->
                         <div class="inline-flex items-center gap-2.5 px-5 py-3 rounded-full bg-brand-500/10 border border-brand-500/30">
                             <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             <span class="text-brand-400 font-bold text-sm tracking-wide uppercase">Fastest on the market</span>
                         </div>
-                        <p class="text-slate-300 text-sm mt-3">We are cheaper and better than the competition.</p>
+                        <p class="text-white/70 text-base mt-3">We are cheaper and better than the competition.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ═══════════════════ PRICING ═══════════════════ -->
-        <section id="pricing" class="py-14 sm:py-24 border-t border-slate-800/50">
+        <section id="pricing" class="py-20 sm:py-28 border-t border-slate-800/50">
             <div class="max-w-4xl mx-auto px-6">
                 <div class="text-center mb-14">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3">Simple pricing</h2>
-                    <p class="text-slate-400">Only charged on successful reservations. No subscription.</p>
+                    <h2 class="text-3xl sm:text-5xl font-bold text-white mb-4">Simple pricing</h2>
+                    <p class="text-white/70 text-lg">Only charged on successful reservations. No subscription.</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
                     <!-- Per-booking -->
@@ -263,9 +277,9 @@
                         <h3 class="text-xl font-semibold text-white mb-3">Per Booking</h3>
                         <div class="mb-6">
                             <span class="text-6xl font-bold text-brand-400">$12</span>
-                            <span class="text-slate-400 ml-1 text-lg">/ reservation</span>
+                            <span class="text-white/60 ml-1 text-lg">/ reservation</span>
                         </div>
-                        <ul class="text-slate-300 text-base space-y-4 mb-8 text-left">
+                        <ul class="text-white/80 text-base space-y-4 mb-8 text-left">
                             <li class="flex items-center gap-3">
                                 <svg class="w-5 h-5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 Only charged on confirmed bookings
@@ -290,9 +304,9 @@
                         <h3 class="text-xl font-semibold text-white mb-3">10 Pack</h3>
                         <div class="mb-6">
                             <span class="text-6xl font-bold text-brand-400">$10</span>
-                            <span class="text-slate-400 ml-1 text-lg">/ reservation</span>
+                            <span class="text-white/60 ml-1 text-lg">/ reservation</span>
                         </div>
-                        <ul class="text-slate-300 text-base space-y-4 mb-8 text-left">
+                        <ul class="text-white/80 text-base space-y-4 mb-8 text-left">
                             <li class="flex items-center gap-3">
                                 <svg class="w-5 h-5 text-brand-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 10 reservations for $100
@@ -316,11 +330,11 @@
         </section>
 
         <!-- ═══════════════════ OUR RESTAURANTS ═══════════════════ -->
-        <section id="restaurants" class="py-14 sm:py-24 border-t border-slate-800/50">
+        <section id="restaurants" class="py-20 sm:py-28 border-t border-slate-800/50">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-14">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-white mb-3">Our Restaurants</h2>
-                    <p class="text-slate-400">The spots everyone wants. We get you in.</p>
+                    <h2 class="text-3xl sm:text-5xl font-bold text-white mb-4">Our Restaurants</h2>
+                    <p class="text-white/70 text-lg">The spots everyone wants. We get you in.</p>
                 </div>
                 <!-- Restaurant preview grid — show only featured restaurants -->
                 <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto sm:max-w-none sm:mx-0 lg:max-w-2xl lg:mx-auto">
@@ -346,7 +360,7 @@
                 <!-- See all CTA -->
                 <div class="text-center mt-10">
                     <button @click="openAuth()"
-                        class="px-6 py-3 rounded-xl bg-brand-500/15 text-brand-400 hover:bg-brand-500/25 font-semibold text-sm transition-all">
+                        class="px-6 py-3 rounded-xl bg-brand-500/15 text-brand-400 hover:bg-brand-500/25 font-semibold text-base transition-all">
                         Sign up to see all 75 restaurants →
                     </button>
                 </div>
@@ -354,23 +368,23 @@
         </section>
 
         <!-- ═══════════════════ FAQ ═══════════════════ -->
-        <section id="faq" class="py-14 sm:py-24 border-t border-slate-800/50">
+        <section id="faq" class="py-20 sm:py-28 border-t border-slate-800/50">
             <div class="max-w-3xl mx-auto px-6">
-                <h2 class="text-3xl sm:text-4xl font-bold text-white mb-14">Frequently asked questions</h2>
+                <h2 class="text-3xl sm:text-5xl font-bold text-white mb-14 text-center">Frequently asked questions</h2>
                 <div class="space-y-4">
                     <template x-for="(faq, i) in faqs" :key="i">
                         <div class="glass rounded-xl border border-slate-700/50 overflow-hidden">
                             <button @click="faq.open = !faq.open"
                                 class="w-full px-6 py-5 flex items-center justify-between text-left">
-                                <span class="font-medium text-white text-sm" x-text="faq.q"></span>
-                                <svg class="w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-200"
+                                <span class="font-medium text-white text-base" x-text="faq.q"></span>
+                                <svg class="w-5 h-5 text-white/40 flex-shrink-0 transition-transform duration-200"
                                     :class="faq.open && 'rotate-180'"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
                             <div x-show="faq.open" x-collapse>
-                                <div class="px-6 pb-5 text-slate-400 text-sm leading-relaxed" x-text="faq.a"></div>
+                                <div class="px-6 pb-5 text-white/70 text-base leading-relaxed" x-text="faq.a"></div>
                             </div>
                         </div>
                     </template>
@@ -380,12 +394,12 @@
     </main>
 
     <!-- ═══════════════════ FOOTER ═══════════════════ -->
-    <footer class="border-t border-slate-800 py-10 text-center text-slate-500 text-sm">
+    <footer class="border-t border-slate-800 py-10 text-center text-white/40 text-sm">
         <div class="flex items-center justify-center gap-2.5 mb-3">
             <div class="w-6 h-6 rounded-md bg-brand-500 flex items-center justify-center">
                 <span class="text-slate-900 font-black text-[10px]">R</span>
             </div>
-            <span class="font-semibold text-slate-400">RESR</span>
+            <span class="font-semibold text-white/50">RESR</span>
         </div>
         <p>NYC restaurant reservations, automated.</p>
     </footer>
@@ -412,12 +426,12 @@
             <!-- Step 1: Phone Number -->
             <div x-show="authStep === 'phone'" class="slide-enter">
                 <h2 class="text-xl font-semibold text-white mb-1">Sign in with your phone</h2>
-                <p class="text-slate-400 text-sm mb-8">We'll text you a verification code.</p>
+                <p class="text-white/60 text-sm mb-8">We'll text you a verification code.</p>
 
                 <form @submit.prevent="sendOtp()">
                     <div class="flex items-center gap-3 mb-6">
                         <div class="flex items-center px-4 py-3 rounded-xl bg-slate-800/40 border border-slate-600/30">
-                            <span class="text-slate-500 text-lg font-medium select-none">+1</span>
+                            <span class="text-white/50 text-lg font-medium select-none">+1</span>
                         </div>
                         <div class="flex-1">
                             <input type="tel" x-ref="phoneInput"
@@ -458,8 +472,8 @@
             <!-- Step 2: OTP Verification -->
             <div x-show="authStep === 'otp'" class="slide-enter">
                 <h2 class="text-xl font-semibold text-white mb-1">Enter verification code</h2>
-                <p class="text-slate-400 text-sm mb-8">
-                    Sent to <span class="text-slate-300">+1 <span x-text="phoneDisplay"></span></span>
+                <p class="text-white/60 text-sm mb-8">
+                    Sent to <span class="text-white/80">+1 <span x-text="phoneDisplay"></span></span>
                 </p>
 
                 <div class="flex justify-center gap-3 mb-6" @paste.prevent="handleOtpPaste($event)">
@@ -489,7 +503,7 @@
                 </button>
 
                 <div class="mt-5 flex items-center justify-between">
-                    <button @click="authStep = 'phone'; error = ''" class="text-slate-400 hover:text-white text-sm transition-colors">
+                    <button @click="authStep = 'phone'; error = ''" class="text-white/60 hover:text-white text-sm transition-colors">
                         ← Change number
                     </button>
                     <button @click="resendOtp()" :disabled="resendCooldown > 0" class="text-sm transition-colors"
