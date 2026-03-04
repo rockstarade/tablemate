@@ -371,7 +371,11 @@ async def update_restaurant_image(venue_id: int, image_url: str | None) -> dict 
 
 
 async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
-    """Update any fields on a curated restaurant."""
+    """Update any fields on a curated restaurant.
+
+    Gracefully handles missing columns by retrying without the offending
+    field when Supabase returns PGRST204 (column not found).
+    """
     allowed = {
         "name", "cuisine", "neighborhood", "url_slug", "image_url",
         "slot_interval", "drop_days_ahead", "drop_hour", "drop_minute",
@@ -381,14 +385,35 @@ async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
     data = {k: v for k, v in fields.items() if k in allowed}
     if not data:
         return None
-    resp = (
-        await get_service_client()
-        .table("curated_restaurants")
-        .update(data)
-        .eq("venue_id", venue_id)
-        .execute()
-    )
-    return resp.data[0] if resp.data else None
+
+    from postgrest.exceptions import APIError
+
+    # Retry loop: strip columns that don't exist in the DB yet
+    for _ in range(len(data)):
+        try:
+            resp = (
+                await get_service_client()
+                .table("curated_restaurants")
+                .update(data)
+                .eq("venue_id", venue_id)
+                .execute()
+            )
+            return resp.data[0] if resp.data else None
+        except APIError as e:
+            msg = str(e)
+            # PGRST204 = column not found in schema cache
+            if "PGRST204" in msg:
+                # Extract the missing column name from the error
+                import re
+                m = re.search(r"'(\w+)' column", msg)
+                if m and m.group(1) in data:
+                    bad_col = m.group(1)
+                    data.pop(bad_col, None)
+                    if not data:
+                        return None
+                    continue
+            raise
+    return None
 
 
 async def create_curated_restaurant(data: dict) -> dict:
