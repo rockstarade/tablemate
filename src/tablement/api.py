@@ -312,10 +312,16 @@ class ResyApiClient:
         raise ValueError("Unexpected response from Resy. Try Email + Password instead.")
 
     async def complete_phone_challenge(self, claim_token: str, challenge_id: str, email: str) -> AuthResponse:
-        """POST /3/auth/mobile/challenge — complete email challenge after phone OTP."""
+        """POST /3/auth/mobile — complete email challenge after phone OTP.
+
+        Same endpoint as send/verify — Resy uses /3/auth/mobile for all steps.
+        This step sends claim_token + challenge_id + em_address to finalize auth.
+        """
         assert self._client is not None
+        logger.info("Resy challenge: posting to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s",
+                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email)
         resp = await self._client.post(
-            "/3/auth/mobile/challenge",
+            "/3/auth/mobile",
             data={
                 "claim_token": claim_token,
                 "challenge_id": challenge_id,
@@ -323,6 +329,7 @@ class ResyApiClient:
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
+        logger.info("Resy challenge response: status=%d, content-type=%s", resp.status_code, resp.headers.get("content-type", "?"))
         if resp.status_code >= 300:
             try:
                 body = resp.json()
@@ -334,6 +341,18 @@ class ResyApiClient:
             )
         raw = resp.json()
         logger.info("Resy challenge response keys: %s", list(raw.keys()))
+
+        # Could be direct auth or could include nested auth data
+        if "id" in raw and "token" in raw:
+            return AuthResponse.model_validate(raw)
+
+        # Some responses nest the auth info differently
+        if "user" in raw:
+            logger.info("Resy challenge: auth nested under 'user' key")
+            return AuthResponse.model_validate(raw["user"])
+
+        # Log full response for debugging if unexpected format
+        logger.warning("Resy challenge: unexpected response format. Keys: %s, raw: %s", list(raw.keys()), str(raw)[:500])
         try:
             return AuthResponse.model_validate(raw)
         except Exception as e:
