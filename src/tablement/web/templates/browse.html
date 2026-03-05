@@ -467,8 +467,8 @@
 
     <!-- ═══════════════ TOP BAR ═══════════════ -->
     <header class="fixed top-0 left-0 lg:left-64 right-0 z-30 topbar-bg">
-        <div class="flex items-center gap-4 px-5 lg:px-8 py-3.5">
-            <button @click="sidebarOpen = true" class="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-all"
+        <div class="flex items-center gap-4 px-5 lg:px-8 py-5">
+            <button @click="sidebarOpen = true" class="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-all"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
@@ -478,11 +478,11 @@
             <!-- Search bar -->
             <div class="flex-1 flex justify-center">
                 <div class="w-full max-w-xl relative">
-                    <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
                     <input type="text" x-model="searchQuery" @input.debounce.300ms="searchVenues()"
                         @focus="searchFocused = true" @blur="setTimeout(() => searchFocused = false, 200)"
                         placeholder="Search restaurants..."
-                        class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm transition-all focus:outline-none"
+                        class="w-full pl-11 pr-5 py-3.5 rounded-2xl text-base transition-all focus:outline-none"
                         style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
@@ -511,14 +511,14 @@
 
             <!-- Gift / Referral -->
             <button @click="showReferral = true"
-                class="relative flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all"
+                class="relative flex items-center gap-2 px-4 py-3 rounded-xl transition-all"
                 style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                <svg class="w-[18px] h-[18px]" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                 <span class="font-bold text-sm" style="color: var(--accent);">3</span>
             </button>
 
             <!-- Theme toggle -->
-            <button @click="toggleTheme()" class="theme-toggle flex items-center justify-center w-9 h-9 rounded-xl transition-all"
+            <button @click="toggleTheme()" class="theme-toggle flex items-center justify-center w-10 h-10 rounded-xl transition-all"
                 style="background: var(--bg-hover); border: 1px solid var(--border);"
                 :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
                 <svg x-show="theme === 'dark'" class="w-[18px] h-[18px]" style="color: #fbbf24;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -541,7 +541,7 @@
     </header>
 
     <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
-    <main class="lg:ml-64 pt-[68px] pb-24 lg:pb-8 min-h-screen">
+    <main class="lg:ml-64 pt-[84px] pb-24 lg:pb-8 min-h-screen">
         <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1400px]">
 
             <!-- Page heading -->
@@ -1076,7 +1076,7 @@
                     <button @click="sendResyOtp()" :disabled="resyLoading || resyPhoneDigits.length !== 10"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
                         :style="resyPhoneDigits.length === 10 ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
-                        <span x-show="!resyLoading">Send Code to Resy</span>
+                        <span x-show="!resyLoading">Receive Code from Resy</span>
                         <span x-show="resyLoading" class="flex items-center justify-center gap-2">
                             <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
                             Sending...
@@ -1564,9 +1564,17 @@
             async sendResyOtp() {
                 this.resyLoading = true; this.resyError = '';
                 try {
-                    this.resyError = 'Phone OTP coming soon. Please use Email + Password.';
-                    this.resyLinkTab = 'email';
-                } finally { this.resyLoading = false; }
+                    const phone = '+1' + this.resyPhoneDigits;
+                    const resp = await fetch('/api/auth/resy-send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ phone }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to send code');
+                    this.resyPhoneStep = 'otp';
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
             },
             handleResyOtpInput(e, idx) {
                 const val = e.target.value.replace(/\D/g, '');
@@ -1588,7 +1596,28 @@
                 for (let i = 0; i < 6; i++) this.resyOtpDigits[i] = pasted[i] || '';
                 if (pasted.length === 6) this.$nextTick(() => this.verifyResyOtp());
             },
-            async verifyResyOtp() { this.resyError = 'Phone OTP not yet implemented.'; },
+            async verifyResyOtp() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const phone = '+1' + this.resyPhoneDigits;
+                    const code = this.resyOtpDigits.join('');
+                    const resp = await fetch('/api/auth/resy-verify-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ phone, code }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Verification failed');
+                    this.resyLinked = true;
+                    this.showResyLink = false;
+                    this.showToast('Resy account linked!', '&#10003;');
+                    if (this.pendingVenueId) {
+                        const vid = this.pendingVenueId; this.pendingVenueId = null;
+                        setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
+                    }
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
 
             async linkResyEmail() {
                 this.resyLoading = true; this.resyError = '';

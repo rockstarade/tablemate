@@ -253,6 +253,49 @@ class ResyApiClient:
             )
             raise
 
+    async def send_phone_otp(self, phone_number: str) -> dict:
+        """POST /3/auth/mobile — send OTP code to phone via Resy."""
+        assert self._client is not None
+        resp = await self._client.post(
+            "/3/auth/mobile",
+            data={"mobile_number": phone_number},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        if resp.status_code != 200:
+            try:
+                body = resp.json()
+                msg = body.get("message", resp.text)
+            except Exception:
+                msg = resp.text or f"HTTP {resp.status_code}"
+            raise httpx.HTTPStatusError(
+                msg, request=resp.request, response=resp
+            )
+        return resp.json()
+
+    async def verify_phone_otp(self, phone_number: str, code: str) -> AuthResponse:
+        """POST /3/auth/mobile/verify — verify OTP and return auth token."""
+        assert self._client is not None
+        resp = await self._client.post(
+            "/3/auth/mobile/verify",
+            data={"mobile_number": phone_number, "code": code},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        if resp.status_code != 200:
+            try:
+                body = resp.json()
+                msg = body.get("message", resp.text)
+            except Exception:
+                msg = resp.text or f"HTTP {resp.status_code}"
+            raise httpx.HTTPStatusError(
+                msg, request=resp.request, response=resp
+            )
+        raw = resp.json()
+        try:
+            return AuthResponse.model_validate(raw)
+        except Exception as e:
+            logger.error("Phone OTP AuthResponse validation failed: %s", e)
+            raise
+
     async def find_slots(
         self, venue_id: int, day: str, party_size: int, *, fast: bool = False
     ) -> list[Slot]:

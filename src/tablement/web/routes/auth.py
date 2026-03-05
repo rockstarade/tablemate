@@ -153,6 +153,88 @@ async def link_resy(
     )
 
 
+@router.post("/resy-send-otp")
+@limiter.limit("5/minute")
+async def resy_send_otp(request: Request, body: dict):
+    """Send an OTP code to the user's phone via Resy's auth API."""
+    phone = body.get("phone", "").strip()
+    if not phone:
+        raise HTTPException(400, "Phone number is required")
+
+    # Ensure +1 prefix for US numbers
+    digits = "".join(c for c in phone if c.isdigit())
+    if len(digits) == 10:
+        phone = f"+1{digits}"
+    elif len(digits) == 11 and digits.startswith("1"):
+        phone = f"+{digits}"
+    elif not phone.startswith("+"):
+        phone = f"+{digits}"
+
+    redacted = phone[:5] + "***" + phone[-2:]
+    logger.info("Sending Resy OTP to %s", redacted)
+
+    try:
+        async with ResyApiClient() as client:
+            result = await client.send_phone_otp(phone)
+    except Exception as e:
+        msg = str(e)
+        if hasattr(e, "response") and e.response is not None:
+            try:
+                msg = e.response.json().get("message", msg)
+            except Exception:
+                pass
+        logger.warning("Resy OTP send failed for %s: %s", redacted, msg)
+        raise HTTPException(400, f"Failed to send code: {msg}")
+
+    return {"sent": True, "message": "Code sent to your phone via Resy"}
+
+
+@router.post("/resy-verify-otp")
+@limiter.limit("5/minute")
+async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(get_user_id)):
+    """Verify the Resy phone OTP code and link the account."""
+    phone = body.get("phone", "").strip()
+    code = body.get("code", "").strip()
+    if not phone or not code:
+        raise HTTPException(400, "Phone and code are required")
+
+    # Normalize phone
+    digits = "".join(c for c in phone if c.isdigit())
+    if len(digits) == 10:
+        phone = f"+1{digits}"
+    elif len(digits) == 11 and digits.startswith("1"):
+        phone = f"+{digits}"
+    elif not phone.startswith("+"):
+        phone = f"+{digits}"
+
+    try:
+        async with ResyApiClient() as client:
+            auth_resp = await client.verify_phone_otp(phone, code)
+    except Exception as e:
+        msg = str(e)
+        if hasattr(e, "response") and e.response is not None:
+            try:
+                msg = e.response.json().get("message", msg)
+            except Exception:
+                pass
+        logger.warning("Resy OTP verify failed: %s", msg)
+        raise HTTPException(401, f"Verification failed: {msg}")
+
+    # Store the Resy auth token — phone users don't have email/password
+    # We store the phone number as resy_email for identification
+    await db.upsert_profile(
+        user_id,
+        resy_email=phone,
+        resy_token=auth_resp.token,
+    )
+
+    return {
+        "linked": True,
+        "resy_first_name": auth_resp.first_name,
+        "resy_last_name": auth_resp.last_name,
+    }
+
+
 @router.get("/me", response_model=UserProfileResponse)
 async def me(user_id: str = Depends(get_user_id)):
     """Return the current user's profile."""

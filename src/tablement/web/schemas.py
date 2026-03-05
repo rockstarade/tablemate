@@ -62,6 +62,7 @@ class VenueSearchResult(BaseModel):
     region: str = ""
     url_slug: str = ""
     location_slug: str = ""
+    image_url: str = ""
 
 
 class VenueSearchResponse(BaseModel):

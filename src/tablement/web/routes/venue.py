@@ -41,6 +41,19 @@ async def search_venues(query: str = "", limit: int = 5):
         for r in raw
         if r.get("resy_id") is not None
     ]
+
+    # Enrich with images from curated restaurants
+    if results:
+        from tablement.web import db
+        try:
+            curated = await db.list_curated_restaurants(active_only=False)
+            img_map = {r["venue_id"]: r.get("image_url", "") for r in curated if r.get("image_url")}
+            for r in results:
+                if not r.image_url and r.resy_id in img_map:
+                    r.image_url = img_map[r.resy_id]
+        except Exception:
+            pass  # non-critical — search still works without images
+
     return VenueSearchResponse(results=results)
 
 
