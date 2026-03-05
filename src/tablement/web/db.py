@@ -880,6 +880,20 @@ async def count_active_drop_snipes(user_id: str) -> int:
     return resp.count or 0
 
 
+async def count_active_snipes_for_venue(venue_id: int) -> int:
+    """Count active snipes targeting a venue (across all users)."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("id", count="exact")
+        .eq("venue_id", venue_id)
+        .eq("mode", "snipe")
+        .in_("status", ["scheduled", "sniping"])
+        .execute()
+    )
+    return resp.count or 0
+
+
 async def count_active_monitors(user_id: str) -> int:
     """Count user's active monitors (mode=monitor, status in monitoring/sniping)."""
     resp = (

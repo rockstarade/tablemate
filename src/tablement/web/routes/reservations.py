@@ -98,6 +98,88 @@ CANCEL_SLOWDOWN_EXTRA = (3, 8)      # add 3-8s to whatever tier interval
 
 
 # ---------------------------------------------------------------------------
+# Auto-scout — automatically start/stop scouts based on active snipes
+# ---------------------------------------------------------------------------
+
+
+async def _ensure_scout_for_venue(app, venue_id: int, venue_name: str = "") -> None:
+    """Auto-start a drop scout ONLY when 2+ snipes target the same venue.
+
+    With 1 snipe, the snipe polls on its own — no scout overhead.
+    With 2+ snipes, a shared scout polls once and broadcasts to all subscribers,
+    saving duplicate requests and giving instant detection to everyone.
+
+    Also a no-op if a scout is already running (e.g. manually started from admin).
+    """
+    scout = getattr(app.state, "scout", None)
+    if not scout:
+        return
+
+    # Check if scout already running — no-op
+    from tablement.web.scout import _task_key
+    key = _task_key(venue_id, "drop")
+    if key in scout._tasks and not scout._tasks[key].done():
+        logger.debug("Scout already running for venue %d", venue_id)
+        return
+
+    # Only auto-start if 2+ active snipes for this venue
+    active_count = await db.count_active_snipes_for_venue(venue_id)
+    if active_count < 2:
+        logger.debug("Only %d snipe(s) for venue %d — no scout needed", active_count, venue_id)
+        return
+
+    # Look up curated restaurant for drop time config
+    curated = await db.get_curated_restaurant(venue_id)
+    config = {}
+    if curated:
+        venue_name = venue_name or curated.get("name", "")
+        if curated.get("drop_hour") is not None:
+            config["drop_hour"] = curated["drop_hour"]
+        if curated.get("drop_minute") is not None:
+            config["drop_minute"] = curated["drop_minute"]
+        if curated.get("drop_days_ahead"):
+            config["days_ahead"] = curated["drop_days_ahead"]
+    else:
+        config["drop_hour"] = 9
+        config["drop_minute"] = 0
+
+    try:
+        await scout.start_scout(venue_id, venue_name, campaign_type="drop", auto=True, **config)
+        logger.info("Auto-started drop scout for %s (%d) — %d snipes targeting this venue",
+                     venue_name or venue_id, venue_id, active_count)
+    except Exception as e:
+        logger.warning("Failed to auto-start scout for venue %d: %s", venue_id, e)
+
+
+async def _maybe_stop_scout_for_venue(app, venue_id: int) -> None:
+    """Stop an AUTO-STARTED scout when snipe count drops below 2.
+
+    Only stops scouts that were auto-started. Manually started scouts
+    (from admin panel) are never auto-stopped — admin controls those.
+    """
+    scout = getattr(app.state, "scout", None)
+    if not scout:
+        return
+
+    # Only auto-stop auto-started scouts
+    if not scout.is_auto_started(venue_id, "drop"):
+        return
+
+    # Check if enough snipes remain to justify the scout
+    remaining = await db.count_active_snipes_for_venue(venue_id)
+    if remaining >= 2:
+        logger.debug("Scout for venue %d: %d snipes still active, keeping scout", venue_id, remaining)
+        return
+
+    # Less than 2 snipes — scout no longer needed
+    from tablement.web.scout import _task_key
+    key = _task_key(venue_id, "drop")
+    if key in scout._tasks and not scout._tasks[key].done():
+        logger.info("Auto-stopping scout for venue %d — only %d snipe(s) remain", venue_id, remaining)
+        await scout.stop_scout(venue_id, campaign_type="drop")
+
+
+# ---------------------------------------------------------------------------
 # SnipeIntelBuffer — accumulates every poll response for batch DB insert
 # ---------------------------------------------------------------------------
 
@@ -479,6 +561,12 @@ async def cancel_reservation(
     # Update DB
     await db.update_reservation(reservation_id, status="cancelled", error="Cancelled by user")
 
+    # Auto-stop scout if this was the last snipe for the venue
+    try:
+        await _maybe_stop_scout_for_venue(request.app, row["venue_id"])
+    except Exception:
+        pass
+
     # Release Stripe hold if exists
     stripe_pi = row.get("stripe_payment_intent_id")
     if stripe_pi:
@@ -575,6 +663,11 @@ async def events(
 def _schedule_snipe(app, reservation_id: str, user_id: str, body, profile: dict, dry_run: bool):
     """Schedule a snipe job via APScheduler or run immediately if drop is past."""
     scheduler = app.state.scheduler
+
+    # Auto-start a drop scout for this venue (idempotent — no-op if already running)
+    asyncio.create_task(
+        _ensure_scout_for_venue(app, body.venue_id, body.venue_name)
+    )
 
     # Build SnipeConfig
     config = _build_snipe_config(body)
@@ -1110,6 +1203,11 @@ async def _run_snipe(
     finally:
         # Release IP assignment back to the pool
         ip_pool.release(snipe_ip_key)
+        # Auto-stop scout if this was the last snipe for the venue
+        try:
+            await _maybe_stop_scout_for_venue(app, config.venue_id)
+        except Exception:
+            pass  # non-critical
         # Clean up job from manager after a delay (let SSE clients read final state)
         await asyncio.sleep(5)
         app.state.jobs.remove(reservation_id)

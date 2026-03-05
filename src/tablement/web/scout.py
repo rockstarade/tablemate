@@ -85,6 +85,7 @@ class ScoutOrchestrator:
         self._running = False
         self._app = None
         self._campaigns: dict[str, dict] = {}  # task_key → campaign data
+        self._auto_started: set[str] = set()  # task_keys that were auto-started (not manual)
 
         # Per-scout state (in memory only)
         self._last_seen: dict[str, dict[str, list]] = {}  # task_key → {date: [slots]}
@@ -195,6 +196,10 @@ class ScoutOrchestrator:
         """Get the slots that triggered the most recent drop event."""
         return self._drop_slots.get(venue_id, [])
 
+    def is_auto_started(self, venue_id: int, campaign_type: str = "drop") -> bool:
+        """Check if a scout was auto-started (vs manually started from admin)."""
+        return _task_key(venue_id, campaign_type) in self._auto_started
+
     # ------------------------------------------------------------------
     # Admin controls
     # ------------------------------------------------------------------
@@ -204,9 +209,16 @@ class ScoutOrchestrator:
         venue_id: int,
         venue_name: str = "",
         campaign_type: str = "drop",
+        auto: bool = False,
         **config,
     ) -> dict:
-        """Start a scout for a specific venue. Creates campaign in DB if needed."""
+        """Start a scout for a specific venue. Creates campaign in DB if needed.
+
+        Args:
+            auto: If True, this scout was auto-started because 2+ snipes target
+                  the same venue. Auto-started scouts are auto-stopped when snipe
+                  count drops below 2. Manually started scouts persist.
+        """
         campaign_data = {
             "venue_name": venue_name,
             "active": True,
@@ -226,9 +238,12 @@ class ScoutOrchestrator:
             self._tasks[key] = asyncio.create_task(
                 coro, name=f"scout-{venue_id}-{campaign_type}",
             )
+            if auto:
+                self._auto_started.add(key)
             logger.info(
-                "Scout started: %s (%d) [%s]",
+                "Scout started: %s (%d) [%s]%s",
                 venue_name or venue_id, venue_id, campaign_type,
+                " (auto)" if auto else "",
             )
 
         return campaign
@@ -250,6 +265,7 @@ class ScoutOrchestrator:
             self._campaigns.pop(key, None)
             self._last_seen.pop(key, None)
             self._poll_counts.pop(key, None)
+            self._auto_started.discard(key)
 
         # Release IP assignments for this venue's scouts
         ip_pool.release(f"scout-drop-{venue_id}")
@@ -281,6 +297,7 @@ class ScoutOrchestrator:
         self._poll_counts.clear()
         self._drop_events.clear()
         self._drop_slots.clear()
+        self._auto_started.clear()
 
         # Deactivate all in DB
         try:
