@@ -1088,7 +1088,8 @@
                     <div class="flex justify-center gap-2 mb-4" @paste.prevent="handleResyOtpPaste($event)">
                         <template x-for="(digit, i) in resyOtpDigits" :key="i">
                             <input type="text" inputmode="numeric" maxlength="1"
-                                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                                autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false"
+                                :name="'otp-digit-' + i + '-' + Date.now()"
                                 :x-ref="'resyOtp' + i" :value="digit"
                                 @input="handleResyOtpInput($event, i)" @keydown="handleResyOtpKeydown($event, i)" @focus="$event.target.select()"
                                 class="w-11 h-12 text-center text-lg font-semibold rounded-xl focus:outline-none"

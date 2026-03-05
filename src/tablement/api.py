@@ -274,7 +274,14 @@ class ResyApiClient:
         return resp.json()
 
     async def verify_phone_otp(self, phone_number: str, code: str) -> AuthResponse:
-        """POST /3/auth/mobile — verify OTP by passing code to same endpoint."""
+        """POST /3/auth/mobile — verify OTP by passing code to same endpoint.
+
+        Resy phone auth can return two formats:
+        1. Standard AuthResponse (id, token, first_name, last_name, payment_methods)
+        2. mobile_claim wrapper: {"mobile_claim": {"mobile_number": ..., ...}}
+           When the phone is already linked to a Resy account, the auth info
+           may be nested inside mobile_claim or require a follow-up call.
+        """
         assert self._client is not None
         resp = await self._client.post(
             "/3/auth/mobile",
@@ -291,11 +298,38 @@ class ResyApiClient:
                 msg, request=resp.request, response=resp
             )
         raw = resp.json()
-        try:
+        logger.info("Resy phone OTP verify response keys: %s", list(raw.keys()))
+
+        # Standard auth response (has id + token at top level)
+        if "id" in raw and "token" in raw:
             return AuthResponse.model_validate(raw)
-        except Exception as e:
-            logger.error("Phone OTP AuthResponse validation failed: %s", e)
-            raise
+
+        # mobile_claim response — phone verified but returns claim object
+        # Try to extract auth info from the claim
+        claim = raw.get("mobile_claim", raw)
+        if isinstance(claim, dict):
+            logger.info("Resy mobile_claim keys: %s", list(claim.keys()))
+            # Some Resy responses nest the token differently
+            token = claim.get("token") or raw.get("token", "")
+            user_id = claim.get("id") or raw.get("id", 0)
+            first = claim.get("first_name") or raw.get("first_name", "")
+            last = claim.get("last_name") or raw.get("last_name", "")
+
+            if token:
+                return AuthResponse(
+                    id=user_id, token=token,
+                    first_name=first, last_name=last,
+                    payment_methods=[],
+                )
+
+        # If we got here, the phone was verified but we don't have a token.
+        # This can happen when the phone is associated with an existing account
+        # but Resy returns a claim instead of full auth. Log full response for debugging.
+        logger.warning("Resy phone OTP: no token in response. Full response: %s", raw)
+        raise ValueError(
+            "Phone verified but Resy didn't return an auth token. "
+            "Try linking with Email + Password instead."
+        )
 
     async def find_slots(
         self, venue_id: int, day: str, party_size: int, *, fast: bool = False
