@@ -261,7 +261,8 @@ class ResyApiClient:
             data={"mobile_number": phone_number},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        if resp.status_code != 200:
+        # Resy returns various 2xx codes for success
+        if resp.status_code >= 300:
             try:
                 body = resp.json()
                 msg = body.get("message", resp.text)
@@ -280,7 +281,7 @@ class ResyApiClient:
             data={"mobile_number": phone_number, "code": code},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        if resp.status_code != 200:
+        if resp.status_code >= 300:
             try:
                 body = resp.json()
                 msg = body.get("message", resp.text)
