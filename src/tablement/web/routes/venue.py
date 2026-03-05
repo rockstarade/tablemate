@@ -28,33 +28,60 @@ router = APIRouter()
 
 @router.get("/search", response_model=VenueSearchResponse)
 async def search_venues(query: str = "", limit: int = 5):
-    """Search Resy venues by name. Used for typeahead autocomplete."""
+    """Search Resy venues by name. Curated restaurants appear first."""
     query = query.strip()
     if len(query) < 2:
         return VenueSearchResponse(results=[])
 
-    venue_lookup = VenueLookup()
-    raw = await venue_lookup.search(query, limit=min(limit, 10))
+    from tablement.web import db
 
-    results = [
-        VenueSearchResult(**r)
-        for r in raw
-        if r.get("resy_id") is not None
-    ]
+    # 1. Search curated restaurants first (local, instant)
+    curated_results: list[VenueSearchResult] = []
+    curated_ids: set[int] = set()
+    try:
+        curated = await db.list_curated_restaurants(active_only=True)
+        q_lower = query.lower()
+        for r in curated:
+            name = (r.get("name") or "").lower()
+            cuisine = (r.get("cuisine") or "").lower()
+            neighborhood = (r.get("neighborhood") or "").lower()
+            if q_lower in name or q_lower in cuisine or q_lower in neighborhood:
+                curated_results.append(VenueSearchResult(
+                    resy_id=r["venue_id"],
+                    name=r.get("name", ""),
+                    cuisine=r.get("cuisine", ""),
+                    neighborhood=r.get("neighborhood", ""),
+                    image_url=r.get("image_url", ""),
+                ))
+                curated_ids.add(r["venue_id"])
+    except Exception:
+        pass
 
-    # Enrich with images from curated restaurants
-    if results:
-        from tablement.web import db
+    # 2. Fill remaining slots from Resy global search (skip dupes)
+    remaining = limit - len(curated_results)
+    resy_results: list[VenueSearchResult] = []
+    if remaining > 0:
+        venue_lookup = VenueLookup()
+        raw = await venue_lookup.search(query, limit=min(limit + 5, 15))
+        for r in raw:
+            if r.get("resy_id") is None:
+                continue
+            if r["resy_id"] in curated_ids:
+                continue  # already in curated results
+            resy_results.append(VenueSearchResult(**r))
+            if len(resy_results) >= remaining:
+                break
+
+        # Enrich Resy results with curated images if available
         try:
-            curated = await db.list_curated_restaurants(active_only=False)
-            img_map = {r["venue_id"]: r.get("image_url", "") for r in curated if r.get("image_url")}
-            for r in results:
+            img_map = {r["venue_id"]: r.get("image_url", "") for r in (await db.list_curated_restaurants(active_only=False)) if r.get("image_url")}
+            for r in resy_results:
                 if not r.image_url and r.resy_id in img_map:
                     r.image_url = img_map[r.resy_id]
         except Exception:
-            pass  # non-critical — search still works without images
+            pass
 
-    return VenueSearchResponse(results=results)
+    return VenueSearchResponse(results=curated_results + resy_results)
 
 
 # ---------- Select (from search result) ----------
