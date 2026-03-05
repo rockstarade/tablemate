@@ -361,9 +361,25 @@ async def vip_snipe_events(reservation_id: str, request: Request, token: str = "
     """SSE stream for real-time updates on an admin-launched snipe.
 
     Uses query param ?token= for auth since EventSource doesn't support custom headers.
+    Token is validated as either the admin password or an HMAC signature.
     """
+    import hashlib
+    import hmac
     expected = os.environ.get("ADMIN_PASSWORD", "")
-    if not expected or token != expected:
+    if not expected:
+        raise HTTPException(401, "Admin not configured")
+    # Accept direct password OR HMAC-signed token (hmac:timestamp:sig)
+    valid = False
+    if token == expected:
+        valid = True
+    elif token.startswith("hmac:"):
+        parts = token.split(":", 2)
+        if len(parts) == 3:
+            _, ts, sig = parts
+            msg = f"sse:{reservation_id}:{ts}".encode()
+            expected_sig = hmac.new(expected.encode(), msg, hashlib.sha256).hexdigest()[:16]
+            valid = hmac.compare_digest(sig, expected_sig)
+    if not valid:
         raise HTTPException(401, "Invalid admin token")
     job_manager = request.app.state.jobs
     job = job_manager.get(reservation_id)
@@ -391,7 +407,6 @@ async def vip_snipe_events(reservation_id: str, request: Request, token: str = "
                     "data": json.dumps({
                         "success": row["status"] in ("confirmed", "dry_run"),
                         "dry_run": row["status"] == "dry_run",
-                        "resy_token": row.get("resy_token"),
                         "attempts": row.get("attempts", 0),
                         "elapsed_seconds": row.get("elapsed_seconds", 0),
                         "error": row.get("error"),
@@ -936,44 +951,25 @@ async def vip_lookup_url(body: dict):
 
 @router.get("/vip/drop-intel/venues", dependencies=[Depends(_require_admin)])
 async def drop_intel_list_venues():
-    """List all tracked venues for drop intelligence."""
+    """List all curated venues (source of truth for drop intelligence)."""
     try:
-        venues = await db.list_tracked_venues(active_only=False)
+        restaurants = await db.list_curated_restaurants(active_only=False)
+        # Map to the format the admin panel expects
+        venues = []
+        for r in restaurants:
+            venues.append({
+                "venue_id": r["venue_id"],
+                "venue_name": r.get("name", ""),
+                "drop_hour": r.get("drop_hour", 10),
+                "drop_minute": r.get("drop_minute", 0),
+                "drop_timezone": "America/New_York",
+                "days_ahead": r.get("drop_days_ahead", 30),
+                "party_size": 2,
+                "active": r.get("is_active", True),
+            })
         return {"venues": venues}
     except Exception as e:
         return {"venues": [], "error": str(e)}
-
-
-@router.post("/vip/drop-intel/track", dependencies=[Depends(_require_admin)])
-async def drop_intel_track_venue(body: dict):
-    """Add or update a venue for drop intelligence tracking."""
-    venue_id = body.get("venue_id")
-    if not venue_id:
-        raise HTTPException(400, "venue_id is required")
-
-    data = {
-        "venue_name": body.get("venue_name", ""),
-        "drop_hour": body.get("drop_hour", 10),
-        "drop_minute": body.get("drop_minute", 0),
-        "drop_timezone": body.get("drop_timezone", "America/New_York"),
-        "days_ahead": body.get("days_ahead", 30),
-        "party_size": body.get("party_size", 2),
-        "active": body.get("active", True),
-        "poll_tier": body.get("poll_tier", "passive"),  # 'aggressive' (1/s) or 'passive' (drop-window only)
-    }
-
-    result = await db.upsert_tracked_venue(venue_id, **data)
-    return {"tracked": True, "venue": result}
-
-
-@router.post("/vip/drop-intel/untrack", dependencies=[Depends(_require_admin)])
-async def drop_intel_untrack_venue(body: dict):
-    """Stop tracking a venue."""
-    venue_id = body.get("venue_id")
-    if not venue_id:
-        raise HTTPException(400, "venue_id is required")
-    await db.delete_tracked_venue(venue_id)
-    return {"untracked": True, "venue_id": venue_id}
 
 
 @router.get("/vip/drop-intel/observations", dependencies=[Depends(_require_admin)])

@@ -172,7 +172,6 @@ class ReservationOut(BaseModel):
     status: str
     time_preferences: list[dict] | None = None
     drop_time_config: dict | None = None
-    resy_token: str | None = None
     attempts: int = 0
     elapsed_seconds: float | None = None
     error: str | None = None
@@ -224,7 +223,6 @@ class SavePaymentMethodRequest(BaseModel):
 
 class SnipeResultOut(BaseModel):
     success: bool
-    resy_token: str | None = None
     booking_path: str | None = None
     slot_time: str | None = None
     slot_type: str | None = None

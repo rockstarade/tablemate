@@ -72,7 +72,21 @@ class DropIntelCollector:
         """Periodically refresh tracked venues and schedule/cancel observers."""
         while self._running:
             try:
-                venues = await db.list_tracked_venues(active_only=True)
+                # Use curated_restaurants as single source of truth
+                curated = await db.list_curated_restaurants(active_only=True)
+                # Map curated fields to the format drop_intel expects
+                venues = []
+                for r in curated:
+                    venues.append({
+                        "venue_id": r["venue_id"],
+                        "venue_name": r.get("name", ""),
+                        "drop_hour": r.get("drop_hour", 10),
+                        "drop_minute": r.get("drop_minute", 0),
+                        "drop_timezone": "America/New_York",
+                        "days_ahead": r.get("drop_days_ahead", 30),
+                        "party_size": 2,
+                        "poll_tier": "passive",
+                    })
                 active_ids = {v["venue_id"] for v in venues}
 
                 # Cancel tasks for removed/deactivated venues
@@ -86,27 +100,15 @@ class DropIntelCollector:
                 for venue in venues:
                     vid = venue["venue_id"]
                     if vid not in self._tasks or self._tasks[vid].done():
-                        poll_tier = venue.get("poll_tier", "passive")
-                        if poll_tier == "aggressive":
-                            self._tasks[vid] = asyncio.create_task(
-                                self._aggressive_observer(venue)
-                            )
-                            logger.info(
-                                "Tracking venue %d (%s) AGGRESSIVE — 1 req/s + drop at %02d:%02d %s",
-                                vid, venue.get("venue_name", "?"),
-                                venue["drop_hour"], venue["drop_minute"],
-                                venue["drop_timezone"],
-                            )
-                        else:
-                            self._tasks[vid] = asyncio.create_task(
-                                self._venue_observer(venue)
-                            )
-                            logger.info(
-                                "Tracking venue %d (%s) PASSIVE — drop at %02d:%02d %s, %dd ahead",
-                                vid, venue.get("venue_name", "?"),
-                                venue["drop_hour"], venue["drop_minute"],
-                                venue["drop_timezone"], venue["days_ahead"],
-                            )
+                        self._tasks[vid] = asyncio.create_task(
+                            self._venue_observer(venue)
+                        )
+                        logger.info(
+                            "Tracking venue %d (%s) PASSIVE — drop at %02d:%02d %s, %dd ahead",
+                            vid, venue.get("venue_name", "?"),
+                            venue["drop_hour"], venue["drop_minute"],
+                            venue["drop_timezone"], venue["days_ahead"],
+                        )
 
             except Exception as e:
                 logger.warning("Drop intel refresh failed: %s", e)

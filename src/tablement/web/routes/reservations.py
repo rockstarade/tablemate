@@ -1173,7 +1173,6 @@ async def _run_snipe(
             result_data = {
                 "success": result.success,
                 "dry_run": dry_run,
-                "resy_token": result.resy_token,
                 "booking_path": result.booking_path,
                 "attempts": result.attempts,
                 "elapsed_seconds": result.elapsed_seconds,
@@ -1961,7 +1960,6 @@ def _row_to_out(row: dict) -> ReservationOut:
         status=row["status"],
         time_preferences=row.get("time_preferences"),
         drop_time_config=row.get("drop_time_config"),
-        resy_token=row.get("resy_token"),
         attempts=row.get("attempts", 0),
         elapsed_seconds=row.get("elapsed_seconds"),
         error=row.get("error"),

@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -128,7 +129,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com; "
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
             "img-src 'self' data: https:; "
@@ -144,6 +145,20 @@ def create_app() -> FastAPI:
     # Rate limiting
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # CORS — restrict to same origin (no cross-site API access)
+    allowed_origins = os.environ.get("CORS_ORIGINS", "").split(",")
+    allowed_origins = [o.strip() for o in allowed_origins if o.strip()]
+    if not allowed_origins:
+        # Default: same-origin only (no wildcard)
+        allowed_origins = []
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],
+    )
 
     # Security headers on every response
     app.add_middleware(SecurityHeadersMiddleware)

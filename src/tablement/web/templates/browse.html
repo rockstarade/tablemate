@@ -486,24 +486,34 @@
                         style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
-                    <div x-show="searchFocused && searchResults.length > 0" x-cloak
+                    <div x-show="searchFocused && searchQuery.length >= 2" x-cloak
                         class="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-50 modal-bg"
                         style="border: 1px solid var(--border);">
-                        <template x-for="r in searchResults" :key="r.resy_id || r.venue_id">
-                            <button @click="goToRestaurantSearch(r)"
-                                class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
-                                style="border-bottom: 1px solid var(--border-subtle);"
-                                onmouseover="this.style.background='var(--bg-hover)';"
-                                onmouseout="this.style.background='transparent';">
-                                <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 img-placeholder">
-                                    <img :src="r.image_url || ('/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg')"
-                                        class="w-full h-full object-cover" @error="$event.target.style.display='none'">
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium" style="color: var(--c1);" x-text="r.name"></p>
-                                    <p class="text-xs" style="color: var(--c3);" x-text="r.neighborhood || r.location || ''"></p>
-                                </div>
-                            </button>
+                        <template x-if="searchResults.length > 0">
+                            <div>
+                                <template x-for="r in searchResults" :key="r.resy_id || r.venue_id">
+                                    <button @click="goToRestaurantSearch(r)"
+                                        class="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                                        style="border-bottom: 1px solid var(--border-subtle);"
+                                        onmouseover="this.style.background='var(--bg-hover)';"
+                                        onmouseout="this.style.background='transparent';">
+                                        <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 img-placeholder">
+                                            <img :src="r.image_url || ('/static/restaurants/' + (r.resy_id || r.venue_id) + '.jpg')"
+                                                class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium" style="color: var(--c1);" x-text="r.name"></p>
+                                            <p class="text-xs" style="color: var(--c3);" x-text="r.neighborhood || r.location || ''"></p>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                        <template x-if="searchResults.length === 0">
+                            <div class="px-4 py-6 text-center">
+                                <p class="text-sm font-medium mb-1" style="color: var(--c3);">No restaurants found</p>
+                                <p class="text-xs" style="color: var(--c4);">Try a different name, cuisine, or neighborhood</p>
+                            </div>
                         </template>
                     </div>
                 </div>
@@ -773,13 +783,26 @@
                                             <span class="w-2 h-2 rounded-full pulse-dot" :style="'background:' + resStatusColor(res.status)"></span>
                                             <span class="text-xs font-medium" :style="'color:' + resStatusColor(res.status)" x-text="res._liveMessage || resStatusLabel(res.status)"></span>
                                         </div>
-                                        <button @click="cancelRes(res.id)"
+                                        <button @click="confirmCancelId = res.id"
                                             class="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
                                             style="border: 1px solid var(--status-failed-bg); color: var(--status-failed);"
                                             onmouseover="this.style.background='var(--status-failed-bg)';"
                                             onmouseout="this.style.background='transparent';">
                                             Cancel
                                         </button>
+                                        <!-- Cancel confirmation inline -->
+                                        <div x-show="confirmCancelId === res.id" x-cloak x-transition
+                                            class="mt-2 p-3 rounded-xl" style="background: var(--status-failed-bg); border: 1px solid var(--status-failed);">
+                                            <p class="text-[11px] font-medium mb-2" style="color: var(--status-failed);">Stop watching for this reservation?</p>
+                                            <div class="flex gap-2">
+                                                <button @click="cancelRes(res.id); confirmCancelId = null"
+                                                    class="flex-1 py-1.5 rounded-lg text-[11px] font-bold"
+                                                    style="background: var(--status-failed); color: white;">Yes, cancel</button>
+                                                <button @click="confirmCancelId = null"
+                                                    class="flex-1 py-1.5 rounded-lg text-[11px] font-medium"
+                                                    style="border: 1px solid var(--border); color: var(--c3);">Keep it</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -804,9 +827,10 @@
                                     style="background: var(--bg-input); color: var(--c3);">—</span>
                                 <span x-show="res.status === 'dry_run'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
                                     style="background: var(--bg-input); color: var(--c3);">⚡</span>
-                                <!-- Name + date inline -->
+                                <!-- Name + date + error inline -->
                                 <div class="flex-1 min-w-0">
                                     <span class="text-xs font-medium truncate" style="color: var(--c2);" x-text="res.venue_name"></span>
+                                    <p x-show="res.status === 'failed' && res.error" class="text-[10px] truncate mt-0.5" style="color: var(--status-failed);" x-text="res.error"></p>
                                 </div>
                                 <span class="text-[11px] flex-shrink-0" style="color: var(--c4);" x-text="formatDateShort(res.target_date)"></span>
                                 <a :href="'/restaurant/' + res.venue_id" class="text-[11px] font-medium flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--accent);">Retry</a>
@@ -1060,6 +1084,23 @@
             </div>
             <!-- Phone OTP -->
             <div x-show="resyLinkTab === 'phone'">
+                <!-- Step indicator -->
+                <div class="flex items-center gap-2 mb-5">
+                    <template x-for="(step, idx) in [{icon: '📱', label: 'Phone'}, {icon: '🔢', label: 'Code'}, {icon: '✉️', label: 'Verify'}]" :key="idx">
+                        <div class="flex items-center gap-2" :class="idx < 2 ? 'flex-1' : ''">
+                            <div class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all"
+                                :style="(resyPhoneStep === 'phone' && idx === 0) || (resyPhoneStep === 'otp' && idx <= 1) || (resyPhoneStep === 'challenge' && idx <= 2)
+                                    ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);'
+                                    : 'background: var(--bg-input); color: var(--c4);'"
+                                x-text="step.icon"></div>
+                            <span class="text-[10px] font-medium hidden sm:inline"
+                                :style="(resyPhoneStep === 'phone' && idx === 0) || (resyPhoneStep === 'otp' && idx === 1) || (resyPhoneStep === 'challenge' && idx === 2) ? 'color: var(--c1);' : 'color: var(--c4);'"
+                                x-text="step.label"></span>
+                            <div x-show="idx < 2" class="flex-1 h-px mx-1" :style="(resyPhoneStep === 'otp' && idx === 0) || (resyPhoneStep === 'challenge' && idx <= 1) ? 'background: var(--accent);' : 'background: var(--border);'"></div>
+                        </div>
+                    </template>
+                </div>
+
                 <div x-show="resyPhoneStep === 'phone'">
                     <p class="text-xs mb-4" style="color: var(--c3);">Enter the phone number linked to your Resy account.</p>
                     <div class="flex items-center gap-3 mb-4">
@@ -1112,7 +1153,8 @@
 
                 <!-- Step 3: Email challenge (Resy security for existing accounts) -->
                 <div x-show="resyPhoneStep === 'challenge'">
-                    <p class="text-xs mb-4" style="color: var(--c3);">Resy needs to verify it's you. Enter the email on your Resy account.</p>
+                    <p class="text-xs mb-2" style="color: var(--c1); font-weight: 600;">Almost there — one last step</p>
+                    <p class="text-xs mb-4" style="color: var(--c3);">Your phone number is already linked to a Resy account. To confirm it's you, enter the email address associated with that account.</p>
                     <input type="email" x-model="resyChallengeEmail" placeholder="Your Resy email address"
                         autocomplete="email"
                         class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
@@ -1218,6 +1260,7 @@
             reservations: [],
             reservationsLoading: true,
             eventSources: {},
+            confirmCancelId: null,
 
             // Resy link
             resyLinkTab: 'phone',
@@ -1361,23 +1404,11 @@
             goToRestaurant(r) {
                 const venueId = r.venue_id || r.resy_id;
                 this.searchResults = []; this.searchQuery = '';
-                const isDevUser = localStorage.getItem('tablement_dev_user') === 'true';
-                if (!this.resyLinked && !isDevUser) {
-                    this.pendingVenueId = venueId;
-                    this.showResyLink = true;
-                    return;
-                }
                 window.location.href = `/restaurant/${venueId}`;
             },
             goToRestaurantSearch(r) {
                 const venueId = r.resy_id || r.venue_id;
                 this.searchResults = []; this.searchQuery = ''; this.searchFocused = false;
-                const isDevUser = localStorage.getItem('tablement_dev_user') === 'true';
-                if (!this.resyLinked && !isDevUser) {
-                    this.pendingVenueId = venueId;
-                    this.showResyLink = true;
-                    return;
-                }
                 window.location.href = `/restaurant/${venueId}`;
             },
 
@@ -1425,7 +1456,7 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Pending', monitoring: 'Watching', sniping: 'Booking', confirmed: 'Secured' };
+                const map = { scheduled: 'Scheduled', monitoring: 'Watching', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
                 return map[status] || status;
             },
 
@@ -1483,7 +1514,18 @@
                     }
                     es.close(); delete this.eventSources[id];
                 });
-                es.onerror = () => { res._live = false; es.close(); delete this.eventSources[id]; };
+                es.onerror = () => {
+                    es.close(); delete this.eventSources[id];
+                    // Auto-reconnect after 3s if reservation is still active
+                    if (this.isActiveRes(res.status)) {
+                        res._liveMessage = 'Reconnecting...';
+                        setTimeout(() => {
+                            if (this.isActiveRes(res.status)) this.connectSSE(res);
+                        }, 3000);
+                    } else {
+                        res._live = false;
+                    }
+                };
             },
             friendlyPhase(data) {
                 const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Watching for openings...' };
