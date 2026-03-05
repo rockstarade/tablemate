@@ -1109,6 +1109,26 @@
                     </button>
                     <button @click="resyPhoneStep = 'phone'" class="mt-3 text-xs w-full text-center" style="color: var(--c3);">&larr; Change number</button>
                 </div>
+
+                <!-- Step 3: Email challenge (Resy security for existing accounts) -->
+                <div x-show="resyPhoneStep === 'challenge'">
+                    <p class="text-xs mb-4" style="color: var(--c3);">Resy needs to verify it's you. Enter the email on your Resy account.</p>
+                    <input type="email" x-model="resyChallengeEmail" placeholder="Your Resy email address"
+                        autocomplete="email"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <button @click="completeResyChallenge()" :disabled="resyLoading || !resyChallengeEmail"
+                        class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                        :style="resyChallengeEmail ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        <span x-show="!resyLoading">Verify & Link</span>
+                        <span x-show="resyLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Verifying...
+                        </span>
+                    </button>
+                </div>
             </div>
             <!-- Email + Password -->
             <div x-show="resyLinkTab === 'email'">
@@ -1205,6 +1225,9 @@
             resyPhoneDisplay: '',
             resyPhoneDigits: '',
             resyOtpDigits: ['', '', '', '', '', ''],
+            resyClaimToken: '',
+            resyChallengeId: '',
+            resyChallengeEmail: '',
             resyEmail: '',
             resyPassword: '',
             resyLoading: false,
@@ -1610,6 +1633,39 @@
                     });
                     const data = await resp.json();
                     if (!resp.ok) throw new Error(data.detail || 'Verification failed');
+                    if (data.challenge) {
+                        // Resy wants email verification — show email step
+                        this.resyClaimToken = data.claim_token;
+                        this.resyChallengeId = data.challenge_id;
+                        this.resyPhoneStep = 'challenge';
+                        this.resyError = '';
+                    } else {
+                        this.resyLinked = true;
+                        this.showResyLink = false;
+                        this.showToast('Resy account linked!', '&#10003;');
+                        if (this.pendingVenueId) {
+                            const vid = this.pendingVenueId; this.pendingVenueId = null;
+                            setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
+                        }
+                    }
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
+
+            async completeResyChallenge() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const resp = await fetch('/api/auth/resy-complete-challenge', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({
+                            claim_token: this.resyClaimToken,
+                            challenge_id: this.resyChallengeId,
+                            email: this.resyChallengeEmail,
+                        }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Email verification failed');
                     this.resyLinked = true;
                     this.showResyLink = false;
                     this.showToast('Resy account linked!', '&#10003;');

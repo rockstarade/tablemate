@@ -273,14 +273,12 @@ class ResyApiClient:
             )
         return resp.json()
 
-    async def verify_phone_otp(self, phone_number: str, code: str) -> AuthResponse:
-        """POST /3/auth/mobile — verify OTP by passing code to same endpoint.
+    async def verify_phone_otp(self, phone_number: str, code: str) -> AuthResponse | dict:
+        """POST /3/auth/mobile — verify OTP code.
 
-        Resy phone auth can return two formats:
-        1. Standard AuthResponse (id, token, first_name, last_name, payment_methods)
-        2. mobile_claim wrapper: {"mobile_claim": {"mobile_number": ..., ...}}
-           When the phone is already linked to a Resy account, the auth info
-           may be nested inside mobile_claim or require a follow-up call.
+        Returns either:
+        - AuthResponse if Resy gives direct auth (new phone, no email on account)
+        - dict with 'challenge' key if Resy wants email verification first
         """
         assert self._client is not None
         resp = await self._client.post(
@@ -304,32 +302,43 @@ class ResyApiClient:
         if "id" in raw and "token" in raw:
             return AuthResponse.model_validate(raw)
 
-        # mobile_claim response — phone verified but returns claim object
-        # Try to extract auth info from the claim
-        claim = raw.get("mobile_claim", raw)
-        if isinstance(claim, dict):
-            logger.info("Resy mobile_claim keys: %s", list(claim.keys()))
-            # Some Resy responses nest the token differently
-            token = claim.get("token") or raw.get("token", "")
-            user_id = claim.get("id") or raw.get("id", 0)
-            first = claim.get("first_name") or raw.get("first_name", "")
-            last = claim.get("last_name") or raw.get("last_name", "")
+        # Challenge response — Resy wants email verification
+        if "challenge" in raw:
+            logger.info("Resy phone OTP: challenge required")
+            return raw  # Return full response for the challenge flow
 
-            if token:
-                return AuthResponse(
-                    id=user_id, token=token,
-                    first_name=first, last_name=last,
-                    payment_methods=[],
-                )
+        # Unexpected format
+        logger.warning("Resy phone OTP: unexpected response: %s", raw)
+        raise ValueError("Unexpected response from Resy. Try Email + Password instead.")
 
-        # If we got here, the phone was verified but we don't have a token.
-        # This can happen when the phone is associated with an existing account
-        # but Resy returns a claim instead of full auth. Log full response for debugging.
-        logger.warning("Resy phone OTP: no token in response. Full response: %s", raw)
-        raise ValueError(
-            "Phone verified but Resy didn't return an auth token. "
-            "Try linking with Email + Password instead."
+    async def complete_phone_challenge(self, claim_token: str, challenge_id: str, email: str) -> AuthResponse:
+        """POST /3/auth/mobile/challenge — complete email challenge after phone OTP."""
+        assert self._client is not None
+        resp = await self._client.post(
+            "/3/auth/mobile/challenge",
+            data={
+                "claim_token": claim_token,
+                "challenge_id": challenge_id,
+                "em_address": email,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
+        if resp.status_code >= 300:
+            try:
+                body = resp.json()
+                msg = body.get("message", resp.text)
+            except Exception:
+                msg = resp.text or f"HTTP {resp.status_code}"
+            raise httpx.HTTPStatusError(
+                msg, request=resp.request, response=resp
+            )
+        raw = resp.json()
+        logger.info("Resy challenge response keys: %s", list(raw.keys()))
+        try:
+            return AuthResponse.model_validate(raw)
+        except Exception as e:
+            logger.error("Challenge AuthResponse validation failed. Keys: %s. Error: %s", list(raw.keys()), e)
+            raise
 
     async def find_slots(
         self, venue_id: int, day: str, party_size: int, *, fast: bool = False

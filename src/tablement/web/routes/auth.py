@@ -192,7 +192,11 @@ async def resy_send_otp(request: Request, body: dict):
 @router.post("/resy-verify-otp")
 @limiter.limit("5/minute")
 async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(get_user_id)):
-    """Verify the Resy phone OTP code and link the account."""
+    """Verify the Resy phone OTP code and link the account.
+
+    May return a challenge requiring email verification (Resy security step
+    for phones linked to existing accounts).
+    """
     phone = body.get("phone", "").strip()
     code = body.get("code", "").strip()
     if not phone or not code:
@@ -209,7 +213,7 @@ async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(g
 
     try:
         async with ResyApiClient() as client:
-            auth_resp = await client.verify_phone_otp(phone, code)
+            result = await client.verify_phone_otp(phone, code)
     except Exception as e:
         msg = str(e)
         if hasattr(e, "response") and e.response is not None:
@@ -220,14 +224,62 @@ async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(g
         logger.warning("Resy OTP verify failed: %s", msg)
         raise HTTPException(401, f"Verification failed: {msg}")
 
-    # Store the Resy auth token — phone users don't have email/password
-    # We store the phone number as resy_email for identification
+    # If challenge returned, send it to frontend for email verification step
+    if isinstance(result, dict) and "challenge" in result:
+        challenge = result["challenge"]
+        claim = result.get("mobile_claim", {})
+        return {
+            "linked": False,
+            "challenge": True,
+            "claim_token": claim.get("claim_token", ""),
+            "challenge_id": challenge.get("challenge_id", ""),
+            "challenge_message": challenge.get("message", "Please verify your email"),
+            "first_name": challenge.get("first_name", ""),
+        }
+
+    # Direct auth success (no challenge needed)
+    auth_resp = result
     await db.upsert_profile(
         user_id,
         resy_email=phone,
         resy_token=auth_resp.token,
     )
+    return {
+        "linked": True,
+        "resy_first_name": auth_resp.first_name,
+        "resy_last_name": auth_resp.last_name,
+    }
 
+
+@router.post("/resy-complete-challenge")
+@limiter.limit("5/minute")
+async def resy_complete_challenge(request: Request, body: dict, user_id: str = Depends(get_user_id)):
+    """Complete the email challenge after phone OTP verification."""
+    claim_token = body.get("claim_token", "").strip()
+    challenge_id = body.get("challenge_id", "").strip()
+    email = body.get("email", "").strip()
+    if not claim_token or not challenge_id or not email:
+        raise HTTPException(400, "claim_token, challenge_id, and email are required")
+
+    try:
+        async with ResyApiClient() as client:
+            auth_resp = await client.complete_phone_challenge(claim_token, challenge_id, email)
+    except Exception as e:
+        msg = str(e)
+        if hasattr(e, "response") and e.response is not None:
+            try:
+                msg = e.response.json().get("message", msg)
+            except Exception:
+                pass
+        logger.warning("Resy challenge failed: %s", msg)
+        raise HTTPException(401, f"Email verification failed: {msg}")
+
+    # Store credentials
+    await db.upsert_profile(
+        user_id,
+        resy_email=email,
+        resy_token=auth_resp.token,
+    )
     return {
         "linked": True,
         "resy_first_name": auth_resp.first_name,
