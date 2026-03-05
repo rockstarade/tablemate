@@ -1310,14 +1310,14 @@
             // ── Restaurant Logic ──
             get hotRestaurants() {
                 // Use DB is_hot flag, fallback to hardcoded names
-                const hotNames = ['carbone', '4 charles', 'atomix', 'torrisi'];
+                const hotNames = ['carbone', '4 charles', 'atomix', 'semma'];
                 return this.restaurants.filter(r =>
                     r.is_hot || hotNames.some(n => r.name && r.name.toLowerCase().includes(n))
                 ).slice(0, 4);
             },
 
             isHotRestaurant(r) {
-                const hotNames = ['carbone', '4 charles', 'atomix', 'torrisi'];
+                const hotNames = ['carbone', '4 charles', 'atomix', 'semma'];
                 return r.is_hot || hotNames.some(n => r.name && r.name.toLowerCase().includes(n));
             },
 
