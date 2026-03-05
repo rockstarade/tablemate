@@ -45,6 +45,7 @@ async def list_curated():
             "service_end": r.get("service_end", "22:00"),
             "hot_start": r.get("hot_start", "19:00"),
             "hot_end": r.get("hot_end", "20:30"),
+            "is_hot": r.get("is_hot", False),
         })
 
     return {"restaurants": restaurants}

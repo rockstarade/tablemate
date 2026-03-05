@@ -52,31 +52,31 @@
             --border-subtle: rgba(0,0,0,0.04);
             --nav: #64748b;
             --nav-hover: #0f172a;
-            --nav-active: #0ea5e9;
-            --nav-active-bg: rgba(14,165,233,0.06);
-            --accent: #6366f1;
-            --accent-bg: rgba(99,102,241,0.05);
-            --accent-border: rgba(99,102,241,0.12);
-            --hot: #ea580c;
-            --hot-bg: rgba(249,115,22,0.06);
-            --hot-border: rgba(249,115,22,0.12);
-            --btn-hot-bg: #0ea5e9;
+            --nav-active: #0369a1;
+            --nav-active-bg: rgba(3,105,161,0.06);
+            --accent: #0369a1;
+            --accent-bg: rgba(3,105,161,0.05);
+            --accent-border: rgba(3,105,161,0.12);
+            --hot: #c2410c;
+            --hot-bg: rgba(194,65,12,0.06);
+            --hot-border: rgba(194,65,12,0.15);
+            --btn-hot-bg: #0369a1;
             --btn-hot-text: #fff;
-            --btn-hot-hover: #0284c7;
+            --btn-hot-hover: #075985;
             --btn-bg: #f1f5f9;
             --btn-text: #475569;
             --btn-border: #e2e8f0;
-            --btn-hover-bg: #0ea5e9;
+            --btn-hover-bg: #0369a1;
             --btn-hover-text: #fff;
             --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
             --card-h-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            --card-h-border: rgba(14,165,233,0.15);
+            --card-h-border: rgba(3,105,161,0.15);
             --signout-h: #ef4444;
-            --search-focus: rgba(14,165,233,0.3);
+            --search-focus: rgba(3,105,161,0.3);
             --skeleton-a: rgba(0,0,0,0.04);
             --skeleton-b: rgba(0,0,0,0.08);
-            --logo-from: #0ea5e9;
-            --logo-to: #0284c7;
+            --logo-from: #0369a1;
+            --logo-to: #075985;
             --logo-text: #fff;
             --status-active: #3b82f6;
             --status-active-bg: rgba(59,130,246,0.08);
@@ -203,6 +203,17 @@
             transform: translateY(-6px);
             box-shadow: var(--card-h-shadow);
             border-color: var(--card-h-border) !important;
+        }
+
+        /* ═══════ BOOK NOW HOVER ═══════ */
+        .btn-book {
+            transition: all 0.2s ease !important;
+        }
+        /* Regular buttons: gray → blue on hover, text goes white */
+        .restaurant-card:hover .btn-book {
+            background: var(--btn-hover-bg) !important;
+            color: var(--btn-hover-text) !important;
+            border-color: var(--btn-hover-bg) !important;
         }
 
         /* ═══════ SKELETON SHIMMER ═══════ */
@@ -560,14 +571,10 @@
 
             <!-- ═══ WHAT'S HOT ═══ -->
             <section x-show="!loading && hotRestaurants.length > 0" x-cloak class="mb-12 fade-in">
-                <div class="flex items-center gap-3 mb-1">
-                    <h2 class="text-lg font-bold" style="color: var(--c1);">What's hot</h2>
-                    <span class="hot-badge flex items-center gap-1 px-2 py-0.5 rounded-lg" style="background: var(--hot-bg); border: 1px solid var(--hot-border);">
-                        <span class="text-[10px]" style="color: var(--hot);">&#x1F525;</span>
-                        <span class="text-[10px] font-bold uppercase tracking-wide" style="color: var(--hot);">Trending</span>
-                    </span>
+                <div class="flex items-center gap-3 mb-5">
+                    <h2 class="text-xl font-extrabold tracking-tight" style="color: var(--c1);">What's hot right now</h2>
+                    <span class="text-base">&#x1F525;</span>
                 </div>
-                <p class="text-sm mb-5" style="color: var(--c3);">Most requested this week</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
                     <template x-for="(r, idx) in hotRestaurants" :key="r.venue_id">
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
@@ -578,26 +585,26 @@
                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                                <div class="absolute top-3 left-3 flex items-center gap-2">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/20 backdrop-blur-md border border-orange-400/20 text-[10px] font-bold text-orange-300 uppercase tracking-wide">
+                                <div class="absolute top-3 left-3">
+                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
+                                        x-text="r.cuisine"></span>
+                                </div>
+                                <div class="absolute top-3 right-3">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
                                         &#x1F525; Hot
                                     </span>
                                 </div>
-                                <div class="absolute top-3 right-3">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/70"
-                                        x-text="r.cuisine"></span>
-                                </div>
                                 <!-- Restaurant name overlay on image -->
                                 <div class="absolute bottom-3 left-3 right-3">
-                                    <h3 class="text-base font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
+                                    <h3 class="text-lg font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
                                     <p class="text-xs text-white/60 mt-0.5" x-text="r.neighborhood"></p>
                                 </div>
                             </div>
                             <div class="p-4">
                                 <div class="flex items-center justify-between mb-3.5">
                                     <p class="text-xs">
-                                        <span style="color: var(--c4);">Next release</span>
-                                        <span class="font-semibold ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
+                                        <span style="color: var(--c3);">Next release</span>
+                                        <span class="font-bold ml-1" style="color: var(--c1);" x-text="getNextRelease(r)"></span>
                                     </p>
                                 </div>
                                 <button @click.stop="goToRestaurant(r)"
@@ -631,19 +638,24 @@
                                     @error="$event.target.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
                                 <div class="absolute top-3 left-3">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/70"
+                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
                                         x-text="r.cuisine"></span>
                                 </div>
+                                <div class="absolute top-3 right-3" x-show="isHotRestaurant(r)">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
+                                        &#x1F525; Hot
+                                    </span>
+                                </div>
                                 <div class="absolute bottom-3 left-3 right-3">
-                                    <h3 class="text-sm font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
+                                    <h3 class="text-base font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
                                     <p class="text-[11px] text-white/60 mt-0.5" x-text="r.neighborhood"></p>
                                 </div>
                             </div>
                             <div class="p-4">
                                 <div class="flex items-center justify-between mb-3.5">
                                     <p class="text-xs">
-                                        <span style="color: var(--c4);">Next release</span>
-                                        <span class="font-semibold ml-1" style="color: var(--accent);" x-text="getNextRelease(r)"></span>
+                                        <span style="color: var(--c3);">Next release</span>
+                                        <span class="font-bold ml-1" style="color: var(--c1);" x-text="getNextRelease(r)"></span>
                                     </p>
                                 </div>
                                 <button @click.stop="goToRestaurant(r)"
@@ -668,17 +680,12 @@
         </div>
     </main>
 
-    <!-- ═══════════════ RESERVATIONS PANEL (Slide-over) ═══════════════ -->
-    <div x-show="showReservations" x-cloak class="fixed inset-0 z-[60]" @keydown.escape.window="showReservations = false">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showReservations = false"
-            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
-        <!-- Panel -->
-        <div class="absolute top-0 right-0 bottom-0 w-full sm:w-[440px] shadow-2xl panel-bg flex flex-col"
-            style="border-left: 1px solid var(--border);"
-            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-            x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full">
+    <!-- ═══════════════ RESERVATIONS PANEL (Sidebar) ═══════════════ -->
+    <div x-show="showReservations" x-cloak class="fixed top-0 right-0 bottom-0 z-[60] w-full sm:w-[420px] shadow-2xl panel-bg flex flex-col"
+        style="border-left: 1px solid var(--border);"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+        @keydown.escape.window="showReservations = false">
 
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
@@ -686,26 +693,18 @@
                     <h2 class="text-lg font-bold" style="color: var(--c1);">My Reservations</h2>
                     <p class="text-xs mt-0.5" style="color: var(--c3);" x-text="resSummaryText()"></p>
                 </div>
-                <button @click="showReservations = false" class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
-                    style="color: var(--c3);"
-                    onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
-                    onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-
-            <!-- Filter tabs -->
-            <div class="px-6 pt-4 pb-2">
-                <div class="flex gap-1 rounded-xl p-1" style="background: var(--bg-input);">
-                    <template x-for="tab in resTabs" :key="tab.key">
-                        <button @click="resFilter = tab.key"
-                            class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
-                            :style="resFilter === tab.key
-                                ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);'
-                                : 'color: var(--c3);'">
-                            <span x-text="tab.label"></span>
-                        </button>
-                    </template>
+                <div class="flex items-center gap-2">
+                    <button @click="showReservations = false"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                        style="background: var(--btn-hot-bg); color: var(--btn-hot-text);">
+                        + New Booking
+                    </button>
+                    <button @click="showReservations = false" class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+                        style="color: var(--c3);"
+                        onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
+                        onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
                 </div>
             </div>
 
@@ -719,17 +718,18 @@
 
                 <template x-if="!reservationsLoading">
                     <div>
-                        <template x-for="res in filteredRes()" :key="res.id">
+                        <!-- Active & Secured reservations -->
+                        <template x-for="res in reservations.filter(r => !isHistoryRes(r.status))" :key="res.id">
                             <div class="rounded-xl p-4 mb-3 transition-all"
                                 style="background: var(--bg-card); border: 1px solid var(--border);"
                                 :style="res.status === 'confirmed' ? 'border-color: var(--status-confirmed); box-shadow: 0 0 20px rgba(16,185,129,0.08);' : ''">
 
-                                <!-- Confirmed -->
+                                <!-- Secured -->
                                 <template x-if="res.status === 'confirmed'">
                                     <div>
                                         <div class="flex items-center gap-2 mb-2">
                                             <span class="text-sm" style="color: var(--status-confirmed);">&#10003;</span>
-                                            <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">You're in!</span>
+                                            <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">Secured</span>
                                         </div>
                                         <h3 class="text-base font-bold mb-2" style="color: var(--c1);" x-text="res.venue_name"></h3>
                                         <div class="space-y-1 text-xs" style="color: var(--c2);">
@@ -756,7 +756,7 @@
                                     </div>
                                 </template>
 
-                                <!-- Active (scheduled, monitoring, sniping) -->
+                                <!-- Pending (scheduled, monitoring, sniping) -->
                                 <template x-if="isActiveRes(res.status)">
                                     <div>
                                         <div class="flex items-center justify-between mb-2">
@@ -782,38 +782,39 @@
                                         </button>
                                     </div>
                                 </template>
+                            </div>
+                        </template>
 
-                                <!-- Failed -->
-                                <template x-if="res.status === 'failed'">
-                                    <div>
-                                        <div class="flex items-center justify-between mb-2">
-                                            <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" style="background: var(--status-failed-bg); color: var(--status-failed);">No luck</span>
-                                        </div>
-                                        <div class="text-xs mb-2" style="color: var(--c3);">
-                                            <span x-text="formatDateShort(res.target_date)"></span> &middot; Party of <span x-text="res.party_size"></span>
-                                        </div>
-                                        <a :href="'/restaurant/' + res.venue_id" class="text-xs font-medium" style="color: var(--accent);">Try again &rarr;</a>
-                                    </div>
-                                </template>
+                        <!-- History divider -->
+                        <template x-if="reservations.filter(r => isHistoryRes(r.status)).length > 0">
+                            <div class="flex items-center gap-3 mt-6 mb-3">
+                                <div class="flex-1 h-px" style="background: var(--border);"></div>
+                                <span class="text-[10px] font-semibold uppercase tracking-widest" style="color: var(--c4);">Past</span>
+                                <div class="flex-1 h-px" style="background: var(--border);"></div>
+                            </div>
+                        </template>
 
-                                <!-- Cancelled / Dry run -->
-                                <template x-if="res.status === 'cancelled' || res.status === 'dry_run'">
-                                    <div class="opacity-60">
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <h3 class="text-sm font-semibold" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                            <span class="text-[10px] font-medium" style="color: var(--c3);" x-text="res.status === 'dry_run' ? 'Test' : 'Cancelled'"></span>
-                                        </div>
-                                        <div class="text-xs" style="color: var(--c4);">
-                                            <span x-text="formatDateShort(res.target_date)"></span>
-                                        </div>
-                                    </div>
-                                </template>
+                        <!-- History (compact inline rows) -->
+                        <template x-for="res in reservations.filter(r => isHistoryRes(r.status))" :key="res.id">
+                            <div class="flex items-center gap-3 py-2.5 px-1 group" style="opacity: 0.55;">
+                                <!-- Status icon -->
+                                <span x-show="res.status === 'failed'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                    style="background: var(--status-failed-bg); color: var(--status-failed);">✕</span>
+                                <span x-show="res.status === 'cancelled'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                    style="background: var(--bg-input); color: var(--c3);">—</span>
+                                <span x-show="res.status === 'dry_run'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                    style="background: var(--bg-input); color: var(--c3);">⚡</span>
+                                <!-- Name + date inline -->
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-xs font-medium truncate" style="color: var(--c2);" x-text="res.venue_name"></span>
+                                </div>
+                                <span class="text-[11px] flex-shrink-0" style="color: var(--c4);" x-text="formatDateShort(res.target_date)"></span>
+                                <a :href="'/restaurant/' + res.venue_id" class="text-[11px] font-medium flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--accent);">Retry</a>
                             </div>
                         </template>
 
                         <!-- Empty -->
-                        <div x-show="filteredRes().length === 0" class="text-center py-12">
+                        <div x-show="reservations.length === 0" class="text-center py-12">
                             <div class="text-4xl mb-3">&#127869;</div>
                             <p class="text-sm font-semibold mb-1" style="color: var(--c1);">No reservations yet</p>
                             <p class="text-xs" style="color: var(--c3);">Browse restaurants and let us handle the hard part.</p>
@@ -846,17 +847,66 @@
                 </button>
             </div>
 
-            <div class="px-6 py-5 space-y-5">
-                <!-- Profile -->
+            <div class="px-6 py-5 space-y-5 overflow-y-auto" style="max-height: 65vh;">
+                <!-- Profile (editable name) -->
                 <div>
                     <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Profile</p>
-                    <div class="flex items-center gap-4 p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                        <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold"
-                            style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); color: var(--logo-text);"
-                            x-text="(userName || 'U').charAt(0).toUpperCase()"></div>
-                        <div>
-                            <p class="text-sm font-semibold" style="color: var(--c1);" x-text="userName || 'User'"></p>
-                            <p class="text-xs" style="color: var(--c3);" x-text="userEmail || 'No email linked'"></p>
+                    <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold"
+                                style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); color: var(--logo-text);"
+                                x-text="(userName || 'U').charAt(0).toUpperCase()"></div>
+                            <div class="flex-1 min-w-0">
+                                <template x-if="!editingName">
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-semibold truncate" style="color: var(--c1);" x-text="userName || 'User'"></p>
+                                        <button @click="editingName = true; editNameValue = userName"
+                                            class="text-[11px] font-medium transition-colors" style="color: var(--accent);">Edit</button>
+                                    </div>
+                                </template>
+                                <template x-if="editingName">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" x-model="editNameValue"
+                                            class="flex-1 px-2 py-1 rounded-lg text-sm font-medium"
+                                            style="background: var(--bg-card); border: 1px solid var(--border); color: var(--c1);"
+                                            @keydown.enter="saveName()" @keydown.escape="editingName = false">
+                                        <button @click="saveName()"
+                                            class="text-[11px] font-semibold" style="color: var(--status-confirmed);">Save</button>
+                                    </div>
+                                </template>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);" x-text="userEmail || 'No email linked'"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscription & Stats -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Subscription</p>
+                    <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-semibold" style="color: var(--c1);">RESR Member</p>
+                                <p class="text-xs" style="color: var(--status-confirmed);">Active</p>
+                            </div>
+                            <div class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                                style="background: var(--status-confirmed-bg); color: var(--status-confirmed);">
+                                Pro
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
+                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.filter(r => r.status === 'confirmed').length">0</p>
+                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Secured</p>
+                            </div>
+                            <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
+                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.filter(r => isActiveRes(r.status)).length">0</p>
+                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Pending</p>
+                            </div>
+                            <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
+                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.length">0</p>
+                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Total</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1134,6 +1184,8 @@
             // User
             userName: '',
             userEmail: '',
+            editingName: false,
+            editNameValue: '',
             referralCode: 'RESR-XXXX',
             referralCopied: false,
 
@@ -1143,14 +1195,7 @@
             // Reservations
             reservations: [],
             reservationsLoading: true,
-            resFilter: 'all',
             eventSources: {},
-            resTabs: [
-                { key: 'all', label: 'All' },
-                { key: 'active', label: 'Active' },
-                { key: 'confirmed', label: 'Booked' },
-                { key: 'history', label: 'History' },
-            ],
 
             // Resy link
             resyLinkTab: 'phone',
@@ -1263,10 +1308,16 @@
 
             // ── Restaurant Logic ──
             get hotRestaurants() {
+                // Use DB is_hot flag, fallback to hardcoded names
                 const hotNames = ['carbone', '4 charles', 'atomix', 'torrisi'];
                 return this.restaurants.filter(r =>
-                    hotNames.some(n => r.name && r.name.toLowerCase().includes(n))
+                    r.is_hot || hotNames.some(n => r.name && r.name.toLowerCase().includes(n))
                 ).slice(0, 4);
+            },
+
+            isHotRestaurant(r) {
+                const hotNames = ['carbone', '4 charles', 'atomix', 'torrisi'];
+                return r.is_hot || hotNames.some(n => r.name && r.name.toLowerCase().includes(n));
             },
 
             getNextRelease(r) {
@@ -1326,12 +1377,13 @@
             },
 
             filteredRes() {
-                const f = this.resFilter;
-                if (f === 'all') return this.reservations;
-                if (f === 'active') return this.reservations.filter(r => this.isActiveRes(r.status));
-                if (f === 'confirmed') return this.reservations.filter(r => r.status === 'confirmed');
-                if (f === 'history') return this.reservations.filter(r => ['failed', 'cancelled', 'dry_run'].includes(r.status));
-                return this.reservations;
+                // Show all non-history reservations first, then history at the end (compact)
+                const active = this.reservations.filter(r => !['failed', 'cancelled', 'dry_run'].includes(r.status));
+                const history = this.reservations.filter(r => ['failed', 'cancelled', 'dry_run'].includes(r.status));
+                return [...active, ...history];
+            },
+            isHistoryRes(status) {
+                return ['failed', 'cancelled', 'dry_run'].includes(status);
             },
 
             resSummaryText() {
@@ -1352,7 +1404,7 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Queued', monitoring: 'Watching', sniping: 'Booking' };
+                const map = { scheduled: 'Pending', monitoring: 'Watching', sniping: 'Booking', confirmed: 'Secured' };
                 return map[status] || status;
             },
 
@@ -1458,6 +1510,15 @@
                     dates: `${startDT}/${endDT}`, details: `Party of ${r.party_size}\nBooked via RESR`, ctz: 'America/New_York',
                 });
                 return `https://calendar.google.com/calendar/render?${params.toString()}`;
+            },
+
+            // ── Profile ──
+            async saveName() {
+                if (!this.editNameValue.trim()) return;
+                this.userName = this.editNameValue.trim();
+                this.editingName = false;
+                this.showToast('Name updated', '&#10003;');
+                // Note: persists client-side only for now
             },
 
             // ── Referral ──
