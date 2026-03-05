@@ -249,8 +249,17 @@
                             <h2 class="text-base font-bold" style="color: var(--c1);">When do you want to go?</h2>
                             <p class="text-xs mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
                         </div>
-                        <div x-show="selectedDates.length > 0" class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: var(--accent-soft); color: var(--accent);">
-                            <span x-text="selectedDates.length"></span> selected
+                        <div class="flex items-center gap-1.5">
+                            <template x-for="i in 5" :key="'dot-'+i">
+                                <div class="w-2 h-2 rounded-full transition-colors"
+                                    :style="i <= selectedDates.length
+                                        ? 'background: var(--accent);'
+                                        : 'background: var(--border);'">
+                                </div>
+                            </template>
+                            <span class="text-xs font-bold ml-1 tabular-nums"
+                                :style="selectedDates.length > 0 ? 'color: var(--accent);' : 'color: var(--c4);'"
+                                x-text="selectedDates.length + '/5'"></span>
                         </div>
                     </div>
 
@@ -346,6 +355,12 @@
                                     </template>
                                 </button>
                             </template>
+                        </div>
+                        <div x-show="selectedTimes.length === 1" x-transition
+                            class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
+                            style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
+                            <span class="text-xs mt-0.5">&#x1F4A1;</span>
+                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting multiple times increases your chances of securing a table.</p>
                         </div>
                     </div>
                 </template>
