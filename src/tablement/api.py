@@ -274,10 +274,10 @@ class ResyApiClient:
         return resp.json()
 
     async def verify_phone_otp(self, phone_number: str, code: str) -> AuthResponse:
-        """POST /3/auth/mobile/verify — verify OTP and return auth token."""
+        """POST /3/auth/mobile — verify OTP by passing code to same endpoint."""
         assert self._client is not None
         resp = await self._client.post(
-            "/3/auth/mobile/verify",
+            "/3/auth/mobile",
             data={"mobile_number": phone_number, "code": code},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )

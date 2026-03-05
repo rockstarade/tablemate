@@ -1067,7 +1067,7 @@
                             <span class="text-lg font-medium" style="color: var(--c3);">+1</span>
                         </div>
                         <input type="tel" x-model="resyPhoneDisplay" @input="formatResyPhone($event)" @keydown="resyPhoneKeydown($event)"
-                            placeholder="(555) 123-4567" maxlength="14" inputmode="numeric"
+                            placeholder="(555) 123-4567" maxlength="14" inputmode="numeric" autocomplete="tel-national" name="phone"
                             class="flex-1 px-4 py-3 rounded-xl text-lg tracking-wide focus:outline-none"
                             style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                             onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
@@ -1088,6 +1088,7 @@
                     <div class="flex justify-center gap-2 mb-4" @paste.prevent="handleResyOtpPaste($event)">
                         <template x-for="(digit, i) in resyOtpDigits" :key="i">
                             <input type="text" inputmode="numeric" maxlength="1"
+                                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                                 :x-ref="'resyOtp' + i" :value="digit"
                                 @input="handleResyOtpInput($event, i)" @keydown="handleResyOtpKeydown($event, i)" @focus="$event.target.select()"
                                 class="w-11 h-12 text-center text-lg font-semibold rounded-xl focus:outline-none"
