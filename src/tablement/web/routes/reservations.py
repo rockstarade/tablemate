@@ -873,6 +873,17 @@ async def _run_snipe(
             if not is_dry_run_success:
                 _handle_stripe_result(reservation_id, result)
 
+            # Notify user (SMS / email) — fire-and-forget, never blocks
+            if result.success and not is_dry_run_success:
+                asyncio.create_task(_notify_booking_confirmed(
+                    user_id=user_id,
+                    venue_name=config.venue_name or f"Venue {config.venue_id}",
+                    slot_time=result.slot.date.start if result.slot else "",
+                    target_date=config.date.isoformat(),
+                    party_size=config.party_size,
+                    resy_token=result.resy_token,
+                ))
+
             if is_dry_run_success:
                 _set_phase(SnipePhase.DONE, "DRY RUN complete — slot found, booking NOT attempted")
             elif result.success:
@@ -912,6 +923,41 @@ async def _run_snipe(
         # Clean up job from manager after a delay (let SSE clients read final state)
         await asyncio.sleep(5)
         app.state.jobs.remove(reservation_id)
+
+
+# ---------------------------------------------------------------------------
+# Booking notifications (SMS / email)
+# ---------------------------------------------------------------------------
+
+
+async def _notify_booking_confirmed(
+    *,
+    user_id: str,
+    venue_name: str,
+    slot_time: str,
+    target_date: str,
+    party_size: int,
+    resy_token: str | None = None,
+) -> None:
+    """Look up user contact info and send confirmation notification.
+
+    Runs as a fire-and-forget task — never blocks the booking flow.
+    """
+    try:
+        from tablement.web.notify import get_user_contact, send_booking_confirmation
+
+        contact = await get_user_contact(user_id)
+        await send_booking_confirmation(
+            phone=contact.get("phone"),
+            email=contact.get("email"),
+            venue_name=venue_name,
+            slot_time=slot_time,
+            target_date=target_date,
+            party_size=party_size,
+            resy_token=resy_token,
+        )
+    except Exception as e:
+        logger.warning("Notification failed for user %s: %s (non-critical)", user_id[:8], e)
 
 
 # ---------------------------------------------------------------------------
@@ -1100,6 +1146,16 @@ async def _cancellation_snipe_loop(
                             "attempts": attempt,
                             "elapsed_seconds": 0,
                         })
+
+                        # Notify user (SMS / email) — fire-and-forget
+                        asyncio.create_task(_notify_booking_confirmed(
+                            user_id=user_id,
+                            venue_name=config.venue_name or f"Venue {config.venue_id}",
+                            slot_time=selected.date.start,
+                            target_date=config.date.isoformat(),
+                            party_size=config.party_size,
+                            resy_token=result.resy_token,
+                        ))
 
                         # Auto-cancel all other reservations in the group
                         if group_id:
