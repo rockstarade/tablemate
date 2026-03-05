@@ -4,8 +4,8 @@ Performance optimizations:
 - Single persistent HTTP/2 connection (auth → warmup → snipe)
 - Non-blocking NTP offset compensation (runs in thread pool)
 - Resy server clock calibration (adjusts pre-fire by server offset)
-- Pre-fire strategy (start 200ms early, adjusted by clock offsets)
-- Keep-alive pings every 10s between phases
+- Pre-fire strategy (start 180-220ms early, randomized per-user)
+- Keep-alive pings every 7-12s between phases (randomized)
 - Earlier warmup at T-30s (was T-5s)
 - Pre-built booking request templates
 - Overlapping find_slots() volleys (catch slots the instant they go live)
@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 import time
 from datetime import timedelta
 
@@ -31,22 +32,24 @@ from tablement.selector import SlotSelector
 
 logger = logging.getLogger(__name__)
 
-# Pre-fire offset: start first find_slots() 200ms before drop
-PRE_FIRE_MS = 200
+# Pre-fire offset: start first find_slots() 180-220ms before drop (randomized per-user)
+PRE_FIRE_MS_MIN = 180
+PRE_FIRE_MS_MAX = 220
 
 # Warmup timing
 WARMUP_BEFORE_SECONDS = 30  # Was 5s — earlier warmup for better TCP window
-PING_INTERVAL_SECONDS = 10  # Was 15s — more frequent keep-alive
+PING_INTERVAL_MIN = 7   # Randomized per-sleep to avoid fixed-interval fingerprint
+PING_INTERVAL_MAX = 12
 
 
 class ReservationSniper:
     """
     Orchestrates the complete snipe flow:
 
-    T-60s:  Authenticate (fresh token + payment_method_id)
-    T-30s:  Warm TCP+TLS connection + calibrate Resy clock
-    T-2s:   Switch to busy-wait for sub-ms precision
-    T-0s:   Begin snipe loop: find → select → details → book
+    T-40-90s:  Authenticate (randomized, fresh token + payment_method_id)
+    T-30s:     Warm TCP+TLS connection + calibrate Resy clock
+    T-2s:      Switch to busy-wait for sub-ms precision
+    T-0s:      Begin snipe loop: find → select → details → book
     """
 
     def __init__(
@@ -73,10 +76,15 @@ class ReservationSniper:
         # Non-blocking NTP offset check (runs in thread, saves 2-5s)
         ntp_task = asyncio.create_task(self.scheduler.check_ntp_offset_async())
 
+        # Per-user randomized pre-fire jitter (computed once, used consistently)
+        pre_fire_ms = random.uniform(PRE_FIRE_MS_MIN, PRE_FIRE_MS_MAX)
+
         # Single persistent connection for entire flow
         async with ResyApiClient() as client:
-            # Authenticate at T-60s
-            auth_time = drop_time - timedelta(seconds=60)
+            # Authenticate at randomized T-40-90s
+            auth_seconds = random.uniform(40, 90)
+            auth_time = drop_time - timedelta(seconds=auth_seconds)
+            logger.info("Auth scheduled at T-%.0fs", auth_seconds)
 
             # Collect NTP result (should be done by now)
             ntp_offset = await ntp_task
@@ -89,7 +97,16 @@ class ReservationSniper:
             await self.scheduler.wait_until(auth_time)
 
             logger.info("Authenticating...")
-            token, payment_id = await self.auth_manager.login(client, credentials)
+            for _auth_attempt in range(3):
+                try:
+                    token, payment_id = await self.auth_manager.login(client, credentials)
+                    break
+                except Exception as auth_err:
+                    if _auth_attempt < 2:
+                        logger.warning("Auth attempt %d failed: %s — retrying in 2s", _auth_attempt + 1, auth_err)
+                        await asyncio.sleep(2)
+                    else:
+                        raise
 
             # Reuse connection — just add auth headers
             client.set_auth_token(token)
@@ -104,7 +121,7 @@ class ReservationSniper:
                 if remaining <= 0:
                     break
                 await client.ping()
-                await asyncio.sleep(min(remaining, PING_INTERVAL_SECONDS))
+                await asyncio.sleep(min(remaining, random.uniform(PING_INTERVAL_MIN, PING_INTERVAL_MAX)))
 
             # Warmup at T-30s: warm proxy connection + calibrate Resy clock
             logger.info("Warming connection + calibrating clock...")
@@ -122,8 +139,11 @@ class ReservationSniper:
                 return_exceptions=True,
             )
 
-            # Apply Resy clock offset
+            # Apply Resy clock offset (reject outliers >±500ms)
             resy_offset = results[1] if isinstance(results[1], float) else 0.0
+            if abs(resy_offset) > 0.5:
+                logger.warning("Resy clock offset %.1fms exceeds 500ms — ignoring", resy_offset * 1000)
+                resy_offset = 0.0
             if resy_offset != 0.0:
                 self.scheduler.set_resy_offset(resy_offset)
                 drop_time = self.scheduler.compensate_drop_time(
@@ -133,21 +153,21 @@ class ReservationSniper:
             # Continue pinging until T-2s
             while True:
                 remaining = (drop_time - self.scheduler._now(drop_time.tzinfo)).total_seconds()
-                if remaining <= 2.0 + (PRE_FIRE_MS / 1000):
+                if remaining <= 2.0 + (pre_fire_ms / 1000):
                     break
                 await client.ping()
-                await asyncio.sleep(min(remaining - 2.0 - (PRE_FIRE_MS / 1000), PING_INTERVAL_SECONDS))
+                await asyncio.sleep(min(remaining - 2.0 - (pre_fire_ms / 1000), random.uniform(PING_INTERVAL_MIN, PING_INTERVAL_MAX)))
 
             # Switch to snipe mode (tighter timeouts)
             client.set_snipe_mode(True)
 
-            # Wait for drop time minus pre-fire offset
-            pre_fire_target = drop_time - timedelta(milliseconds=PRE_FIRE_MS)
+            # Wait for drop time minus per-user pre-fire offset
+            pre_fire_target = drop_time - timedelta(milliseconds=pre_fire_ms)
             await self.scheduler.wait_until(pre_fire_target)
-            logger.info("GO! Starting snipe loop (pre-fire: %dms early)...", PRE_FIRE_MS)
+            logger.info("GO! Starting snipe loop (pre-fire: %.0fms early)...", pre_fire_ms)
 
             # Snipe loop
-            return await self._snipe_loop(client, config, payment_id, dry_run)
+            return await self._snipe_loop(client, config, payment_id, dry_run, token)
 
     async def _snipe_loop(
         self,
@@ -155,6 +175,7 @@ class ReservationSniper:
         config: SnipeConfig,
         payment_id: int,
         dry_run: bool,
+        auth_token: str = "",
     ) -> SnipeResult:
         """Tight retry loop: find → select → details → dual_book.
 
@@ -244,14 +265,16 @@ class ReservationSniper:
 
                 elapsed = time.monotonic() - start
                 logger.info(
-                    "BOOKED in %.3fs after %d attempts! Token: %s",
+                    "BOOKED in %.3fs after %d attempts via %s! Token: %s",
                     elapsed,
                     attempt,
+                    result.booking_path or "unknown",
                     result.resy_token,
                 )
                 return SnipeResult(
                     success=True,
                     resy_token=result.resy_token,
+                    booking_path=result.booking_path or None,
                     slot=selected,
                     attempts=attempt,
                     elapsed_seconds=elapsed,
@@ -264,6 +287,19 @@ class ReservationSniper:
                     e.response.status_code,
                     e.response.text[:200],
                 )
+                continue
+            except (httpx.ConnectError, httpx.ReadError, httpx.RemoteProtocolError) as e:
+                logger.warning("Attempt %d: connection error: %s — reconnecting", attempt, e)
+                try:
+                    await client.aclose()
+                except Exception:
+                    pass
+                client = ResyApiClient()
+                await client.__aenter__()
+                if auth_token:
+                    client.set_auth_token(auth_token)
+                    client.prepare_book_template(payment_id)
+                    client.set_snipe_mode(True)
                 continue
             except Exception as e:
                 logger.error("Attempt %d: unexpected error: %s", attempt, e)

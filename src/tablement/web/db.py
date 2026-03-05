@@ -643,8 +643,23 @@ async def get_scout_stats() -> dict:
     }
 
 
+async def update_scout_polling_windows(
+    venue_id: int, campaign_type: str, polling_windows: list[dict]
+) -> dict | None:
+    """Update only the polling_windows for a campaign."""
+    resp = (
+        await get_service_client()
+        .table("scout_campaigns")
+        .update({"polling_windows": polling_windows})
+        .eq("venue_id", venue_id)
+        .eq("type", campaign_type)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
 # ---------------------------------------------------------------------------
-# Scout Slot Sightings — per-slot lifecycle tracking (Date Scouts)
+# Scout Slot Sightings — per-slot lifecycle tracking (Cancellation Scouts)
 # ---------------------------------------------------------------------------
 
 
@@ -747,3 +762,145 @@ async def get_sighting_stats(venue_id: int) -> dict:
         "max_duration_seconds": round(max(durations), 1) if durations else 0,
         "active_slots": active_resp.count or 0,
     }
+
+
+# ---------------------------------------------------------------------------
+# Scout Error Log
+# ---------------------------------------------------------------------------
+
+
+async def insert_scout_error(data: dict) -> dict | None:
+    """Record a scout error (fire-and-forget safe)."""
+    try:
+        resp = await get_service_client().table("scout_errors").insert(data).execute()
+        return resp.data[0] if resp.data else None
+    except Exception:
+        return None
+
+
+async def get_scout_errors(
+    venue_id: int | None = None, *, limit: int = 50
+) -> list[dict]:
+    """Get recent scout errors, optionally filtered by venue."""
+    q = get_service_client().table("scout_errors").select("*")
+    if venue_id is not None:
+        q = q.eq("venue_id", venue_id)
+    resp = await q.order("created_at", desc=True).limit(limit).execute()
+    return resp.data
+
+
+async def clear_scout_errors(venue_id: int | None = None) -> None:
+    """Clear scout errors. If venue_id given, only clear for that venue."""
+    q = get_service_client().table("scout_errors").delete()
+    if venue_id:
+        q = q.eq("venue_id", venue_id)
+    else:
+        q = q.neq("id", "00000000-0000-0000-0000-000000000000")
+    await q.execute()
+
+
+# ---------------------------------------------------------------------------
+# Scout Settings (single-row table)
+# ---------------------------------------------------------------------------
+
+
+async def get_scout_settings() -> dict | None:
+    """Get the single settings row. Returns None if table doesn't exist."""
+    try:
+        resp = (
+            await get_service_client()
+            .table("scout_settings")
+            .select("*")
+            .eq("id", 1)
+            .execute()
+        )
+        return resp.data[0] if resp.data else None
+    except Exception:
+        return None
+
+
+async def update_scout_settings(**fields) -> dict:
+    """Update scout settings (partial). Creates row if needed."""
+    fields.pop("id", None)
+    resp = (
+        await get_service_client()
+        .table("scout_settings")
+        .upsert({"id": 1, **fields})
+        .execute()
+    )
+    return resp.data[0] if resp.data else {}
+
+
+# ---------------------------------------------------------------------------
+# Production hardening helpers
+# ---------------------------------------------------------------------------
+
+
+async def has_active_reservation(user_id: str, venue_id: int, target_date: str) -> bool:
+    """Check if user already has an active reservation for this venue+date."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("venue_id", venue_id)
+        .eq("target_date", target_date)
+        .not_.in_("status", ["cancelled", "failed", "confirmed"])
+        .limit(1)
+        .execute()
+    )
+    return bool(resp.data)
+
+
+async def cancel_group_members(group_id: str, except_id: str) -> list[str]:
+    """Atomically cancel all group members except the winner. Returns cancelled IDs."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .update({"status": "cancelled", "error": "Another reservation in group confirmed"})
+        .eq("group_id", group_id)
+        .neq("id", except_id)
+        .not_.in_("status", ["confirmed", "cancelled", "failed"])
+        .execute()
+    )
+    return [r["id"] for r in resp.data] if resp.data else []
+
+
+async def count_active_drop_snipes(user_id: str) -> int:
+    """Count user's active drop snipes (mode=snipe, status in scheduled/sniping)."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("id", count="exact")
+        .eq("user_id", user_id)
+        .eq("mode", "snipe")
+        .in_("status", ["scheduled", "sniping"])
+        .execute()
+    )
+    return resp.count or 0
+
+
+async def count_active_monitors(user_id: str) -> int:
+    """Count user's active monitors (mode=monitor, status in monitoring/sniping)."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("id", count="exact")
+        .eq("user_id", user_id)
+        .eq("mode", "monitor")
+        .in_("status", ["monitoring", "sniping"])
+        .execute()
+    )
+    return resp.count or 0
+
+
+async def get_recoverable_reservations() -> list[dict]:
+    """Get all reservations that were in-flight when server crashed."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("*")
+        .in_("status", ["scheduled", "monitoring", "sniping"])
+        .execute()
+    )
+    return resp.data or []

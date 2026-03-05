@@ -28,6 +28,8 @@ from datetime import date, datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sse_starlette.sse import EventSourceResponse
 
+import httpx
+
 from tablement.api import ResyApiClient
 from tablement.fingerprint import fingerprint_pool
 from tablement.models import DropTime, SnipeConfig, SnipeResult, TimePreference
@@ -44,6 +46,8 @@ from tablement.web.schemas import (
     ReservationOut,
     SnipeResultOut,
 )
+from tablement.web.ip_pool import ip_pool
+from tablement.web.ratelimit import limiter
 from tablement.web.state import JobState, SnipePhase
 
 logger = logging.getLogger(__name__)
@@ -167,11 +171,30 @@ class SnipeIntelBuffer:
 
 
 # ---------------------------------------------------------------------------
+# Error sanitization — generic messages for clients, raw details in server logs
+# ---------------------------------------------------------------------------
+
+
+def _safe_error(e: Exception) -> str:
+    """Map exception types to generic user-facing messages."""
+    if isinstance(e, httpx.HTTPStatusError):
+        return "Resy returned an error"
+    if isinstance(e, httpx.ConnectError):
+        return "Could not connect to Resy"
+    if isinstance(e, (httpx.TimeoutException, asyncio.TimeoutError)):
+        return "Request timed out"
+    if isinstance(e, asyncio.CancelledError):
+        return "Cancelled"
+    return "An unexpected error occurred"
+
+
+# ---------------------------------------------------------------------------
 # CRUD
 # ---------------------------------------------------------------------------
 
 
 @router.post("/", response_model=ReservationOut)
+@limiter.limit("10/minute")
 async def create_reservation(
     body: ReservationCreateRequest,
     request: Request,
@@ -182,10 +205,44 @@ async def create_reservation(
     if body.mode == "snipe" and not body.drop_time:
         raise HTTPException(400, "Snipe mode requires drop_time configuration")
 
+    # Validate: drop time must be in the future
+    if body.mode == "snipe" and body.drop_time:
+        from tablement.scheduler import PrecisionScheduler
+        _sched = PrecisionScheduler()
+        _config = SnipeConfig(
+            venue_id=body.venue_id,
+            date=date.fromisoformat(body.date) if isinstance(body.date, str) else body.date,
+            party_size=body.party_size,
+            time_preferences=[],
+            drop_time=DropTime(
+                hour=body.drop_time.hour,
+                minute=body.drop_time.minute,
+                days_ahead=body.drop_time.days_ahead,
+            ),
+        )
+        _drop_dt = _sched.calculate_drop_datetime(_config)
+        if _drop_dt < datetime.now(_drop_dt.tzinfo):
+            raise HTTPException(400, "Drop time has already passed")
+
     # Check user has linked Resy account
     profile = await db.get_profile(user_id)
     if not profile or not profile.get("resy_email"):
         raise HTTPException(400, "Please link your Resy account first (POST /api/auth/link-resy)")
+
+    # Check for duplicate reservation (same user + venue + date)
+    target_date_str = body.date if isinstance(body.date, str) else body.date.isoformat()
+    if await db.has_active_reservation(user_id, body.venue_id, target_date_str):
+        raise HTTPException(409, "You already have an active reservation for this venue and date")
+
+    # Per-user reservation limits
+    if body.mode == "snipe":
+        count = await db.count_active_drop_snipes(user_id)
+        if count >= 4:
+            raise HTTPException(429, "Maximum 4 active drop snipes allowed")
+    else:
+        count = await db.count_active_monitors(user_id)
+        if count >= 5:
+            raise HTTPException(429, "Maximum 5 active cancellation monitors allowed")
 
     # Build time_preferences and drop_time as JSON for DB
     time_prefs_json = [tp.model_dump() for tp in body.time_preferences]
@@ -219,6 +276,7 @@ async def create_reservation(
 
 
 @router.post("/batch", response_model=BatchReservationResponse)
+@limiter.limit("10/minute")
 async def create_batch_reservations(
     body: BatchReservationRequest,
     request: Request,
@@ -230,6 +288,16 @@ async def create_batch_reservations(
     cancellation snipes (monitor mode with tiered polling). Unreleased dates
     become release snipes (scheduled at drop time).
     """
+    # Pre-flight rate limit check
+    snipe_count = await db.count_active_drop_snipes(user_id)
+    monitor_count = await db.count_active_monitors(user_id)
+    snipe_dates_in_batch = len([d for d in body.dates if date.fromisoformat(d) > date.today() + timedelta(days=body.drop_time.days_ahead if body.drop_time else 30)])
+    monitor_dates_in_batch = len(body.dates) - snipe_dates_in_batch
+    if snipe_count + snipe_dates_in_batch > 4:
+        raise HTTPException(429, f"Would exceed max 4 drop snipes (currently {snipe_count} active)")
+    if monitor_count + monitor_dates_in_batch > 5:
+        raise HTTPException(429, f"Would exceed max 5 cancellation monitors (currently {monitor_count} active)")
+
     # Check user has linked Resy account
     profile = await db.get_profile(user_id)
     if not profile or not profile.get("resy_email"):
@@ -237,6 +305,32 @@ async def create_batch_reservations(
 
     if not body.time_preferences:
         raise HTTPException(400, "At least one time preference is required")
+
+    # Validate: if any dates are unreleased (snipe mode), drop time must be in the future
+    if body.drop_time:
+        from tablement.scheduler import PrecisionScheduler
+        _sched = PrecisionScheduler()
+        _any_date = date.fromisoformat(body.dates[0])
+        _config = SnipeConfig(
+            venue_id=body.venue_id,
+            date=_any_date,
+            party_size=body.party_size,
+            time_preferences=[],
+            drop_time=DropTime(
+                hour=body.drop_time.hour,
+                minute=body.drop_time.minute,
+                days_ahead=body.drop_time.days_ahead,
+            ),
+        )
+        _drop_dt = _sched.calculate_drop_datetime(_config)
+        days_ahead_val = body.drop_time.days_ahead
+        today = date.today()
+        has_unreleased = any(
+            date.fromisoformat(d) > today + timedelta(days=days_ahead_val)
+            for d in body.dates
+        )
+        if has_unreleased and _drop_dt < datetime.now(_drop_dt.tzinfo):
+            raise HTTPException(400, "Drop time has already passed for unreleased dates")
 
     # Generate group ID to link all reservations
     group_id = str(uuid.uuid4())
@@ -273,6 +367,11 @@ async def create_batch_reservations(
                 poll_tier = "hot"
             elif body.book_earliest:
                 poll_tier = "hot"  # First date in "earliest" mode gets hot tier
+
+        # Skip duplicate dates for this user+venue
+        if await db.has_active_reservation(user_id, body.venue_id, date_str):
+            logger.info("Batch: skipping duplicate reservation for venue %d date %s", body.venue_id, date_str)
+            continue
 
         row = await db.create_reservation(
             user_id=user_id,
@@ -440,8 +539,19 @@ async def events(
                 }),
             }
 
+            idle_since = time_module.monotonic()
             while True:
-                msg = await queue.get()
+                try:
+                    msg = await asyncio.wait_for(queue.get(), timeout=30.0)
+                except asyncio.TimeoutError:
+                    # Send heartbeat to keep connection alive
+                    yield {"event": "heartbeat", "data": "{}"}
+                    if time_module.monotonic() - idle_since > 300:
+                        # 5 min with no real activity — close
+                        break
+                    continue
+
+                idle_since = time_module.monotonic()
                 yield {
                     "event": msg["event"],
                     "data": json.dumps(msg["data"]),
@@ -582,6 +692,11 @@ async def _run_snipe(
             setattr(job.status, k, v)
         job.broadcast("snipe_phase", {"phase": phase.value, "message": message, **kw})
 
+    # Assign a dedicated IP for this snipe (multi-EIP distribution)
+    snipe_ip_key = f"snipe-{user_id}-{reservation_id}"
+    local_ip = ip_pool.get_ip(snipe_ip_key)
+    logger.info("Snipe %s: bound to IP %s", reservation_id, local_ip)
+
     try:
         # Non-blocking NTP offset check (runs in thread, saves 2-5s)
         ntp_task = asyncio.create_task(scheduler.check_ntp_offset_async())
@@ -601,8 +716,14 @@ async def _run_snipe(
         # Apply NTP compensation
         drop_dt = scheduler.compensate_drop_time(drop_dt)
 
-        # Single persistent connection with per-user fingerprint + proxy
-        async with ResyApiClient(user_id=user_id) as client:
+        # Check if a drop scout is watching this venue — subscribe for instant notification
+        scout = getattr(app.state, "scout", None)
+        scout_event = scout.subscribe_drop(config.venue_id) if scout else None
+        if scout_event:
+            logger.info("Snipe %s: subscribed to scout for venue %d", reservation_id, config.venue_id)
+
+        # Single persistent connection with per-user fingerprint + proxy + dedicated IP
+        async with ResyApiClient(user_id=user_id, local_address=local_ip) as client:
             # Wait until T-60 then authenticate
             auth_time = drop_dt - timedelta(seconds=60)
             now = datetime.now(drop_dt.tzinfo)
@@ -619,9 +740,18 @@ async def _run_snipe(
                 await asyncio.sleep(sleep_time)
                 wait_secs = (auth_time - datetime.now(drop_dt.tzinfo)).total_seconds()
 
-            # Authenticate at T-60
+            # Authenticate at T-60 (with retry)
             _set_phase(SnipePhase.AUTHENTICATING, "Authenticating with Resy...")
-            auth_resp = await client.authenticate(resy_email, resy_password)
+            for _auth_attempt in range(3):
+                try:
+                    auth_resp = await client.authenticate(resy_email, resy_password)
+                    break
+                except Exception as auth_err:
+                    if _auth_attempt < 2:
+                        logger.warning("Auth attempt %d failed for %s: %s — retrying in 2s", _auth_attempt + 1, reservation_id, auth_err)
+                        await asyncio.sleep(2)
+                    else:
+                        raise
             pm = next(
                 (p for p in auth_resp.payment_methods if p.is_default),
                 auth_resp.payment_methods[0],
@@ -661,8 +791,11 @@ async def _run_snipe(
                 return_exceptions=True,
             )
 
-            # Apply Resy clock offset
+            # Apply Resy clock offset (reject outliers >±500ms)
             resy_offset = warmup_results[1] if isinstance(warmup_results[1], float) else 0.0
+            if abs(resy_offset) > 0.5:
+                logger.warning("Resy clock offset %.1fms exceeds 500ms — ignoring", resy_offset * 1000)
+                resy_offset = 0.0
             if resy_offset != 0.0:
                 scheduler.set_resy_offset(resy_offset)
                 drop_dt = scheduler.compensate_drop_time(
@@ -708,26 +841,79 @@ async def _run_snipe(
             # Switch to snipe mode (tighter timeouts)
             client.set_snipe_mode(True)
 
-            # AGGRESSIVE PRE-DROP POLLING
-            # Start hammering find_slots() before drop. Jittered intervals
-            # (20-40ms) to avoid pattern detection. Slots will return empty
-            # until the exact moment Resy releases them.
-            _set_phase(SnipePhase.SNIPING, f"Pre-drop polling (T-{PRE_DROP_POLL_SECONDS}s)...")
-            # Non-blocking: status update is informational, don't block the snipe loop
-            asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
+            # --- SCOUT SUBSCRIPTION: wait for scout to detect drop instead of own polling ---
+            # If a scout is actively watching this venue, we skip our own pre-drop polling
+            # and wait for the scout to broadcast. When it fires, we jump straight to booking.
+            # This saves N-1 polling connections when N users snipe the same venue.
+            scout_detected = False
+            if scout_event is not None:
+                # Race condition fix: check if scout already detected drop before we got here
+                if scout_event.is_set():
+                    logger.info("Snipe %s: scout ALREADY detected drop — booking immediately!", reservation_id)
+                    scout_detected = True
+                else:
+                    _set_phase(SnipePhase.SNIPING, "Scout monitoring — waiting for drop...")
+                    asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
+                    try:
+                        # Wait for scout with a timeout (drop window + 5 min safety)
+                        timeout_s = max(
+                            (drop_dt + timedelta(minutes=5) - datetime.now(drop_dt.tzinfo)).total_seconds(),
+                            60,
+                        )
+                        await asyncio.wait_for(scout_event.wait(), timeout=timeout_s)
+                        logger.info("Snipe %s: SCOUT DETECTED DROP — booking immediately!", reservation_id)
+                        scout_detected = True
+                    except asyncio.TimeoutError:
+                        logger.warning("Snipe %s: scout timeout — falling back to own polling", reservation_id)
+                        scout_event = None  # Fall through to regular polling
 
-            # Create intel buffer to record EVERY poll response
-            intel_buffer = SnipeIntelBuffer(
-                venue_id=config.venue_id,
-                target_date=day_str,
-                reservation_id=reservation_id,
-            )
+            if scout_detected:
+                # Scout detected slots — skip polling, go straight to booking
+                _set_phase(SnipePhase.SNIPING, "Scout detected drop — booking...")
+                asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
 
-            result = await _snipe_loop(
-                client, config, selector, payment_id, dry_run, job,
-                pre_drop_poll=True,
-                intel_buffer=intel_buffer,
-            )
+                # Get the slots the scout found and select best match
+                scout_slots_data = scout.get_drop_slots(config.venue_id) if scout else []
+                logger.info(
+                    "Snipe %s: scout provided %d slots, proceeding to book",
+                    reservation_id, len(scout_slots_data),
+                )
+
+                # Still need to find_slots ourselves to get proper Slot objects with config tokens
+                intel_buffer = SnipeIntelBuffer(
+                    venue_id=config.venue_id,
+                    target_date=day_str,
+                    reservation_id=reservation_id,
+                )
+
+                # Use the snipe loop but it should find slots on the first poll
+                result = await _snipe_loop(
+                    client, config, selector, payment_id, dry_run, job,
+                    pre_drop_poll=True,
+                    intel_buffer=intel_buffer,
+                )
+            else:
+                # No scout or scout timed out — do our own pre-drop polling
+                # AGGRESSIVE PRE-DROP POLLING
+                # Start hammering find_slots() before drop. Jittered intervals
+                # (20-40ms) to avoid pattern detection. Slots will return empty
+                # until the exact moment Resy releases them.
+                _set_phase(SnipePhase.SNIPING, f"Pre-drop polling (T-{PRE_DROP_POLL_SECONDS}s)...")
+                # Non-blocking: status update is informational, don't block the snipe loop
+                asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
+
+                # Create intel buffer to record EVERY poll response
+                intel_buffer = SnipeIntelBuffer(
+                    venue_id=config.venue_id,
+                    target_date=day_str,
+                    reservation_id=reservation_id,
+                )
+
+                result = await _snipe_loop(
+                    client, config, selector, payment_id, dry_run, job,
+                    pre_drop_poll=True,
+                    intel_buffer=intel_buffer,
+                )
 
             # ---- DROP INTELLIGENCE: record observation from real snipe ----
             # This piggybacks on the real snipe — zero extra polling.
@@ -895,6 +1081,7 @@ async def _run_snipe(
                 "success": result.success,
                 "dry_run": dry_run,
                 "resy_token": result.resy_token,
+                "booking_path": result.booking_path,
                 "attempts": result.attempts,
                 "elapsed_seconds": result.elapsed_seconds,
                 "error": result.error,
@@ -913,13 +1100,16 @@ async def _run_snipe(
         })
     except Exception as e:
         logger.exception("Snipe %s failed with error", reservation_id)
-        _set_phase(SnipePhase.DONE, f"Error: {e}")
+        safe_msg = _safe_error(e)
+        _set_phase(SnipePhase.DONE, f"Error: {safe_msg}")
         await db.update_reservation(reservation_id, status="failed", error=str(e))
         job.broadcast("snipe_result", {
-            "success": False, "error": str(e),
+            "success": False, "error": safe_msg,
             "attempts": job.status.attempt, "elapsed_seconds": 0,
         })
     finally:
+        # Release IP assignment back to the pool
+        ip_pool.release(snipe_ip_key)
         # Clean up job from manager after a delay (let SSE clients read final state)
         await asyncio.sleep(5)
         app.state.jobs.remove(reservation_id)
@@ -1000,7 +1190,8 @@ async def _cancellation_snipe_loop(
     day_str = config.date.isoformat()
     attempt = 0
 
-    # Burst/rest tracking
+    # Burst/rest tracking + per-user 429 backoff
+    cancel_backoff = 0.0
     burst_start = time_module.monotonic()
     tier_range = CANCEL_TIER_HOT if poll_tier == "hot" else CANCEL_TIER_WARM
     burst_config = CANCEL_BURST_HOT if poll_tier == "hot" else CANCEL_BURST_WARM
@@ -1104,7 +1295,16 @@ async def _cancellation_snipe_loop(
                         async with ResyApiClient(user_id=user_id, fingerprint=fp) as booker:
                             await asyncio.sleep(random.uniform(0.3, 1.0))  # human delay
 
-                            auth_resp = await booker.authenticate(resy_email, resy_password)
+                            for _auth_try in range(2):
+                                try:
+                                    auth_resp = await booker.authenticate(resy_email, resy_password)
+                                    break
+                                except Exception as _auth_err:
+                                    if _auth_try < 1:
+                                        logger.warning("Cancel snipe %s auth retry: %s", reservation_id, _auth_err)
+                                        await asyncio.sleep(1)
+                                    else:
+                                        raise
                             booker.set_auth_token(auth_resp.token)
                             pm = next(
                                 (p for p in auth_resp.payment_methods if p.is_default),
@@ -1141,6 +1341,7 @@ async def _cancellation_snipe_loop(
                         job.broadcast("snipe_result", {
                             "success": True,
                             "resy_token": result.resy_token,
+                            "booking_path": result.booking_path or None,
                             "slot_time": selected.date.start,
                             "slot_type": selected.config.type,
                             "attempts": attempt,
@@ -1164,13 +1365,23 @@ async def _cancellation_snipe_loop(
                         # Capture Stripe payment
                         snipe_result = SnipeResult(
                             success=True, resy_token=result.resy_token,
+                            booking_path=result.booking_path or None,
                             slot=selected, attempts=attempt, elapsed_seconds=0,
                         )
                         _handle_stripe_result(reservation_id, snipe_result)
                         break
 
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429:
+                    cancel_backoff = min(max(cancel_backoff * 2, 1.0), 30.0)
+                    logger.warning("Cancel snipe %s: 429 rate limited — backing off %.1fs", reservation_id, cancel_backoff)
+                    await asyncio.sleep(cancel_backoff)
+                else:
+                    logger.warning("Cancel snipe %s poll %d: HTTP %d", reservation_id, attempt, e.response.status_code)
+                    cancel_backoff = 0.0
             except Exception as e:
                 logger.warning("Cancel snipe %s poll %d failed: %s", reservation_id, attempt, e)
+                cancel_backoff = 0.0
 
             # ---- 6. Check if burst exceeded → rest period ----
             elapsed_burst = time_module.monotonic() - burst_start
@@ -1221,27 +1432,21 @@ def _get_cancel_tier(target_date: str, is_priority: bool) -> str:
 
 
 async def _cancel_group_members(app, group_id: str, except_reservation_id: str):
-    """Cancel all other reservations in the same group.
+    """Cancel all other reservations in the same group (atomic DB update first).
 
     Called when ANY reservation in a group confirms. Ensures the user
     NEVER ends up with multiple reservations at the same restaurant.
     Works regardless of the "book earliest" toggle state.
     """
+    # Step 1: Atomic DB update — single query cancels all eligible members
     try:
-        group_rows = await db.get_reservations_by_group(group_id)
+        cancelled_ids = await db.cancel_group_members(group_id, except_reservation_id)
     except Exception as e:
-        logger.warning("Failed to fetch group %s: %s", group_id, e)
+        logger.warning("Failed to atomically cancel group %s: %s", group_id, e)
         return
 
-    cancelled_count = 0
-    for row in group_rows:
-        rid = row["id"]
-        if rid == except_reservation_id:
-            continue
-        if row["status"] in ("confirmed", "cancelled", "failed"):
-            continue
-
-        # Cancel the in-memory job
+    # Step 2: Clean up in-memory jobs for cancelled IDs
+    for rid in cancelled_ids:
         job = app.state.jobs.get(rid)
         if job:
             job.broadcast("snipe_result", {
@@ -1259,18 +1464,62 @@ async def _cancel_group_members(app, group_id: str, except_reservation_id: str):
                 except Exception:
                     pass
 
-        # Update DB
-        await db.update_reservation(
-            rid, status="cancelled",
-            error="Group auto-cancelled: another date confirmed",
-        )
-        cancelled_count += 1
-
-    if cancelled_count:
+    if cancelled_ids:
         logger.info(
             "Group %s: cancelled %d other reservations after %s confirmed",
-            group_id, cancelled_count, except_reservation_id,
+            group_id, len(cancelled_ids), except_reservation_id,
         )
+
+
+# ---------------------------------------------------------------------------
+# Request coalescing — deduplicate concurrent identical find_slots calls
+# ---------------------------------------------------------------------------
+
+_poll_cache: dict[str, tuple[float, list]] = {}  # "venue:date:party" → (timestamp, slots)
+_poll_locks: dict[str, asyncio.Lock] = {}
+
+
+async def _coalesced_find_slots(
+    client: ResyApiClient,
+    venue_id: int,
+    day: str,
+    party_size: int,
+    *,
+    fast: bool = True,
+    direct: bool = False,
+) -> list:
+    """Deduplicate concurrent identical find_slots requests.
+
+    If another snipe polled the same venue+date+party within 30ms, reuse the result.
+    Saves N-1 requests when N users snipe the same venue at the same drop time.
+    """
+    cache_key = f"{venue_id}:{day}:{party_size}"
+    now = time_module.monotonic()
+
+    # Check cache first (no lock needed for read)
+    if cache_key in _poll_cache:
+        ts, cached = _poll_cache[cache_key]
+        if now - ts < 0.03:  # 30ms cache window
+            return cached
+
+    if cache_key not in _poll_locks:
+        _poll_locks[cache_key] = asyncio.Lock()
+
+    async with _poll_locks[cache_key]:
+        # Re-check after lock acquisition (another coroutine may have filled cache)
+        now = time_module.monotonic()
+        if cache_key in _poll_cache:
+            ts, cached = _poll_cache[cache_key]
+            if now - ts < 0.03:
+                return cached
+
+        if direct:
+            slots = await client.find_slots_direct(venue_id, day, party_size, fast=fast)
+        else:
+            slots = await client.find_slots(venue_id, day, party_size, fast=fast)
+
+        _poll_cache[cache_key] = (time_module.monotonic(), slots)
+        return slots
 
 
 # ---------------------------------------------------------------------------
@@ -1312,6 +1561,7 @@ async def _snipe_loop(
     day_str = config.date.isoformat()
     total_interval_ms = 0.0  # Track polling intervals for intel
     drop_detected_at = None  # When slots first appeared
+    backoff_seconds = 0.0  # Per-user 429 backoff
 
     while True:
         attempt += 1
@@ -1330,16 +1580,12 @@ async def _snipe_loop(
             )
 
         try:
-            # Step 1: Find slots — use direct client (19ms) for pre-drop polling
-            # instead of proxy (502ms). Falls back to proxy if direct isn't warmed.
-            if pre_drop_poll:
-                slots = await client.find_slots_direct(
-                    config.venue_id, day_str, config.party_size, fast=True,
-                )
-            else:
-                slots = await client.find_slots(
-                    config.venue_id, day_str, config.party_size, fast=True,
-                )
+            # Step 1: Find slots — coalesced to deduplicate when multiple snipes
+            # target the same venue. Uses direct client (19ms) for pre-drop polling.
+            slots = await _coalesced_find_slots(
+                client, config.venue_id, day_str, config.party_size,
+                fast=True, direct=pre_drop_poll,
+            )
 
             # RECORD EVERY POLL — this is just a list.append(), ~0ms overhead
             if intel_buffer is not None:
@@ -1459,9 +1705,34 @@ async def _snipe_loop(
             # All detail/book attempts failed — retry from find_slots
             logger.warning("All %d parallel book attempts failed, retrying...", len(top_matches))
 
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429:
+                backoff_seconds = min(max(backoff_seconds * 2, 1.0), 30.0)
+                logger.warning("Attempt %d: 429 rate limited — backing off %.1fs", attempt, backoff_seconds)
+                await asyncio.sleep(backoff_seconds)
+            else:
+                logger.warning("Attempt %d: HTTP %d", attempt, e.response.status_code)
+                if pre_drop_poll:
+                    await asyncio.sleep(random.uniform(PRE_DROP_POLL_MIN_MS, PRE_DROP_POLL_MAX_MS) / 1000)
+            continue
+        except (httpx.ConnectError, httpx.ReadError, httpx.RemoteProtocolError) as e:
+            logger.warning("Attempt %d: connection error: %s — reconnecting client", attempt, e)
+            try:
+                await client.aclose()
+            except Exception:
+                pass
+            # Recreate client with same auth state
+            new_client = ResyApiClient()
+            await new_client.__aenter__()
+            if hasattr(client, '_auth_token') and client._auth_token:
+                new_client.set_auth_token(client._auth_token)
+            if hasattr(client, '_book_template'):
+                new_client._book_template = client._book_template
+            new_client.set_snipe_mode(True)
+            client = new_client
+            continue
         except Exception as e:
             logger.warning("Attempt %d failed: %s", attempt, e)
-            # Jittered retry even on error
             if pre_drop_poll:
                 await asyncio.sleep(random.uniform(PRE_DROP_POLL_MIN_MS, PRE_DROP_POLL_MAX_MS) / 1000)
             continue
@@ -1619,3 +1890,153 @@ def _handle_stripe_result(reservation_id: str, result: SnipeResult):
         # when Stripe is fully integrated
     except ImportError:
         pass
+
+
+# ---------------------------------------------------------------------------
+# Job Recovery — re-schedule in-flight jobs after crash/restart
+# ---------------------------------------------------------------------------
+
+
+def _build_snipe_config_from_row(row: dict) -> SnipeConfig:
+    """Rebuild a SnipeConfig from a DB reservation row."""
+    time_prefs = row.get("time_preferences") or []
+    drop_config = row.get("drop_time_config") or {}
+
+    return SnipeConfig(
+        venue_id=row["venue_id"],
+        venue_name=row.get("venue_name", ""),
+        party_size=row.get("party_size", 2),
+        date=date.fromisoformat(str(row["target_date"])),
+        time_preferences=[
+            TimePreference(
+                time=time.fromisoformat(tp["time"]),
+                seating_type=tp.get("seating_type"),
+            )
+            for tp in time_prefs
+            if tp.get("time")
+        ],
+        drop_time=DropTime(
+            hour=drop_config.get("hour", 0),
+            minute=drop_config.get("minute", 0),
+            second=drop_config.get("second", 0),
+            timezone=drop_config.get("timezone", "America/New_York"),
+            days_ahead=drop_config.get("days_ahead", 30),
+        )
+        if drop_config
+        else DropTime(hour=0, minute=0, timezone="America/New_York", days_ahead=30),
+    )
+
+
+async def recover_jobs(app) -> int:
+    """Recover in-flight reservations after server crash/restart.
+
+    Called during app startup. For each recoverable reservation:
+    - mode=snipe + status=sniping → mark failed (was mid-execution, state lost)
+    - mode=snipe + drop_time passed >5min → mark failed
+    - mode=snipe + drop_time future → reschedule
+    - mode=monitor → restart cancellation monitoring
+    """
+    try:
+        rows = await db.get_recoverable_reservations()
+    except Exception as e:
+        logger.warning("Job recovery failed to query DB: %s", e)
+        return 0
+
+    if not rows:
+        return 0
+
+    recovered = 0
+    failed = 0
+
+    for row in rows:
+        rid = row["id"]
+        user_id = row["user_id"]
+        mode = row.get("mode", "snipe")
+        status = row.get("status", "")
+
+        # Load user profile (need Resy credentials)
+        try:
+            profile = await db.get_profile(user_id)
+        except Exception:
+            profile = None
+
+        if not profile or not profile.get("resy_email"):
+            await db.update_reservation(rid, status="failed", error="Recovery failed: no Resy credentials")
+            failed += 1
+            continue
+
+        if mode == "snipe":
+            # Was mid-execution → state is lost
+            if status == "sniping":
+                await db.update_reservation(rid, status="failed", error="Server restarted during snipe")
+                failed += 1
+                continue
+
+            # Check if drop time has passed
+            config = _build_snipe_config_from_row(row)
+            scheduler = PrecisionScheduler()
+            try:
+                drop_dt = scheduler.calculate_drop_datetime(config)
+            except Exception:
+                await db.update_reservation(rid, status="failed", error="Recovery failed: invalid drop time")
+                failed += 1
+                continue
+
+            now = datetime.now(drop_dt.tzinfo)
+            if (now - drop_dt).total_seconds() > 300:  # >5 min past drop
+                await db.update_reservation(rid, status="failed", error="Drop time passed during restart")
+                failed += 1
+                continue
+
+            # Reschedule — build a mock request body
+            body = _mock_create_request_from_row(row)
+            _schedule_snipe(app, rid, user_id, body, profile, dry_run=False)
+            recovered += 1
+
+        elif mode == "monitor":
+            # Restart cancellation monitoring
+            body = _mock_create_request_from_row(row)
+            group_id = row.get("group_id")
+            poll_tier = row.get("poll_tier", "warm")
+            latest_notify_hours = row.get("latest_notify_hours", 3.0)
+
+            _schedule_cancellation_snipe(
+                app, rid, user_id, body, profile,
+                group_id=group_id,
+                poll_tier=poll_tier,
+                latest_notify_hours=latest_notify_hours,
+            )
+            recovered += 1
+
+    logger.info("Job recovery: %d recovered, %d failed (of %d total)", recovered, failed, len(rows))
+    return recovered
+
+
+def _mock_create_request_from_row(row: dict) -> ReservationCreateRequest:
+    """Build a ReservationCreateRequest from a DB row for recovery."""
+    from tablement.web.schemas import DropTimeIn, TimePreferenceIn
+
+    time_prefs = row.get("time_preferences") or []
+    drop_config = row.get("drop_time_config") or {}
+
+    return ReservationCreateRequest(
+        venue_id=row["venue_id"],
+        venue_name=row.get("venue_name", ""),
+        party_size=row.get("party_size", 2),
+        date=str(row["target_date"]),
+        mode=row.get("mode", "snipe"),
+        time_preferences=[
+            TimePreferenceIn(
+                time=tp.get("time", "19:00"),
+                seating_type=tp.get("seating_type"),
+            )
+            for tp in time_prefs
+        ] if time_prefs else [TimePreferenceIn(time="19:00")],
+        drop_time=DropTimeIn(
+            hour=drop_config.get("hour", 0),
+            minute=drop_config.get("minute", 0),
+            second=drop_config.get("second", 0),
+            timezone=drop_config.get("timezone", "America/New_York"),
+            days_ahead=drop_config.get("days_ahead", 30),
+        ) if drop_config else None,
+    )

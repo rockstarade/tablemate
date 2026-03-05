@@ -105,11 +105,13 @@ class ResyApiClient:
         user_id: str | None = None,
         fingerprint: BrowserFingerprint | None = None,
         scout: bool = False,
+        local_address: str | None = None,
     ) -> None:
         self._auth_token = auth_token
         self._snipe_mode = snipe_mode
         self._user_id = user_id
         self._scout = scout
+        self._local_address = local_address
         self._client: httpx.AsyncClient | None = None
 
         # Dual-path: direct client (no proxy) for fastest booking path
@@ -138,15 +140,22 @@ class ResyApiClient:
         proxy_url = proxy_pool.get_proxy_url(self._user_id)
 
         client_kwargs: dict = {
-            "http2": True,
             "base_url": self.BASE_URL,
             "headers": self._base_headers(),
             "timeout": timeout,
         }
 
         if proxy_url:
+            # Proxy mode: proxy determines exit IP, local_address irrelevant
             client_kwargs["proxy"] = proxy_url
+            client_kwargs["http2"] = True
             logger.debug("Using proxy for user %s", (self._user_id or "anon")[:8])
+        else:
+            # Direct mode: use transport with local_address for IP control
+            transport_kwargs: dict = {"http2": True}
+            if self._local_address:
+                transport_kwargs["local_address"] = self._local_address
+            client_kwargs["transport"] = httpx.AsyncHTTPTransport(**transport_kwargs)
 
         self._client = httpx.AsyncClient(**client_kwargs)
         return self
@@ -401,13 +410,17 @@ class ResyApiClient:
 
         Call during warmup phase (T-30s). This client skips the residential proxy,
         saving 50-200ms on the final booking request.
+        Uses same local_address as main client for consistent IP binding.
         """
         if self._direct_client:
             return  # Already warm
 
         timeout = httpx.Timeout(3.0, connect=2.0)
+        transport_kwargs: dict = {"http2": True}
+        if self._local_address:
+            transport_kwargs["local_address"] = self._local_address
         self._direct_client = httpx.AsyncClient(
-            http2=True,
+            transport=httpx.AsyncHTTPTransport(**transport_kwargs),
             base_url=self.BASE_URL,
             headers=self._base_headers(),
             timeout=timeout,
@@ -447,6 +460,7 @@ class ResyApiClient:
                 resp = await client.get("/3/book", params=params, headers=headers)
                 resp.raise_for_status()
                 result = BookResponse.model_validate(orjson.loads(resp.content))
+                result.booking_path = label
                 logger.info("Booking won via %s path", label)
                 return result
             except Exception:
@@ -458,6 +472,7 @@ class ResyApiClient:
                 )
                 resp.raise_for_status()
                 result = BookResponse.model_validate(orjson.loads(resp.content))
+                result.booking_path = label
                 logger.info("Booking won via %s path (POST fallback)", label)
                 return result
 

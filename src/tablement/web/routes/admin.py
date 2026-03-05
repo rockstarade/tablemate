@@ -1490,9 +1490,9 @@ async def start_scout(
 
     Body params:
         venue_id (required)
-        type: "drop" or "date" (default: "drop")
-        target_dates: ["2026-03-15", ...] (required for date scouts)
-        venue_name, poll_interval_s, party_size, etc.
+        type: "drop" or "cancellation" (default: "drop")
+        target_dates: ["2026-03-15", ...] (required for cancellation scouts)
+        venue_name (optional — auto-detected from curated data)
     """
     scout = _get_scout(request)
     venue_id = body.get("venue_id")
@@ -1500,7 +1500,11 @@ async def start_scout(
         raise HTTPException(400, "venue_id is required")
 
     campaign_type = body.get("type", "drop")
+    if campaign_type not in ("drop", "cancellation"):
+        raise HTTPException(400, "type must be 'drop' or 'cancellation'")
+
     venue_name = body.get("venue_name", "")
+    curated = None
 
     if not venue_name:
         curated = await db.get_curated_restaurant(int(venue_id))
@@ -1508,15 +1512,36 @@ async def start_scout(
             venue_name = curated.get("name", "")
 
     config = {}
-    for key in ["poll_interval_s", "enhanced_interval_s", "drop_hour",
-                "drop_minute", "days_ahead", "party_size", "priority",
-                "target_dates"]:
-        if key in body:
-            config[key] = body[key]
 
-    # Date scouts require target_dates
-    if campaign_type == "date" and not config.get("target_dates"):
-        raise HTTPException(400, "target_dates is required for date scouts")
+    if campaign_type == "drop":
+        # Auto-detect drop time from curated data or body override
+        if not curated:
+            curated = await db.get_curated_restaurant(int(venue_id))
+        drop_hour = body.get("drop_hour") or (curated.get("drop_hour") if curated else None) or 9
+        drop_minute = body.get("drop_minute") or (curated.get("drop_minute") if curated else None) or 0
+        config["drop_hour"] = drop_hour
+        config["drop_minute"] = drop_minute
+
+        # days_ahead from curated data (e.g. Semma = 15, not default 30)
+        days_ahead = body.get("days_ahead") or (curated.get("drop_days_ahead") if curated else None) or 30
+        config["days_ahead"] = int(days_ahead)
+
+        # Optional explicit target_dates for drop scouts
+        target_dates = body.get("target_dates", [])
+        if target_dates:
+            config["target_dates"] = target_dates
+
+        # Auto-compute polling windows around drop time
+        from tablement.web.scout import compute_drop_polling_windows
+        config["polling_windows"] = compute_drop_polling_windows(drop_hour, drop_minute)
+
+    elif campaign_type == "cancellation":
+        target_dates = body.get("target_dates", [])
+        if not target_dates:
+            raise HTTPException(400, "target_dates is required for cancellation scouts")
+        config["target_dates"] = target_dates
+        # Default cancellation polling window: 10 AM - 10 PM
+        config["polling_windows"] = [{"start": "10:00", "end": "22:00"}]
 
     campaign = await scout.start_scout(
         int(venue_id), venue_name, campaign_type=campaign_type, **config,
@@ -1559,18 +1584,21 @@ async def update_scout_config(
     request: Request,
     token: str = Depends(_require_admin),
 ):
-    """Update scout campaign config (interval, priority, etc.)."""
-    allowed = {
-        "poll_interval_s", "enhanced_interval_s", "enhanced_window_min",
-        "drop_hour", "drop_minute", "drop_timezone", "days_ahead",
-        "party_size", "priority", "target_dates",
-    }
-    fields = {k: v for k, v in body.items() if k in allowed}
-    if not fields:
-        raise HTTPException(400, "No valid fields to update")
+    """Update scout campaign config. Only polling_windows is editable."""
+    polling_windows = body.get("polling_windows")
+    if polling_windows is None:
+        raise HTTPException(400, "polling_windows is required")
+
+    if not isinstance(polling_windows, list):
+        raise HTTPException(400, "polling_windows must be a list")
+    for w in polling_windows:
+        if not isinstance(w, dict) or "start" not in w or "end" not in w:
+            raise HTTPException(400, "Each window must have 'start' and 'end' (HH:MM format)")
 
     campaign_type = body.get("type", "drop")
-    campaign = await db.upsert_scout_campaign(venue_id, campaign_type=campaign_type, **fields)
+    campaign = await db.update_scout_polling_windows(venue_id, campaign_type, polling_windows)
+    if not campaign:
+        raise HTTPException(404, "Campaign not found")
     return {"ok": True, "campaign": campaign}
 
 
@@ -1602,11 +1630,12 @@ async def scout_feed(
     except Exception:
         events = []
 
-    # Enrich with venue names from campaigns
+    # Enrich with venue names — prefer DB column, fall back to in-memory campaigns
     scout = _get_scout(request)
     for evt in events:
+        if evt.get("venue_name"):
+            continue  # Already stored in DB (v3+)
         vid = evt.get("venue_id")
-        # Look up venue name from any campaign type for this venue
         venue_name = ""
         for key, campaign in scout._campaigns.items():
             if campaign.get("venue_id") == vid:
@@ -1701,3 +1730,49 @@ async def scout_sighting_stats(
     except Exception:
         stats = {"total_sightings": 0, "avg_duration_seconds": 0, "active_slots": 0}
     return stats
+
+
+# ── Scout Errors ──────────────────────────────────────────────────────
+
+
+@router.get("/vip/scouts/errors")
+async def scout_errors(
+    venue_id: int | None = None,
+    token: str = Depends(_require_admin),
+):
+    """Get recent scout errors, optionally filtered by venue."""
+    errors = await db.get_scout_errors(venue_id=venue_id, limit=100)
+    return {"errors": errors}
+
+
+@router.delete("/vip/scouts/errors")
+async def clear_scout_errors(
+    token: str = Depends(_require_admin),
+):
+    """Clear all scout errors."""
+    await db.clear_scout_errors()
+    return {"ok": True}
+
+
+# ── Scout Settings ────────────────────────────────────────────────────
+
+
+@router.get("/vip/scouts/settings")
+async def get_scout_settings(
+    token: str = Depends(_require_admin),
+):
+    """Get scout polling configuration."""
+    settings = await db.get_scout_settings()
+    return settings or {}
+
+
+@router.patch("/vip/scouts/settings")
+async def update_scout_settings(
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Update scout polling configuration (partial update)."""
+    body.pop("id", None)
+    body.pop("updated_at", None)
+    settings = await db.update_scout_settings(**body)
+    return {"ok": True, "settings": settings}

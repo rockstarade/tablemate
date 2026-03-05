@@ -117,6 +117,7 @@ class DetailsResponse(BaseModel):
 class BookResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
     resy_token: str = ""
+    booking_path: str = ""  # "direct" or "proxy" — set by dual_book
 
 
 # --- Snipe Result ---
@@ -125,6 +126,7 @@ class BookResponse(BaseModel):
 class SnipeResult(BaseModel):
     success: bool
     resy_token: str | None = None
+    booking_path: str | None = None  # "direct" or "proxy" — which path won the race
     slot: Slot | None = None
     attempts: int = 0
     elapsed_seconds: float = 0.0

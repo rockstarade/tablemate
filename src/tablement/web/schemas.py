@@ -224,6 +224,7 @@ class SavePaymentMethodRequest(BaseModel):
 class SnipeResultOut(BaseModel):
     success: bool
     resy_token: str | None = None
+    booking_path: str | None = None
     slot_time: str | None = None
     slot_type: str | None = None
     attempts: int = 0

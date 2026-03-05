@@ -13,9 +13,10 @@ import logging
 import os
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from tablement.api import ResyApiClient
+from tablement.web.ratelimit import limiter
 from tablement.web import db
 from tablement.web.deps import get_user_id
 from tablement.web.encryption import encrypt_password
@@ -37,7 +38,8 @@ _dev_tokens: dict[str, str] = {}  # token -> user_id
 
 
 @router.post("/send-otp", response_model=OtpSendResponse)
-async def send_otp(body: OtpSendRequest):
+@limiter.limit("5/minute")
+async def send_otp(request: Request, body: OtpSendRequest):
     """Send a 6-digit SMS verification code to the given phone number."""
     try:
         client = db.get_client()
@@ -64,13 +66,14 @@ async def send_otp(body: OtpSendRequest):
             raise HTTPException(status_code=503, detail="Phone auth is not enabled in Supabase. Enable the Phone provider in Authentication settings.")
         if "rate" in err or "limit" in err:
             raise HTTPException(status_code=429, detail="Too many requests. Please wait a minute before trying again.")
-        raise HTTPException(status_code=400, detail=f"Failed to send verification code: {e}")
+        raise HTTPException(status_code=400, detail="Failed to send verification code. Please try again.")
 
     return OtpSendResponse(sent=True, message="Verification code sent")
 
 
 @router.post("/verify-otp", response_model=OtpVerifyResponse)
-async def verify_otp(body: OtpVerifyRequest):
+@limiter.limit("5/minute")
+async def verify_otp(request: Request, body: OtpVerifyRequest):
     """Verify the 6-digit code and return auth tokens."""
     try:
         client = db.get_client()
@@ -96,7 +99,7 @@ async def verify_otp(body: OtpVerifyRequest):
             raise HTTPException(status_code=401, detail="Verification code has expired. Please request a new one.")
         if "invalid" in err or "token" in err:
             raise HTTPException(status_code=401, detail="Invalid verification code. Please check and try again.")
-        raise HTTPException(status_code=401, detail=f"Verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Verification failed. Please try again.")
 
     if not resp.session:
         raise HTTPException(status_code=401, detail="Verification failed — no session returned")
@@ -132,7 +135,8 @@ async def link_resy(
                 msg = body_json.get("message", msg)
             except Exception:
                 pass
-        raise HTTPException(status_code=401, detail=f"Resy login failed: {msg}")
+        logger.warning("Resy login failed for user %s: %s", user_id, msg)
+        raise HTTPException(status_code=401, detail="Resy login failed. Please check your email and password.")
 
     # Encrypt and store
     encrypted_pw = encrypt_password(body.password)

@@ -12,8 +12,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from tablement.web import db
+from tablement.web.ratelimit import limiter
 from tablement.web.state import JobManager
 
 logger = logging.getLogger(__name__)
@@ -86,6 +92,15 @@ async def lifespan(app: FastAPI):
         logger.warning("Scout orchestrator failed to start: %s", e)
         app.state.scout = None
 
+    # Recover in-flight jobs from before crash/restart
+    try:
+        from tablement.web.routes.reservations import recover_jobs
+        recovered = await recover_jobs(app)
+        if recovered:
+            logger.info("Recovered %d in-flight jobs", recovered)
+    except Exception as e:
+        logger.warning("Job recovery failed: %s", e)
+
     yield
 
     # Shutdown: cancel all running jobs
@@ -102,8 +117,36 @@ async def lifespan(app: FastAPI):
         await app.state.scout.stop()
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response: Response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://*.supabase.co wss://*.supabase.co; "
+            "frame-ancestors 'none'"
+        )
+        return response
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="Tablement", lifespan=lifespan)
+
+    # Rate limiting
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+    # Security headers on every response
+    app.add_middleware(SecurityHeadersMiddleware)
 
     from tablement.web.routes import admin, auth, curated, policy, reservations, slots, venue
 

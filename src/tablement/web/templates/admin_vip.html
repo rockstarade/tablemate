@@ -585,6 +585,17 @@
 
                 <!-- ===== SCOUTS SUB-SECTION ===== -->
                 <div x-show="intelSection === 'scouts'" class="space-y-6">
+                    <!-- System Info Bar -->
+                    <div class="flex items-center gap-4 px-4 py-2 rounded-lg bg-slate-800/40 border border-slate-700/30 text-[10px] text-slate-400">
+                        <span>Proxy: <span class="text-white capitalize" x-text="proxyStatus.proxy_type || 'unknown'"></span>
+                            <span class="text-slate-600" x-text="'(' + (proxyStatus.provider || 'N/A') + ')'"></span>
+                        </span>
+                        <span class="text-slate-700">|</span>
+                        <span>IP Rotation: <span class="text-white">per-poll</span></span>
+                        <span class="text-slate-700">|</span>
+                        <span>Active: <span class="text-white" x-text="scouts.activeCount + ' scouts'"></span></span>
+                    </div>
+
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-xl font-bold text-white">Scout Campaigns</h2>
@@ -603,7 +614,7 @@
 
                     <!-- Filter -->
                     <div class="flex gap-2">
-                        <template x-for="f in [{id:'all',label:'All'},{id:'drop',label:'Drop'},{id:'date',label:'Date'}]">
+                        <template x-for="f in [{id:'all',label:'All'},{id:'drop',label:'Drop'},{id:'cancellation',label:'Cancellation'}]">
                             <button @click="scoutFilter = f.id"
                                 class="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
                                 :class="scoutFilter === f.id ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-700/30 text-slate-400 hover:text-white'"
@@ -647,49 +658,29 @@
                                     :class="newScout.type === 'drop' ? 'bg-brand-500/20 text-brand-400 border border-brand-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
                                     Drop Scout
                                 </button>
-                                <button @click="newScout.type = 'date'"
+                                <button @click="newScout.type = 'cancellation'"
                                     class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                                    :class="newScout.type === 'date' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
-                                    Date Scout
+                                    :class="newScout.type === 'cancellation' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
+                                    Cancellation Scout
                                 </button>
                             </div>
                         </div>
-                        <!-- Drop config -->
-                        <div x-show="newScout.type === 'drop'" class="grid grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[10px] text-slate-500 mb-1">Drop Hour</label>
-                                <input type="number" x-model.number="newScout.drop_hour" min="0" max="23"
-                                    class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-slate-500 mb-1">Drop Minute</label>
-                                <input type="number" x-model.number="newScout.drop_minute" min="0" max="59"
-                                    class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-slate-500 mb-1">Days Ahead</label>
-                                <input type="number" x-model.number="newScout.days_ahead" min="1" max="90"
-                                    class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                            </div>
+                        <!-- Drop auto-detection status -->
+                        <div x-show="newScout.type === 'drop'" class="text-xs px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/30">
+                            <span x-show="newScout._detecting" class="text-yellow-400">Detecting drop time...</span>
+                            <span x-show="!newScout._detecting && newScout._detected_drop_hour !== null"
+                                class="text-emerald-400"
+                                x-text="'Drop time: ' + ((newScout._detected_drop_hour % 12) || 12) + ':' + String(newScout._detected_drop_minute || 0).padStart(2, '0') + (newScout._detected_drop_hour >= 12 ? ' PM' : ' AM') + ' ET'">
+                            </span>
+                            <span x-show="!newScout._detecting && newScout._detected_drop_hour === null && newScout.venue_id"
+                                class="text-slate-500">Default drop time: 9:00 AM ET</span>
+                            <span x-show="!newScout.venue_id" class="text-slate-600">Select a restaurant first</span>
                         </div>
-                        <!-- Date config -->
-                        <div x-show="newScout.type === 'date'">
+                        <!-- Cancellation config -->
+                        <div x-show="newScout.type === 'cancellation'">
                             <label class="block text-[10px] text-slate-500 mb-1">Target Dates (comma-separated, YYYY-MM-DD)</label>
                             <input type="text" x-model="newScout.target_dates_input" placeholder="2026-03-15, 2026-03-22, 2026-03-29"
                                 class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600">
-                        </div>
-                        <!-- Common -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-[10px] text-slate-500 mb-1">Party Size</label>
-                                <input type="number" x-model.number="newScout.party_size" min="1" max="20"
-                                    class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-slate-500 mb-1">Poll Interval (s)</label>
-                                <input type="number" x-model.number="newScout.poll_interval_s" min="10" max="300"
-                                    class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
-                            </div>
                         </div>
                         <button @click="launchScout()" :disabled="!newScout.venue_id"
                             class="w-full py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-30">
@@ -711,28 +702,45 @@
                                         <div class="w-2 h-2 rounded-full"
                                             :class="sc.running ? 'bg-emerald-400 animate-pulse' : (sc.active ? 'bg-yellow-400' : 'bg-slate-600')"></div>
                                         <span class="text-sm font-medium text-white" x-text="sc.venue_name || ('Venue ' + sc.venue_id)"></span>
+                                        <!-- Phase badge (drop scouts) -->
+                                        <template x-if="(sc.type || 'drop') === 'drop' && sc.current_phase">
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                                :class="{
+                                                    'bg-slate-600/30 text-slate-400': ['idle','waiting','sleeping'].includes(sc.current_phase),
+                                                    'bg-yellow-500/20 text-yellow-400': ['warming','verifying','syncing'].includes(sc.current_phase),
+                                                    'bg-emerald-500/20 text-emerald-400 animate-pulse': sc.current_phase === 'polling',
+                                                    'bg-blue-500/20 text-blue-400': sc.current_phase === 'done',
+                                                }"
+                                                x-text="sc.current_phase"></span>
+                                        </template>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <span class="px-1.5 py-0.5 rounded text-[10px] font-medium"
                                             :class="(sc.type || 'drop') === 'drop' ? 'bg-brand-500/20 text-brand-400' : 'bg-blue-500/20 text-blue-400'"
                                             x-text="(sc.type || 'drop').charAt(0).toUpperCase() + (sc.type || 'drop').slice(1)"></span>
+                                        <template x-if="(sc.consecutive_errors || 0) > 0">
+                                            <span class="w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center" x-text="sc.consecutive_errors"></span>
+                                        </template>
                                         <span class="text-xs" :class="sc.running ? 'text-emerald-400' : 'text-slate-500'" x-text="sc.running ? 'Running' : 'Stopped'"></span>
                                     </div>
                                 </div>
                                 <div class="text-xs text-slate-400 space-y-0.5">
                                     <div x-show="(sc.type || 'drop') === 'drop'">
                                         Drop: <span class="text-white" x-text="formatDropTime(sc.drop_hour, sc.drop_minute)"></span>
-                                        | Polls: <span class="text-white tabular-nums" x-text="sc.total_polls || 0"></span>
+                                        <span class="text-slate-500" x-text="'· Targeting ' + new Date(Date.now() + (sc.days_ahead || 30) * 86400000).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) + ' (' + (sc.days_ahead || 30) + ' days ahead)'"></span>
                                     </div>
-                                    <div x-show="(sc.type || 'drop') === 'date'">
+                                    <div x-show="(sc.type || 'drop') === 'cancellation'">
                                         Dates: <span class="text-white" x-text="(sc.target_dates || []).join(', ') || 'N/A'"></span>
                                     </div>
+                                    <div x-show="(sc.type || 'drop') === 'cancellation'">
+                                        Windows: <span class="text-white" x-text="(sc.polling_windows || []).map(w => w.start + ' - ' + w.end).join(', ') || 'Always'"></span>
+                                    </div>
                                     <div>
-                                        Events: <span class="text-white tabular-nums" x-text="sc.total_events || 0"></span>
-                                        | Errors: <span :class="(sc.consecutive_errors || 0) > 0 ? 'text-red-400' : 'text-white'" x-text="sc.consecutive_errors || 0"></span>
+                                        Polls: <span class="text-white tabular-nums" x-text="sc.total_polls || 0"></span>
+                                        | Events: <span class="text-white tabular-nums" x-text="sc.total_events || 0"></span>
                                     </div>
                                     <div x-show="sc.last_poll_at" class="text-slate-500">
-                                        Last: <span x-text="timeAgo(sc.last_poll_at)"></span> | <span x-text="(sc.poll_interval_s || 45) + 's interval'"></span>
+                                        Last: <span x-text="timeAgo(sc.last_poll_at)"></span>
                                     </div>
                                 </div>
                                 <div class="flex gap-2 mt-3">
@@ -741,36 +749,34 @@
                                             class="flex-1 px-2 py-1 text-[10px] font-medium rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">Stop</button>
                                     </template>
                                     <template x-if="!sc.running">
-                                        <button @click="startScout(sc.venue_id, sc.venue_name, sc.type || 'drop', {poll_interval_s: sc.poll_interval_s, party_size: sc.party_size, days_ahead: sc.days_ahead})"
+                                        <button @click="startScout(sc.venue_id, sc.venue_name, sc.type || 'drop', {})"
                                             class="flex-1 px-2 py-1 text-[10px] font-medium rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors">Start</button>
                                     </template>
                                     <button @click="sc._showConfig = !sc._showConfig"
-                                        class="px-2 py-1 text-[10px] font-medium rounded bg-slate-700/50 text-slate-400 hover:bg-slate-700 transition-colors">Config</button>
-                                    <button x-show="(sc.type || 'drop') === 'date'" @click="loadScoutTimeline(sc.venue_id, (sc.target_dates || [])[0])"
+                                        class="px-2 py-1 text-[10px] font-medium rounded bg-slate-700/50 text-slate-400 hover:bg-slate-700 transition-colors">Windows</button>
+                                    <button x-show="(sc.type || 'drop') === 'cancellation'" @click="loadScoutTimeline(sc.venue_id, (sc.target_dates || [])[0])"
                                         class="px-2 py-1 text-[10px] font-medium rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors">Timeline</button>
+                                    <button @click="deleteScout(sc.venue_id, sc.type || 'drop', sc.venue_name)"
+                                        class="px-2 py-1 text-[10px] font-medium rounded bg-red-900/30 text-red-400 hover:bg-red-900/50 transition-colors">Delete</button>
                                 </div>
-                                <!-- Inline config panel -->
+                                <!-- Polling Windows Editor -->
                                 <div x-show="sc._showConfig" class="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label class="text-[10px] text-slate-500">Interval (s)</label>
-                                            <input type="number" x-model.number="sc.poll_interval_s" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    <label class="text-[10px] text-slate-500 font-medium">Polling Windows</label>
+                                    <template x-for="(w, idx) in (sc.polling_windows || [])" :key="idx">
+                                        <div class="flex items-center gap-2">
+                                            <input type="time" x-model="w.start"
+                                                class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                            <span class="text-slate-500 text-xs">to</span>
+                                            <input type="time" x-model="w.end"
+                                                class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                            <button @click="sc.polling_windows.splice(idx, 1)"
+                                                class="text-red-400 hover:text-red-300 text-xs px-1">×</button>
                                         </div>
-                                        <div>
-                                            <label class="text-[10px] text-slate-500">Party Size</label>
-                                            <input type="number" x-model.number="sc.party_size" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] text-slate-500">Priority</label>
-                                            <input type="number" x-model.number="sc.priority" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                                        </div>
-                                        <div>
-                                            <label class="text-[10px] text-slate-500">Days Ahead</label>
-                                            <input type="number" x-model.number="sc.days_ahead" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
-                                        </div>
-                                    </div>
+                                    </template>
+                                    <button @click="if(!sc.polling_windows) sc.polling_windows = []; sc.polling_windows.push({start: '10:00', end: '22:00'})"
+                                        class="text-[10px] text-brand-400 hover:text-brand-300">+ Add Window</button>
                                     <button @click="updateScoutConfig(sc)"
-                                        class="w-full px-2 py-1 text-[10px] font-medium rounded bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 transition-colors">Save Config</button>
+                                        class="w-full px-2 py-1 text-[10px] font-medium rounded bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 transition-colors">Save</button>
                                 </div>
                             </div>
                         </template>
@@ -783,23 +789,35 @@
                         <div class="text-slate-600 text-xs mt-1">Click "+ Add Scout" to start monitoring a restaurant.</div>
                     </div>
 
-                    <!-- Recent Events Feed -->
+                    <!-- Recent Intel Feed -->
                     <div class="glass rounded-xl border border-slate-700/50 p-4">
-                        <h3 class="text-sm font-medium text-slate-300 mb-3">Recent Events</h3>
-                        <div x-show="scouts.events.length === 0" class="text-xs text-slate-600 text-center py-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-sm font-medium text-slate-300">Recent Intel</h3>
+                            <div class="flex items-center gap-2">
+                                <select x-model="scoutEventFilter" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-300">
+                                    <option value="">All Restaurants</option>
+                                    <template x-for="sc in scouts.campaigns" :key="sc.venue_id">
+                                        <option :value="sc.venue_id" x-text="sc.venue_name || sc.venue_id"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div x-show="filteredEvents().length === 0" class="text-xs text-slate-600 text-center py-4">
                             No events recorded yet. Start scouts to begin collecting data.
                         </div>
-                        <div x-show="scouts.events.length > 0" class="space-y-1 max-h-80 overflow-y-auto">
-                            <template x-for="evt in scouts.events" :key="evt.id">
-                                <div class="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-slate-800/50 text-xs">
-                                    <span class="text-slate-600 tabular-nums shrink-0" x-text="formatTimestamp(evt.captured_at)"></span>
-                                    <span class="text-slate-300 shrink-0 w-28 truncate" x-text="evt.venue_name || evt.venue_id"></span>
-                                    <span class="text-slate-500 shrink-0" x-text="evt.target_date"></span>
-                                    <span :class="{
+                        <div x-show="filteredEvents().length > 0" class="space-y-0.5 max-h-96 overflow-y-auto">
+                            <template x-for="evt in filteredEvents()" :key="evt.id">
+                                <div class="py-1.5 px-2 rounded hover:bg-slate-800/50 text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-600 tabular-nums shrink-0" x-text="formatTimestamp(evt.captured_at)"></span>
+                                        <span class="text-white font-medium shrink-0" x-text="evt.venue_name || evt.venue_id"></span>
+                                        <span class="text-slate-500 shrink-0" x-text="evt.target_date"></span>
+                                    </div>
+                                    <div class="ml-[72px] mt-0.5" :class="{
                                         'text-emerald-400': evt.event_type === 'slot_appeared' || evt.event_type === 'slots_appeared',
                                         'text-red-400': evt.event_type === 'slot_disappeared' || evt.event_type === 'slots_disappeared',
                                         'text-yellow-400': evt.event_type === 'slots_changed'
-                                    }" x-text="formatScoutEvent(evt)"></span>
+                                    }" x-text="formatScoutEvent(evt)"></div>
                                 </div>
                             </template>
                         </div>
@@ -849,6 +867,42 @@
                                     </template>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Error Log -->
+                    <div class="glass rounded-xl border border-slate-700/50 p-4">
+                        <div class="flex items-center justify-between mb-3 cursor-pointer" @click="scoutErrorsOpen = !scoutErrorsOpen">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-medium text-slate-300">Error Log</h3>
+                                <template x-if="scoutErrors.length > 0">
+                                    <span class="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-medium" x-text="scoutErrors.length"></span>
+                                </template>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button x-show="scoutErrors.length > 0" @click.stop="clearScoutErrors()" class="text-[10px] text-red-400 hover:text-red-300">Clear All</button>
+                                <svg class="w-4 h-4 text-slate-500 transition-transform" :class="scoutErrorsOpen && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+                        <div x-show="scoutErrorsOpen" x-cloak>
+                            <div x-show="scoutErrors.length === 0" class="text-xs text-slate-600 text-center py-3">No errors recorded.</div>
+                            <div x-show="scoutErrors.length > 0" class="space-y-0.5 max-h-64 overflow-y-auto">
+                                <template x-for="err in scoutErrors" :key="err.id">
+                                    <div class="py-1.5 px-2 rounded hover:bg-slate-800/50 text-xs flex items-start gap-2">
+                                        <span class="text-slate-600 tabular-nums shrink-0" x-text="formatTimestamp(err.created_at)"></span>
+                                        <span class="text-white font-medium shrink-0" x-text="err.venue_name || err.venue_id"></span>
+                                        <span class="px-1 py-0.5 rounded text-[9px] font-medium shrink-0"
+                                            :class="{
+                                                'bg-red-500/20 text-red-400': err.error_type === 'resy_block',
+                                                'bg-orange-500/20 text-orange-400': err.error_type === 'rate_limit',
+                                                'bg-yellow-500/20 text-yellow-400': err.error_type === 'proxy_error',
+                                                'bg-slate-600/30 text-slate-400': err.error_type === 'timeout' || err.error_type === 'unknown',
+                                            }"
+                                            x-text="err.error_type"></span>
+                                        <span class="text-slate-500 truncate" x-text="err.error_message"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1448,6 +1502,126 @@
                     <div class="text-slate-400 text-sm">No restaurants found.</div>
                 </div>
 
+                <!-- Scout Polling Configuration -->
+                <div class="pt-6 border-t border-slate-700/30">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-white">Scout Polling Configuration</h2>
+                        <button @click="loadScoutSettings()" class="text-xs text-slate-400 hover:text-white">Refresh</button>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- Drop Scout -->
+                        <div class="glass rounded-xl border border-slate-700/50 p-5">
+                            <h3 class="text-sm font-semibold text-white mb-4">Drop Scout — Phased Precision Polling</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Phase 1 — Warmup Ping (minutes before drop)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.drop_warmup_min_minutes" min="5" max="60"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.drop_warmup_max_minutes" min="5" max="60"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">min</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Phase 2 — Verify Ping (minutes before drop)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.drop_verify_min_minutes" min="1" max="10"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.drop_verify_max_minutes" min="1" max="10"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">min</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Phase 3 — Activate (seconds before drop)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.drop_activate_min_seconds" min="1" max="30" step="0.5"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.drop_activate_max_seconds" min="1" max="30" step="0.5"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">sec</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Phase 4 — Drop Polling Interval</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.drop_poll_min_ms" min="5" max="1000"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.drop_poll_max_ms" min="5" max="1000"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">ms</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Timeout (minutes after drop)</label>
+                                    <input type="number" x-model.number="scoutSettings.drop_timeout_minutes" min="1" max="30"
+                                        class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Cancellation Scout -->
+                        <div class="glass rounded-xl border border-slate-700/50 p-5">
+                            <h3 class="text-sm font-semibold text-white mb-4">Cancellation Scout — Burst/Pause Evasion</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Burst Interval (seconds between polls)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.cancel_poll_min_seconds" min="0.5" max="30" step="0.5"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.cancel_poll_max_seconds" min="1" max="60" step="0.5"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">sec</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Burst Duration</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.cancel_burst_duration_seconds" min="5" max="120"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">seconds</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Pause Duration (seconds)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" x-model.number="scoutSettings.cancel_pause_min_seconds" min="1" max="60"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-500">to</span>
+                                        <input type="number" x-model.number="scoutSettings.cancel_pause_max_seconds" min="1" max="120"
+                                            class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                        <span class="text-slate-600">sec</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- System -->
+                        <div class="glass rounded-xl border border-slate-700/50 p-5">
+                            <h3 class="text-sm font-semibold text-white mb-4">System</h3>
+                            <div class="flex items-center gap-4">
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-2">Default Party Size</label>
+                                    <input type="number" x-model.number="scoutSettings.default_party_size" min="1" max="20"
+                                        class="w-20 bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-brand-500">
+                                </div>
+                                <div class="flex-1"></div>
+                                <button @click="saveScoutSettings()" :disabled="scoutSettingsSaving"
+                                    class="px-5 py-2 rounded-lg text-xs font-medium transition-all"
+                                    :class="scoutSettingsSaved ? 'bg-green-500/30 text-green-400' : scoutSettingsSaving ? 'bg-slate-700 text-slate-500' : 'bg-brand-500/20 text-brand-400 hover:bg-brand-500/30'">
+                                    <span x-show="scoutSettingsSaved">Saved!</span>
+                                    <span x-show="scoutSettingsSaving">Saving...</span>
+                                    <span x-show="!scoutSettingsSaving && !scoutSettingsSaved">Save Settings</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Proxy Control -->
                 <div class="pt-6 border-t border-slate-700/30">
                     <h2 class="text-xl font-bold text-white mb-6">Proxy Control</h2>
@@ -1477,17 +1651,6 @@
                                 </div>
                             </div>
                             <div class="mt-5 pt-4 border-t border-slate-700/50">
-                                <label class="block text-xs font-medium text-slate-400 mb-2">Switch Proxy Type</label>
-                                <div class="flex gap-2">
-                                    <template x-for="t in ['residential', 'dedicated', 'direct']">
-                                        <button @click="switchProxyType(t)"
-                                            class="flex-1 py-2 rounded-lg text-xs font-medium transition-colors capitalize"
-                                            :class="proxyStatus.proxy_type === t ? 'bg-brand-500/20 text-brand-400 border border-brand-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30 hover:text-white'"
-                                            x-text="t"></button>
-                                    </template>
-                                </div>
-                            </div>
-                            <div class="mt-4">
                                 <button @click="rotateProxy()" class="w-full py-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 text-xs transition-colors">Force Rotate Session (New IP)</button>
                             </div>
                         </div>
@@ -1628,18 +1791,17 @@
                 _quickVenueId: '',
             },
             scoutFilter: 'all',
+            scoutEventFilter: '',
             showAddScout: false,
             newScout: {
                 venue_query: '',
                 venue_id: null,
                 venue_name: '',
                 type: 'drop',
-                drop_hour: 9,
-                drop_minute: 0,
-                days_ahead: 30,
                 target_dates_input: '',
-                party_size: 2,
-                poll_interval_s: 45,
+                _detected_drop_hour: null,
+                _detected_drop_minute: null,
+                _detecting: false,
             },
             scoutVenueResults: [],
             scoutVenueDropdownOpen: false,
@@ -1649,6 +1811,21 @@
                 sightings: [],
                 loaded: false,
             },
+            scoutErrors: [],
+            scoutErrorsOpen: false,
+            scoutSettings: {
+                drop_warmup_min_minutes: 15, drop_warmup_max_minutes: 25,
+                drop_verify_min_minutes: 2, drop_verify_max_minutes: 3,
+                drop_activate_min_seconds: 3, drop_activate_max_seconds: 4,
+                drop_poll_min_ms: 20, drop_poll_max_ms: 50,
+                drop_timeout_minutes: 5,
+                cancel_poll_min_seconds: 1, cancel_poll_max_seconds: 7,
+                cancel_burst_duration_seconds: 30,
+                cancel_pause_min_seconds: 5, cancel_pause_max_seconds: 15,
+                default_party_size: 2,
+            },
+            scoutSettingsSaving: false,
+            scoutSettingsSaved: false,
             intelSection: 'scouts',
 
             // Users tab
@@ -1709,7 +1886,10 @@
                 this.activeTab = id;
                 if (id === 'dashboard' && !this.analytics.loaded) this.loadAnalytics();
                 if (id === 'intelligence' && !this.scouts.loaded) this.loadScouts();
-                if (id === 'settings' && !this.restMgr.loaded) this.loadRestaurantsMgr();
+                if (id === 'settings') {
+                    if (!this.restMgr.loaded) this.loadRestaurantsMgr();
+                    if (!this.scoutSettings) this.loadScoutSettings();
+                }
             },
 
             async init() {
@@ -1994,14 +2174,7 @@
                 } catch (e) { this.proxyTests[type] = { error: e.message }; }
                 this.proxyTesting = null;
             },
-            async switchProxyType(type) {
-                try {
-                    await fetch('/api/admin/vip/proxy-config', {
-                        method: 'PATCH', headers: this.headers(), body: JSON.stringify({ proxy_type: type }),
-                    });
-                    await this.loadProxyStatus();
-                } catch (e) {}
-            },
+            // Proxy type switching removed from UI — residential is the default
             async rotateProxy() {
                 try {
                     const resp = await fetch('/api/admin/vip/rotate-proxy', {
@@ -2212,10 +2385,11 @@
                 this.scouts.loading = true;
                 try {
                     if (!this.restMgr.loaded) this.loadRestaurantsMgr();
-                    const [scoutsResp, feedResp, statsResp] = await Promise.all([
+                    const [scoutsResp, feedResp, statsResp, errResp] = await Promise.all([
                         fetch('/api/admin/vip/scouts', { headers: this.headers() }),
                         fetch('/api/admin/vip/scouts/feed', { headers: this.headers() }),
                         fetch('/api/admin/vip/scouts/stats', { headers: this.headers() }),
+                        fetch('/api/admin/vip/scouts/errors', { headers: this.headers() }),
                     ]);
                     if (scoutsResp.ok) {
                         const d = await scoutsResp.json();
@@ -2224,6 +2398,7 @@
                     }
                     if (feedResp.ok) { const d = await feedResp.json(); this.scouts.events = d.events || []; }
                     if (statsResp.ok) { this.scouts.stats = await statsResp.json(); }
+                    if (errResp.ok) { const d = await errResp.json(); this.scoutErrors = d.errors || []; }
                     this.scouts.loaded = true;
                 } catch (e) { console.warn('Failed to load scouts:', e); }
                 this.scouts.loading = false;
@@ -2252,11 +2427,48 @@
                     await this.loadScouts();
                 } catch (e) { console.warn('Stop all scouts failed:', e); }
             },
+            async deleteScout(venueId, type, venueName) {
+                if (!confirm(`Delete ${venueName || 'Venue ' + venueId} (${type}) scout permanently?`)) return;
+                try {
+                    await fetch('/api/admin/vip/scouts/stop', {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ venue_id: venueId, type: type }),
+                    });
+                    await this.loadScouts();
+                } catch (e) { console.warn('Delete scout failed:', e); }
+            },
+            async clearScoutErrors() {
+                try {
+                    await fetch('/api/admin/vip/scouts/errors', { method: 'DELETE', headers: this.headers() });
+                    this.scoutErrors = [];
+                } catch (e) { console.warn('Clear errors failed:', e); }
+            },
+            async loadScoutSettings() {
+                try {
+                    const resp = await fetch('/api/admin/vip/scouts/settings', { headers: this.headers() });
+                    if (resp.ok) { this.scoutSettings = await resp.json(); }
+                } catch (e) { console.warn('Load scout settings failed:', e); }
+            },
+            async saveScoutSettings() {
+                if (!this.scoutSettings) return;
+                this.scoutSettingsSaving = true;
+                try {
+                    const resp = await fetch('/api/admin/vip/scouts/settings', {
+                        method: 'PATCH', headers: this.headers(),
+                        body: JSON.stringify(this.scoutSettings),
+                    });
+                    if (resp.ok) {
+                        this.scoutSettingsSaved = true;
+                        setTimeout(() => this.scoutSettingsSaved = false, 2000);
+                    }
+                } catch (e) { console.warn('Save scout settings failed:', e); }
+                this.scoutSettingsSaving = false;
+            },
             async updateScoutConfig(sc) {
                 try {
                     await fetch(`/api/admin/vip/scouts/${sc.venue_id}`, {
                         method: 'PATCH', headers: this.headers(),
-                        body: JSON.stringify({ poll_interval_s: sc.poll_interval_s, party_size: sc.party_size, priority: sc.priority, days_ahead: sc.days_ahead }),
+                        body: JSON.stringify({ type: sc.type || 'drop', polling_windows: sc.polling_windows || [] }),
                     });
                     sc._showConfig = false;
                     await this.loadScouts();
@@ -2285,6 +2497,7 @@
                 this.newScout.venue_query = v.name;
                 this.scoutVenueResults = [];
                 this.scoutVenueDropdownOpen = false;
+                this.newScout._detecting = true;
                 try {
                     const resp = await fetch('/api/venue/select', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2293,23 +2506,25 @@
                     if (resp.ok) {
                         const data = await resp.json();
                         if (data.detected_policy) {
-                            this.newScout.drop_hour = data.detected_policy.hour;
-                            this.newScout.drop_minute = data.detected_policy.minute;
-                            this.newScout.days_ahead = data.detected_policy.days_ahead;
+                            this.newScout._detected_drop_hour = data.detected_policy.hour;
+                            this.newScout._detected_drop_minute = data.detected_policy.minute || 0;
                         }
                     }
                 } catch (e) {}
+                this.newScout._detecting = false;
             },
             async launchScout() {
                 if (!this.newScout.venue_id) return;
                 const payload = {
-                    venue_id: this.newScout.venue_id, venue_name: this.newScout.venue_name,
-                    type: this.newScout.type, party_size: this.newScout.party_size, poll_interval_s: this.newScout.poll_interval_s,
+                    venue_id: this.newScout.venue_id,
+                    venue_name: this.newScout.venue_name,
+                    type: this.newScout.type,
                 };
                 if (this.newScout.type === 'drop') {
-                    payload.drop_hour = this.newScout.drop_hour;
-                    payload.drop_minute = this.newScout.drop_minute;
-                    payload.days_ahead = this.newScout.days_ahead;
+                    if (this.newScout._detected_drop_hour !== null) {
+                        payload.drop_hour = this.newScout._detected_drop_hour;
+                        payload.drop_minute = this.newScout._detected_drop_minute;
+                    }
                 } else {
                     payload.target_dates = this.newScout.target_dates_input.split(',').map(d => d.trim()).filter(d => d.match(/^\d{4}-\d{2}-\d{2}$/));
                     if (payload.target_dates.length === 0) { alert('Please enter at least one date (YYYY-MM-DD format)'); return; }
@@ -2317,7 +2532,7 @@
                 try {
                     await fetch('/api/admin/vip/scouts/start', { method: 'POST', headers: this.headers(), body: JSON.stringify(payload) });
                     this.showAddScout = false;
-                    this.newScout = { venue_query: '', venue_id: null, venue_name: '', type: 'drop', drop_hour: 9, drop_minute: 0, days_ahead: 30, target_dates_input: '', party_size: 2, poll_interval_s: 45 };
+                    this.newScout = { venue_query: '', venue_id: null, venue_name: '', type: 'drop', target_dates_input: '', _detected_drop_hour: null, _detected_drop_minute: null, _detecting: false };
                     await this.loadScouts();
                 } catch (e) { alert('Failed to start scout: ' + e.message); }
             },
@@ -2339,26 +2554,41 @@
                 if (this.scoutFilter === 'all') return this.scouts.campaigns;
                 return this.scouts.campaigns.filter(s => (s.type || 'drop') === this.scoutFilter);
             },
+            filteredEvents() {
+                if (!this.scoutEventFilter) return this.scouts.events;
+                return this.scouts.events.filter(e => String(e.venue_id) === String(this.scoutEventFilter));
+            },
             formatScoutEvent(evt) {
+                const vn = evt.venue_name || evt.venue_id;
+                const d = evt.target_date || '';
                 if (evt.event_type === 'slot_appeared') {
                     const slot = (evt.slots_added || [])[0];
-                    return (slot?.time || '?') + ' appeared';
+                    return (slot?.time || '?') + ' ' + (slot?.type || '') + ' OPENED';
                 }
                 if (evt.event_type === 'slot_disappeared') {
                     const slot = (evt.slots_removed || [])[0];
-                    const dur = slot?.duration_s ? ` (${this.formatDuration(slot.duration_s)})` : '';
-                    return (slot?.time || '?') + ' gone' + dur;
+                    const dur = slot?.duration_s ? ` (lasted ${this.formatDuration(slot.duration_s)})` : '';
+                    return (slot?.time || '?') + ' CLOSED' + dur;
                 }
-                if (evt.event_type === 'slots_appeared') return '+' + evt.new_slot_count + ' slots appeared';
-                if (evt.event_type === 'slots_disappeared') return '-' + (evt.prev_slot_count - evt.new_slot_count) + ' slots disappeared';
+                if (evt.event_type === 'slots_appeared') {
+                    const slots = evt.slots_added || [];
+                    const times = slots.slice(0, 4).map(s => s.time || '?').join(', ');
+                    const more = slots.length > 4 ? ` +${slots.length - 4} more` : '';
+                    return '+' + evt.new_slot_count + ' slots opened (' + times + more + ')';
+                }
+                if (evt.event_type === 'slots_disappeared') {
+                    const gone = (evt.prev_slot_count || 0) - (evt.new_slot_count || 0);
+                    return gone + ' slots closed (sold out in ' + this.formatDuration((new Date(evt.captured_at) - new Date(evt.captured_at)) / 1000 || 0) + ')';
+                }
                 return (evt.prev_slot_count || 0) + ' \u2192 ' + (evt.new_slot_count || 0) + ' slots';
             },
             formatDuration(seconds) {
-                if (!seconds) return '\u2014';
-                if (seconds < 60) return Math.round(seconds) + 's';
+                if (!seconds && seconds !== 0) return '\u2014';
+                if (seconds < 1) return Math.round(seconds * 1000) + 'ms';
+                if (seconds < 60) return seconds.toFixed(1) + 's';
                 const m = Math.floor(seconds / 60);
                 const s = Math.round(seconds % 60);
-                return m + 'm' + (s > 0 ? s + 's' : '');
+                return m + 'm' + (s > 0 ? ' ' + s + 's' : '');
             },
             formatTimestamp(isoStr) {
                 if (!isoStr) return '';

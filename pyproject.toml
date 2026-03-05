@@ -30,6 +30,7 @@ web = [
     "stripe>=8.0",
     "apscheduler>=3.10,<4.0",
     "cryptography>=42.0",
+    "slowapi>=0.1.9",
 ]
 dev = [
     "pytest>=8.0",
