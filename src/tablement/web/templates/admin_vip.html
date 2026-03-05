@@ -100,7 +100,7 @@
         <div class="fixed top-[53px] inset-x-0 z-40 border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
             <div class="max-w-7xl mx-auto px-6 flex gap-1 overflow-x-auto">
                 <template x-for="tab in tabs">
-                    <button @click="activeTab = tab.id; if (tab.id === 'analytics' && !analytics.loaded) loadAnalytics(); if (tab.id === 'restaurants' && !restMgr.loaded) loadRestaurantsMgr();"
+                    <button @click="activeTab = tab.id; if (tab.id === 'scouts' && !scouts.loaded) loadScouts(); if (tab.id === 'analytics' && !analytics.loaded) loadAnalytics(); if (tab.id === 'restaurants' && !restMgr.loaded) loadRestaurantsMgr();"
                         class="px-4 py-2.5 text-xs font-medium transition-colors border-b-2 whitespace-nowrap"
                         :class="activeTab === tab.id
                             ? 'text-brand-400 border-brand-400'
@@ -1150,6 +1150,171 @@
                 </div>
             </div>
 
+            <!-- ==================== SCOUTS ==================== -->
+            <div x-show="activeTab === 'scouts'" class="space-y-6">
+                <!-- Header -->
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Scout Campaigns</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            <span x-text="scouts.activeCount"></span> active ·
+                            <span x-text="scouts.stats.total_polls || 0"></span> polls ·
+                            <span x-text="scouts.stats.total_events || 0"></span> events
+                        </p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="bulkStartScouts()"
+                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors">
+                            Start All
+                        </button>
+                        <button @click="stopAllScouts()"
+                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
+                            Stop All
+                        </button>
+                        <button @click="loadScouts()"
+                            class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 transition-colors">
+                            ↻ Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading state -->
+                <div x-show="scouts.loading" class="glass rounded-xl border border-slate-700/50 p-8 text-center">
+                    <div class="text-slate-500 text-sm">Loading scouts...</div>
+                </div>
+
+                <!-- Campaign Cards Grid -->
+                <div x-show="!scouts.loading && scouts.campaigns.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="sc in scouts.campaigns" :key="sc.venue_id">
+                        <div class="glass rounded-xl border border-slate-700/50 p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2 h-2 rounded-full"
+                                        :class="sc.running ? 'bg-emerald-400 animate-pulse' : (sc.active ? 'bg-yellow-400' : 'bg-slate-600')"></div>
+                                    <span class="text-sm font-medium text-white" x-text="sc.venue_name || ('Venue ' + sc.venue_id)"></span>
+                                </div>
+                                <span class="text-[10px] text-slate-600 tabular-nums" x-text="'#' + sc.venue_id"></span>
+                            </div>
+                            <div class="text-xs text-slate-400 space-y-0.5">
+                                <div>
+                                    <span class="text-slate-500" x-text="(sc.total_polls || 0) + ' polls'"></span> ·
+                                    <span class="text-slate-500" x-text="(sc.total_events || 0) + ' events'"></span>
+                                </div>
+                                <div x-show="sc.last_poll_at">
+                                    Last: <span class="text-slate-300" x-text="sc.last_poll_at ? timeAgo(sc.last_poll_at) : 'never'"></span> ·
+                                    <span x-text="(sc.poll_interval_s || 45) + 's'"></span>
+                                </div>
+                                <div x-show="sc.consecutive_errors > 0" class="text-red-400">
+                                    ⚠ <span x-text="sc.consecutive_errors"></span> consecutive errors
+                                </div>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <template x-if="sc.running">
+                                    <button @click="stopScout(sc.venue_id)"
+                                        class="flex-1 px-2 py-1 text-[10px] font-medium rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
+                                        Stop
+                                    </button>
+                                </template>
+                                <template x-if="!sc.running">
+                                    <button @click="startScout(sc.venue_id, sc.venue_name)"
+                                        class="flex-1 px-2 py-1 text-[10px] font-medium rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors">
+                                        Start
+                                    </button>
+                                </template>
+                                <button @click="sc._showConfig = !sc._showConfig"
+                                    class="px-2 py-1 text-[10px] font-medium rounded bg-slate-700/50 text-slate-400 hover:bg-slate-700 transition-colors">
+                                    Configure
+                                </button>
+                            </div>
+                            <!-- Inline config panel -->
+                            <div x-show="sc._showConfig" class="mt-3 pt-3 border-t border-slate-700/50 space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="text-[10px] text-slate-500">Interval (s)</label>
+                                        <input type="number" x-model.number="sc.poll_interval_s" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500">Party Size</label>
+                                        <input type="number" x-model.number="sc.party_size" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500">Priority</label>
+                                        <input type="number" x-model.number="sc.priority" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-slate-500">Days Ahead</label>
+                                        <input type="number" x-model.number="sc.days_ahead" class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white">
+                                    </div>
+                                </div>
+                                <button @click="updateScoutConfig(sc)"
+                                    class="w-full px-2 py-1 text-[10px] font-medium rounded bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 transition-colors">
+                                    Save Config
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Quick Start -->
+                <div class="glass rounded-xl border border-slate-700/50 p-4">
+                    <h3 class="text-sm font-medium text-slate-300 mb-3">Quick Start Scout</h3>
+                    <div class="flex gap-2">
+                        <select x-model="scouts._quickVenueId"
+                            class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                            <option value="">Select restaurant...</option>
+                            <template x-for="r in restMgr.restaurants" :key="r.venue_id">
+                                <option :value="r.venue_id" x-text="r.name + ' (' + r.venue_id + ')'"></option>
+                            </template>
+                        </select>
+                        <button @click="quickStartScout()"
+                            :disabled="!scouts._quickVenueId"
+                            class="px-4 py-1.5 text-xs font-medium rounded-lg bg-brand-500/20 text-brand-400 hover:bg-brand-500/30 transition-colors disabled:opacity-30">
+                            Add Scout
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Events Feed -->
+                <div class="glass rounded-xl border border-slate-700/50 p-4">
+                    <h3 class="text-sm font-medium text-slate-300 mb-3">Recent Events</h3>
+                    <div x-show="scouts.events.length === 0" class="text-xs text-slate-600 text-center py-4">
+                        No events recorded yet. Start scouts to begin collecting data.
+                    </div>
+                    <div x-show="scouts.events.length > 0" class="space-y-1 max-h-80 overflow-y-auto">
+                        <template x-for="evt in scouts.events" :key="evt.id">
+                            <div class="flex items-center gap-3 py-1.5 px-2 rounded hover:bg-slate-800/50 text-xs">
+                                <span class="text-slate-600 tabular-nums shrink-0" x-text="new Date(evt.captured_at).toLocaleTimeString()"></span>
+                                <span class="text-slate-300 shrink-0 w-28 truncate" x-text="evt.venue_name || evt.venue_id"></span>
+                                <span :class="{
+                                    'text-emerald-400': evt.event_type === 'slots_appeared',
+                                    'text-red-400': evt.event_type === 'slots_disappeared',
+                                    'text-yellow-400': evt.event_type === 'slots_changed'
+                                }">
+                                    <template x-if="evt.event_type === 'slots_appeared'">
+                                        <span x-text="'+' + evt.new_slot_count + ' slots appeared'"></span>
+                                    </template>
+                                    <template x-if="evt.event_type === 'slots_disappeared'">
+                                        <span x-text="'-' + (evt.prev_slot_count - evt.new_slot_count) + ' slots disappeared'"></span>
+                                    </template>
+                                    <template x-if="evt.event_type === 'slots_changed'">
+                                        <span x-text="evt.prev_slot_count + ' → ' + evt.new_slot_count + ' slots'"></span>
+                                    </template>
+                                </span>
+                                <span class="text-slate-600 ml-auto" x-text="evt.target_date"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Empty state (no campaigns at all) -->
+                <div x-show="!scouts.loading && scouts.campaigns.length === 0 && scouts.loaded"
+                    class="glass rounded-xl border border-slate-700/50 p-8 text-center">
+                    <div class="text-4xl mb-3">🔭</div>
+                    <div class="text-slate-400 text-sm">No scout campaigns configured.</div>
+                    <div class="text-slate-600 text-xs mt-1">Click "Start All" to begin scouting all curated restaurants, or add scouts individually.</div>
+                </div>
+            </div>
+
             <!-- ==================== ANALYTICS ==================== -->
             <div x-show="activeTab === 'analytics'" class="space-y-6">
                 <div class="flex items-center justify-between">
@@ -1231,6 +1396,64 @@
                             <canvas id="dayChart"></canvas>
                         </div>
                         <p class="text-[10px] text-slate-600 mt-2">Which days have the most cancellations — plan polling tiers accordingly.</p>
+                    </div>
+                </div>
+
+                <!-- Scout Availability Heatmap -->
+                <div x-show="!analytics.loading && heatmap.grid" class="glass rounded-xl border border-slate-700/50 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-slate-300">Availability Heatmap (Scout Data)</h3>
+                        <div class="flex items-center gap-2">
+                            <select x-model="heatmap.venueFilter"
+                                @change="loadHeatmap()"
+                                class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-300 focus:outline-none focus:border-brand-500">
+                                <option :value="null">All Restaurants</option>
+                                <template x-for="sc in scouts.campaigns" :key="sc.venue_id">
+                                    <option :value="sc.venue_id" x-text="sc.venue_name || sc.venue_id"></option>
+                                </template>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Heatmap grid: 24 rows (hours) × 7 cols (days) -->
+                    <div class="overflow-x-auto">
+                        <div class="inline-grid gap-[2px]" style="grid-template-columns: 48px repeat(7, 1fr); min-width: 400px;">
+                            <!-- Header row -->
+                            <div class="text-[10px] text-slate-600"></div>
+                            <template x-for="day in heatmap.days" :key="day">
+                                <div class="text-[10px] text-slate-500 text-center px-1" x-text="day"></div>
+                            </template>
+                            <!-- Hour rows -->
+                            <template x-for="h in 24" :key="h">
+                                <template x-for="(_, colIdx) in Array(8)" :key="h + '-' + colIdx">
+                                    <template x-if="colIdx === 0">
+                                        <div class="text-[10px] text-slate-500 text-right pr-2 leading-[20px]"
+                                            x-text="((h-1) % 12 || 12) + (h-1 < 12 ? 'a' : 'p')"></div>
+                                    </template>
+                                    <template x-if="colIdx > 0">
+                                        <div class="w-full rounded-sm cursor-default transition-colors"
+                                            style="height: 20px; min-width: 36px;"
+                                            :style="{
+                                                backgroundColor: heatmap.grid && heatmap.grid[h-1] && heatmap.grid[h-1][colIdx-1] > 0
+                                                    ? 'rgba(245, 158, 11, ' + Math.min(0.15 + (heatmap.grid[h-1][colIdx-1] / (heatmapMax() || 1)) * 0.85, 1) + ')'
+                                                    : 'rgba(30, 41, 59, 0.5)'
+                                            }"
+                                            :title="heatmap.days[colIdx-1] + ' ' + ((h-1)%12||12) + (h-1<12?'AM':'PM') + ': ' + (heatmap.grid && heatmap.grid[h-1] ? heatmap.grid[h-1][colIdx-1] : 0) + ' events'">
+                                        </div>
+                                    </template>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-3">
+                        <p class="text-[10px] text-slate-600">When slots appear — brighter = more frequent. Hours in ET.</p>
+                        <div class="flex items-center gap-1">
+                            <div class="w-3 h-3 rounded-sm" style="background: rgba(30,41,59,0.5)"></div>
+                            <span class="text-[10px] text-slate-600">0</span>
+                            <div class="w-3 h-3 rounded-sm" style="background: rgba(245,158,11,0.3)"></div>
+                            <div class="w-3 h-3 rounded-sm" style="background: rgba(245,158,11,0.6)"></div>
+                            <div class="w-3 h-3 rounded-sm" style="background: rgba(245,158,11,1)"></div>
+                            <span class="text-[10px] text-slate-600">max</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1419,6 +1642,7 @@
                 { id: 'ops', label: 'Live Ops' },
                 { id: 'intel', label: 'Restaurant Intel' },
                 { id: 'drops', label: 'Drop Intel' },
+                { id: 'scouts', label: 'Scouts' },
                 { id: 'analytics', label: 'Analytics' },
                 { id: 'restaurants', label: 'Restaurants' },
             ],
@@ -1503,6 +1727,24 @@
 
             // Drop Intelligence
             dropIntel: { venues: [], summaries: [], observations: [] },
+
+            // Scouts
+            scouts: {
+                campaigns: [],
+                events: [],
+                stats: {},
+                loaded: false,
+                loading: false,
+                activeCount: 0,
+                refreshTimer: null,
+                _quickVenueId: '',
+            },
+            heatmap: {
+                grid: null,
+                days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                venueFilter: null,
+                loaded: false,
+            },
 
             // Analytics
             analytics: {
@@ -2258,6 +2500,155 @@
                 }
             },
 
+            // ----- Scouts -----
+            async loadScouts() {
+                this.scouts.loading = true;
+                try {
+                    // Also load restaurants for Quick Start dropdown
+                    if (!this.restMgr.loaded) {
+                        this.loadRestaurantsMgr();
+                    }
+
+                    const [scoutsResp, feedResp, statsResp] = await Promise.all([
+                        fetch('/api/admin/vip/scouts', { headers: this.headers() }),
+                        fetch('/api/admin/vip/scouts/feed', { headers: this.headers() }),
+                        fetch('/api/admin/vip/scouts/stats', { headers: this.headers() }),
+                    ]);
+                    if (scoutsResp.ok) {
+                        const d = await scoutsResp.json();
+                        this.scouts.campaigns = (d.scouts || []).map(s => ({ ...s, _showConfig: false }));
+                        this.scouts.activeCount = d.active_count || 0;
+                    }
+                    if (feedResp.ok) {
+                        const d = await feedResp.json();
+                        this.scouts.events = d.events || [];
+                    }
+                    if (statsResp.ok) {
+                        this.scouts.stats = await statsResp.json();
+                    }
+                    this.scouts.loaded = true;
+                } catch (e) {
+                    console.warn('Failed to load scouts:', e);
+                }
+                this.scouts.loading = false;
+            },
+
+            async startScout(venueId, venueName) {
+                try {
+                    await fetch('/api/admin/vip/scouts/start', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({ venue_id: venueId, venue_name: venueName || '' }),
+                    });
+                    await this.loadScouts();
+                } catch (e) {
+                    console.warn('Start scout failed:', e);
+                }
+            },
+
+            async stopScout(venueId) {
+                try {
+                    await fetch('/api/admin/vip/scouts/stop', {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({ venue_id: venueId }),
+                    });
+                    await this.loadScouts();
+                } catch (e) {
+                    console.warn('Stop scout failed:', e);
+                }
+            },
+
+            async bulkStartScouts() {
+                try {
+                    const resp = await fetch('/api/admin/vip/scouts/bulk-start', {
+                        method: 'POST',
+                        headers: this.headers(),
+                    });
+                    if (resp.ok) {
+                        const d = await resp.json();
+                        console.log('Bulk started:', d.started, 'scouts');
+                    }
+                    await this.loadScouts();
+                } catch (e) {
+                    console.warn('Bulk start failed:', e);
+                }
+            },
+
+            async stopAllScouts() {
+                try {
+                    await fetch('/api/admin/vip/scouts/stop-all', {
+                        method: 'POST',
+                        headers: this.headers(),
+                    });
+                    await this.loadScouts();
+                } catch (e) {
+                    console.warn('Stop all scouts failed:', e);
+                }
+            },
+
+            async updateScoutConfig(sc) {
+                try {
+                    await fetch(`/api/admin/vip/scouts/${sc.venue_id}`, {
+                        method: 'PATCH',
+                        headers: this.headers(),
+                        body: JSON.stringify({
+                            poll_interval_s: sc.poll_interval_s,
+                            party_size: sc.party_size,
+                            priority: sc.priority,
+                            days_ahead: sc.days_ahead,
+                        }),
+                    });
+                    sc._showConfig = false;
+                    await this.loadScouts();
+                } catch (e) {
+                    console.warn('Update scout config failed:', e);
+                }
+            },
+
+            async quickStartScout() {
+                const vid = this.scouts._quickVenueId;
+                if (!vid) return;
+                const r = this.restMgr.restaurants.find(r => r.venue_id == vid);
+                await this.startScout(parseInt(vid), r ? r.name : '');
+                this.scouts._quickVenueId = '';
+            },
+
+            async loadHeatmap() {
+                try {
+                    const venueParam = this.heatmap.venueFilter ? `?venue_id=${this.heatmap.venueFilter}` : '';
+                    const resp = await fetch('/api/admin/vip/scouts/heatmap' + venueParam, { headers: this.headers() });
+                    if (resp.ok) {
+                        const d = await resp.json();
+                        this.heatmap.grid = d.grid;
+                        this.heatmap.loaded = true;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load heatmap:', e);
+                }
+            },
+
+            heatmapMax() {
+                if (!this.heatmap.grid) return 1;
+                let max = 0;
+                for (const row of this.heatmap.grid) {
+                    for (const val of row) {
+                        if (val > max) max = val;
+                    }
+                }
+                return max || 1;
+            },
+
+            timeAgo(isoStr) {
+                if (!isoStr) return 'never';
+                const diff = (Date.now() - new Date(isoStr).getTime()) / 1000;
+                if (diff < 5) return 'just now';
+                if (diff < 60) return Math.round(diff) + 's ago';
+                if (diff < 3600) return Math.round(diff / 60) + 'm ago';
+                if (diff < 86400) return Math.round(diff / 3600) + 'h ago';
+                return Math.round(diff / 86400) + 'd ago';
+            },
+
             // ----- Analytics -----
             async loadAnalytics() {
                 this.analytics.loading = true;
@@ -2280,6 +2671,8 @@
                         this.analytics.bookingSuccess = await successResp.json();
                     }
                     this.analytics.loaded = true;
+                    // Load scout heatmap data too
+                    this.loadHeatmap();
                     // Render charts after data loads (next tick so DOM is ready)
                     this.$nextTick(() => this.renderAnalyticsCharts());
                 } catch (e) {

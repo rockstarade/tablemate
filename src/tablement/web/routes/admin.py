@@ -1438,3 +1438,228 @@ async def create_restaurant(
         raise HTTPException(409, f"Restaurant with venue_id {venue_id} already exists")
     created = await db.create_curated_restaurant(body)
     return {"ok": True, "restaurant": created}
+
+
+# ---------------------------------------------------------------------------
+# Scout System — continuous restaurant monitoring
+# ---------------------------------------------------------------------------
+
+
+def _get_scout(request: Request):
+    """Get the scout orchestrator from app state."""
+    scout = getattr(request.app.state, "scout", None)
+    if not scout:
+        raise HTTPException(503, "Scout orchestrator not running")
+    return scout
+
+
+@router.get("/vip/scouts")
+async def list_scouts(
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """List all scout campaigns with live status."""
+    scout = _get_scout(request)
+    try:
+        campaigns = await db.list_scout_campaigns(active_only=False)
+    except Exception:
+        # Tables may not exist yet (migration not run)
+        campaigns = []
+
+    # Merge DB data with live status
+    result = []
+    for c in campaigns:
+        vid = c["venue_id"]
+        live = scout.get_campaign_status(vid)
+        entry = {
+            **c,
+            "running": live["running"] if live else False,
+            "poll_count": live["poll_count"] if live else 0,
+        }
+        result.append(entry)
+
+    return {"scouts": result, "active_count": scout.active_scouts}
+
+
+@router.post("/vip/scouts/start")
+async def start_scout(
+    request: Request,
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Start a scout for a specific venue."""
+    scout = _get_scout(request)
+    venue_id = body.get("venue_id")
+    if not venue_id:
+        raise HTTPException(400, "venue_id is required")
+
+    venue_name = body.get("venue_name", "")
+
+    # Try to get name from curated restaurants if not provided
+    if not venue_name:
+        curated = await db.get_curated_restaurant(int(venue_id))
+        if curated:
+            venue_name = curated.get("name", "")
+
+    config = {}
+    for key in ["poll_interval_s", "enhanced_interval_s", "drop_hour",
+                "drop_minute", "days_ahead", "party_size", "priority"]:
+        if key in body:
+            config[key] = body[key]
+
+    campaign = await scout.start_scout(int(venue_id), venue_name, **config)
+    return {"ok": True, "campaign": campaign}
+
+
+@router.post("/vip/scouts/stop")
+async def stop_scout(
+    request: Request,
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Stop a specific scout."""
+    scout = _get_scout(request)
+    venue_id = body.get("venue_id")
+    if not venue_id:
+        raise HTTPException(400, "venue_id is required")
+
+    await scout.stop_scout(int(venue_id))
+    return {"ok": True, "venue_id": venue_id}
+
+
+@router.post("/vip/scouts/stop-all")
+async def stop_all_scouts(
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Stop all running scouts."""
+    scout = _get_scout(request)
+    count = await scout.stop_all()
+    return {"ok": True, "stopped": count}
+
+
+@router.post("/vip/scouts/bulk-start")
+async def bulk_start_scouts(
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Start scouts for all active curated restaurants."""
+    scout = _get_scout(request)
+    started = await scout.start_all_curated()
+    return {"ok": True, "started": started, "total_active": scout.active_scouts}
+
+
+@router.patch("/vip/scouts/{venue_id}")
+async def update_scout_config(
+    venue_id: int,
+    body: dict,
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Update scout campaign config (interval, priority, etc.)."""
+    allowed = {
+        "poll_interval_s", "enhanced_interval_s", "enhanced_window_min",
+        "drop_hour", "drop_minute", "drop_timezone", "days_ahead",
+        "party_size", "priority",
+    }
+    fields = {k: v for k, v in body.items() if k in allowed}
+    if not fields:
+        raise HTTPException(400, "No valid fields to update")
+
+    campaign = await db.upsert_scout_campaign(venue_id, **fields)
+    return {"ok": True, "campaign": campaign}
+
+
+@router.get("/vip/scouts/stats")
+async def scout_stats(
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Get aggregate scout stats."""
+    scout = _get_scout(request)
+    try:
+        db_stats = await db.get_scout_stats()
+    except Exception:
+        db_stats = {"total_campaigns": 0, "active_campaigns": 0, "total_polls": 0, "total_events": 0}
+    return {
+        **db_stats,
+        "running_scouts": scout.active_scouts,
+    }
+
+
+@router.get("/vip/scouts/feed")
+async def scout_feed(
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Recent events across all venues (live feed)."""
+    try:
+        events = await db.get_scout_events(limit=50)
+    except Exception:
+        events = []
+
+    # Enrich with venue names from campaigns
+    scout = _get_scout(request)
+    for evt in events:
+        vid = evt.get("venue_id")
+        campaign = scout._campaigns.get(vid)
+        evt["venue_name"] = campaign.get("venue_name", "") if campaign else ""
+
+    return {"events": events}
+
+
+@router.get("/vip/scouts/{venue_id}/events")
+async def scout_venue_events(
+    venue_id: int,
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Get change events for a specific venue."""
+    try:
+        events = await db.get_scout_events(venue_id=venue_id, limit=100)
+    except Exception:
+        events = []
+    return {"events": events}
+
+
+@router.get("/vip/scouts/{venue_id}/snapshots")
+async def scout_venue_snapshots(
+    venue_id: int,
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Get availability snapshots for a venue."""
+    try:
+        snapshots = await db.get_scout_snapshots(venue_id, limit=100)
+    except Exception:
+        snapshots = []
+    return {"snapshots": snapshots}
+
+
+@router.get("/vip/scouts/heatmap")
+async def scout_heatmap(
+    request: Request,
+    venue_id: int | None = None,
+    token: str = Depends(_require_admin),
+):
+    """Get heatmap data: hour×day grid of slots_appeared events."""
+    try:
+        data = await db.get_scout_heatmap_data(venue_id)
+    except Exception:
+        data = []
+
+    # Build full 24×7 grid with zeros
+    grid = [[0] * 7 for _ in range(24)]
+    for row in data:
+        h = row["hour_et"]
+        d = row["day_of_week"]
+        if 0 <= h < 24 and 0 <= d < 7:
+            grid[h][d] = row["event_count"]
+
+    return {
+        "grid": grid,
+        "hours": list(range(24)),
+        "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        "venue_id": venue_id,
+        "total_events": sum(sum(row) for row in grid),
+    }

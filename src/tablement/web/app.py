@@ -76,6 +76,16 @@ async def lifespan(app: FastAPI):
         logger.warning("Drop Intelligence collector failed to start: %s", e)
         app.state.drop_intel = None
 
+    # Start Scout orchestrator (continuous restaurant monitoring)
+    try:
+        from tablement.web.scout import scout_orchestrator
+        await scout_orchestrator.start(app)
+        app.state.scout = scout_orchestrator
+        logger.info("Scout orchestrator started")
+    except Exception as e:
+        logger.warning("Scout orchestrator failed to start: %s", e)
+        app.state.scout = None
+
     yield
 
     # Shutdown: cancel all running jobs
@@ -86,6 +96,10 @@ async def lifespan(app: FastAPI):
     # Stop Drop Intelligence collector
     if getattr(app.state, "drop_intel", None):
         await app.state.drop_intel.stop()
+
+    # Stop Scout orchestrator
+    if getattr(app.state, "scout", None):
+        await app.state.scout.stop()
 
 
 def create_app() -> FastAPI:

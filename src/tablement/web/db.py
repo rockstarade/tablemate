@@ -476,3 +476,164 @@ async def get_active_group_reservations(group_id: str) -> list[dict]:
         .execute()
     )
     return resp.data
+
+
+# ---------------------------------------------------------------------------
+# Scout System — campaigns, events, snapshots
+# ---------------------------------------------------------------------------
+
+
+async def list_scout_campaigns(active_only: bool = True) -> list[dict]:
+    """List scout campaigns, optionally filtered to active only."""
+    q = get_service_client().table("scout_campaigns").select("*")
+    if active_only:
+        q = q.eq("active", True)
+    resp = await q.order("priority", desc=True).execute()
+    return resp.data
+
+
+async def get_scout_campaign(venue_id: int) -> dict | None:
+    """Get a single scout campaign by venue_id."""
+    resp = (
+        await get_service_client()
+        .table("scout_campaigns")
+        .select("*")
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def upsert_scout_campaign(venue_id: int, **fields) -> dict:
+    """Create or update a scout campaign."""
+    data = {"venue_id": venue_id, **fields}
+    resp = await get_service_client().table("scout_campaigns").upsert(
+        data, on_conflict="venue_id"
+    ).execute()
+    return resp.data[0]
+
+
+async def delete_scout_campaign(venue_id: int) -> None:
+    """Deactivate a scout campaign."""
+    await (
+        get_service_client()
+        .table("scout_campaigns")
+        .update({"active": False})
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+
+
+async def update_scout_campaign_stats(venue_id: int, **fields) -> None:
+    """Update stats on a scout campaign (total_polls, last_poll_at, etc.)."""
+    await (
+        get_service_client()
+        .table("scout_campaigns")
+        .update(fields)
+        .eq("venue_id", venue_id)
+        .execute()
+    )
+
+
+async def insert_scout_event(data: dict) -> dict:
+    """Record a scout event (availability change)."""
+    resp = await get_service_client().table("scout_events").insert(data).execute()
+    return resp.data[0]
+
+
+async def batch_insert_scout_events(events: list[dict]) -> int:
+    """Batch-insert scout events. Returns count inserted."""
+    if not events:
+        return 0
+    try:
+        resp = await get_service_client().table("scout_events").insert(events).execute()
+        return len(resp.data) if resp.data else 0
+    except Exception as e:
+        logger.warning("Batch insert scout events failed (%d rows): %s", len(events), e)
+        return 0
+
+
+async def get_scout_events(
+    venue_id: int | None = None,
+    event_type: str | None = None,
+    *,
+    limit: int = 50,
+) -> list[dict]:
+    """Get recent scout events, optionally filtered by venue or type."""
+    q = get_service_client().table("scout_events").select("*")
+    if venue_id is not None:
+        q = q.eq("venue_id", venue_id)
+    if event_type:
+        q = q.eq("event_type", event_type)
+    resp = await q.order("captured_at", desc=True).limit(limit).execute()
+    return resp.data
+
+
+async def insert_scout_snapshot(data: dict) -> dict:
+    """Record a periodic availability snapshot."""
+    resp = await get_service_client().table("scout_snapshots").insert(data).execute()
+    return resp.data[0]
+
+
+async def get_scout_snapshots(
+    venue_id: int,
+    target_date: str | None = None,
+    *,
+    limit: int = 100,
+) -> list[dict]:
+    """Get availability snapshots for a venue."""
+    q = (
+        get_service_client()
+        .table("scout_snapshots")
+        .select("*")
+        .eq("venue_id", venue_id)
+    )
+    if target_date:
+        q = q.eq("target_date", target_date)
+    resp = await q.order("captured_at", desc=True).limit(limit).execute()
+    return resp.data
+
+
+async def get_scout_heatmap_data(venue_id: int | None = None) -> list[dict]:
+    """Get aggregated heatmap data: count of slots_appeared events by hour×day.
+
+    Returns rows with {hour_et, day_of_week, event_count}.
+    Uses raw Supabase RPC or falls back to client-side aggregation.
+    """
+    q = (
+        get_service_client()
+        .table("scout_events")
+        .select("hour_et, day_of_week")
+        .eq("event_type", "slots_appeared")
+    )
+    if venue_id is not None:
+        q = q.eq("venue_id", venue_id)
+    resp = await q.limit(5000).execute()
+
+    # Client-side aggregation into hour×day grid
+    grid: dict[tuple[int, int], int] = {}
+    for row in resp.data:
+        h = row.get("hour_et")
+        d = row.get("day_of_week")
+        if h is not None and d is not None:
+            grid[(h, d)] = grid.get((h, d), 0) + 1
+
+    return [
+        {"hour_et": h, "day_of_week": d, "event_count": c}
+        for (h, d), c in sorted(grid.items())
+    ]
+
+
+async def get_scout_stats() -> dict:
+    """Get aggregate scout stats."""
+    campaigns = await list_scout_campaigns(active_only=False)
+    active = sum(1 for c in campaigns if c.get("active"))
+    total_polls = sum(c.get("total_polls", 0) for c in campaigns)
+    total_events = sum(c.get("total_events", 0) for c in campaigns)
+
+    return {
+        "total_campaigns": len(campaigns),
+        "active_campaigns": active,
+        "total_polls": total_polls,
+        "total_events": total_events,
+    }
