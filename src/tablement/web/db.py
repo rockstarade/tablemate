@@ -492,36 +492,40 @@ async def list_scout_campaigns(active_only: bool = True) -> list[dict]:
     return resp.data
 
 
-async def get_scout_campaign(venue_id: int) -> dict | None:
-    """Get a single scout campaign by venue_id."""
-    resp = (
-        await get_service_client()
+async def get_scout_campaign(venue_id: int, campaign_type: str | None = None) -> dict | None:
+    """Get a single scout campaign by venue_id (and optional type)."""
+    q = (
+        get_service_client()
         .table("scout_campaigns")
         .select("*")
         .eq("venue_id", venue_id)
-        .execute()
     )
+    if campaign_type:
+        q = q.eq("type", campaign_type)
+    resp = await q.execute()
     return resp.data[0] if resp.data else None
 
 
-async def upsert_scout_campaign(venue_id: int, **fields) -> dict:
+async def upsert_scout_campaign(venue_id: int, campaign_type: str = "drop", **fields) -> dict:
     """Create or update a scout campaign."""
-    data = {"venue_id": venue_id, **fields}
+    data = {"venue_id": venue_id, "type": campaign_type, **fields}
     resp = await get_service_client().table("scout_campaigns").upsert(
-        data, on_conflict="venue_id"
+        data, on_conflict="venue_id,type"
     ).execute()
     return resp.data[0]
 
 
-async def delete_scout_campaign(venue_id: int) -> None:
+async def delete_scout_campaign(venue_id: int, campaign_type: str | None = None) -> None:
     """Deactivate a scout campaign."""
-    await (
+    q = (
         get_service_client()
         .table("scout_campaigns")
         .update({"active": False})
         .eq("venue_id", venue_id)
-        .execute()
     )
+    if campaign_type:
+        q = q.eq("type", campaign_type)
+    await q.execute()
 
 
 async def update_scout_campaign_stats(venue_id: int, **fields) -> None:
@@ -636,4 +640,110 @@ async def get_scout_stats() -> dict:
         "active_campaigns": active,
         "total_polls": total_polls,
         "total_events": total_events,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Scout Slot Sightings — per-slot lifecycle tracking (Date Scouts)
+# ---------------------------------------------------------------------------
+
+
+async def get_active_sightings(venue_id: int, target_date: str) -> list[dict]:
+    """Get currently visible slots (gone_at IS NULL) for a venue+date."""
+    resp = (
+        await get_service_client()
+        .table("scout_slot_sightings")
+        .select("*")
+        .eq("venue_id", venue_id)
+        .eq("target_date", target_date)
+        .is_("gone_at", "null")
+        .execute()
+    )
+    return resp.data
+
+
+async def upsert_sighting(data: dict) -> dict:
+    """Insert a new slot sighting."""
+    resp = await get_service_client().table("scout_slot_sightings").insert(data).execute()
+    return resp.data[0]
+
+
+async def update_sighting(sighting_id: str, **fields) -> dict | None:
+    """Update a sighting (e.g., last_seen_at, poll_count, gone_at)."""
+    resp = (
+        await get_service_client()
+        .table("scout_slot_sightings")
+        .update(fields)
+        .eq("id", sighting_id)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def close_sighting(sighting_id: str, gone_at: str, duration_seconds: float) -> dict | None:
+    """Mark a sighting as disappeared."""
+    return await update_sighting(
+        sighting_id,
+        gone_at=gone_at,
+        duration_seconds=duration_seconds,
+    )
+
+
+async def get_slot_timeline(
+    venue_id: int,
+    target_date: str | None = None,
+    *,
+    limit: int = 100,
+) -> list[dict]:
+    """Get slot sighting timeline (recent appear/disappear events)."""
+    q = (
+        get_service_client()
+        .table("scout_slot_sightings")
+        .select("*")
+        .eq("venue_id", venue_id)
+    )
+    if target_date:
+        q = q.eq("target_date", target_date)
+    resp = await q.order("first_seen_at", desc=True).limit(limit).execute()
+    return resp.data
+
+
+async def get_sighting_stats(venue_id: int) -> dict:
+    """Get aggregated sighting stats for a venue."""
+    resp = (
+        await get_service_client()
+        .table("scout_slot_sightings")
+        .select("*")
+        .eq("venue_id", venue_id)
+        .not_.is_("gone_at", "null")
+        .order("first_seen_at", desc=True)
+        .limit(500)
+        .execute()
+    )
+    sightings = resp.data
+    if not sightings:
+        return {
+            "total_sightings": 0,
+            "avg_duration_seconds": 0,
+            "min_duration_seconds": 0,
+            "max_duration_seconds": 0,
+            "active_slots": 0,
+        }
+
+    durations = [s.get("duration_seconds", 0) for s in sightings if s.get("duration_seconds")]
+    active_resp = (
+        await get_service_client()
+        .table("scout_slot_sightings")
+        .select("id", count="exact")
+        .eq("venue_id", venue_id)
+        .is_("gone_at", "null")
+        .execute()
+    )
+
+    return {
+        "total_sightings": len(sightings),
+        "avg_duration_seconds": round(sum(durations) / len(durations), 1) if durations else 0,
+        "min_duration_seconds": round(min(durations), 1) if durations else 0,
+        "max_duration_seconds": round(max(durations), 1) if durations else 0,
+        "active_slots": active_resp.count or 0,
     }

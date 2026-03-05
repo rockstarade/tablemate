@@ -1463,14 +1463,13 @@ async def list_scouts(
     try:
         campaigns = await db.list_scout_campaigns(active_only=False)
     except Exception:
-        # Tables may not exist yet (migration not run)
         campaigns = []
 
-    # Merge DB data with live status
     result = []
     for c in campaigns:
         vid = c["venue_id"]
-        live = scout.get_campaign_status(vid)
+        ctype = c.get("type", "drop")
+        live = scout.get_campaign_status(vid, ctype)
         entry = {
             **c,
             "running": live["running"] if live else False,
@@ -1487,15 +1486,22 @@ async def start_scout(
     body: dict,
     token: str = Depends(_require_admin),
 ):
-    """Start a scout for a specific venue."""
+    """Start a scout for a specific venue.
+
+    Body params:
+        venue_id (required)
+        type: "drop" or "date" (default: "drop")
+        target_dates: ["2026-03-15", ...] (required for date scouts)
+        venue_name, poll_interval_s, party_size, etc.
+    """
     scout = _get_scout(request)
     venue_id = body.get("venue_id")
     if not venue_id:
         raise HTTPException(400, "venue_id is required")
 
+    campaign_type = body.get("type", "drop")
     venue_name = body.get("venue_name", "")
 
-    # Try to get name from curated restaurants if not provided
     if not venue_name:
         curated = await db.get_curated_restaurant(int(venue_id))
         if curated:
@@ -1503,11 +1509,18 @@ async def start_scout(
 
     config = {}
     for key in ["poll_interval_s", "enhanced_interval_s", "drop_hour",
-                "drop_minute", "days_ahead", "party_size", "priority"]:
+                "drop_minute", "days_ahead", "party_size", "priority",
+                "target_dates"]:
         if key in body:
             config[key] = body[key]
 
-    campaign = await scout.start_scout(int(venue_id), venue_name, **config)
+    # Date scouts require target_dates
+    if campaign_type == "date" and not config.get("target_dates"):
+        raise HTTPException(400, "target_dates is required for date scouts")
+
+    campaign = await scout.start_scout(
+        int(venue_id), venue_name, campaign_type=campaign_type, **config,
+    )
     return {"ok": True, "campaign": campaign}
 
 
@@ -1523,8 +1536,9 @@ async def stop_scout(
     if not venue_id:
         raise HTTPException(400, "venue_id is required")
 
-    await scout.stop_scout(int(venue_id))
-    return {"ok": True, "venue_id": venue_id}
+    campaign_type = body.get("type")  # None = stop all types for this venue
+    await scout.stop_scout(int(venue_id), campaign_type)
+    return {"ok": True, "venue_id": venue_id, "type": campaign_type}
 
 
 @router.post("/vip/scouts/stop-all")
@@ -1538,17 +1552,6 @@ async def stop_all_scouts(
     return {"ok": True, "stopped": count}
 
 
-@router.post("/vip/scouts/bulk-start")
-async def bulk_start_scouts(
-    request: Request,
-    token: str = Depends(_require_admin),
-):
-    """Start scouts for all active curated restaurants."""
-    scout = _get_scout(request)
-    started = await scout.start_all_curated()
-    return {"ok": True, "started": started, "total_active": scout.active_scouts}
-
-
 @router.patch("/vip/scouts/{venue_id}")
 async def update_scout_config(
     venue_id: int,
@@ -1560,13 +1563,14 @@ async def update_scout_config(
     allowed = {
         "poll_interval_s", "enhanced_interval_s", "enhanced_window_min",
         "drop_hour", "drop_minute", "drop_timezone", "days_ahead",
-        "party_size", "priority",
+        "party_size", "priority", "target_dates",
     }
     fields = {k: v for k, v in body.items() if k in allowed}
     if not fields:
         raise HTTPException(400, "No valid fields to update")
 
-    campaign = await db.upsert_scout_campaign(venue_id, **fields)
+    campaign_type = body.get("type", "drop")
+    campaign = await db.upsert_scout_campaign(venue_id, campaign_type=campaign_type, **fields)
     return {"ok": True, "campaign": campaign}
 
 
@@ -1602,8 +1606,13 @@ async def scout_feed(
     scout = _get_scout(request)
     for evt in events:
         vid = evt.get("venue_id")
-        campaign = scout._campaigns.get(vid)
-        evt["venue_name"] = campaign.get("venue_name", "") if campaign else ""
+        # Look up venue name from any campaign type for this venue
+        venue_name = ""
+        for key, campaign in scout._campaigns.items():
+            if campaign.get("venue_id") == vid:
+                venue_name = campaign.get("venue_name", "")
+                break
+        evt["venue_name"] = venue_name
 
     return {"events": events}
 
@@ -1663,3 +1672,32 @@ async def scout_heatmap(
         "venue_id": venue_id,
         "total_events": sum(sum(row) for row in grid),
     }
+
+
+@router.get("/vip/scouts/{venue_id}/timeline")
+async def scout_timeline(
+    venue_id: int,
+    request: Request,
+    target_date: str | None = None,
+    token: str = Depends(_require_admin),
+):
+    """Slot sighting timeline — when slots appeared/disappeared with durations."""
+    try:
+        sightings = await db.get_slot_timeline(venue_id, target_date, limit=100)
+    except Exception:
+        sightings = []
+    return {"sightings": sightings, "venue_id": venue_id, "target_date": target_date}
+
+
+@router.get("/vip/scouts/{venue_id}/sighting-stats")
+async def scout_sighting_stats(
+    venue_id: int,
+    request: Request,
+    token: str = Depends(_require_admin),
+):
+    """Aggregated sighting stats for a venue (avg duration, fastest disappearance, etc.)."""
+    try:
+        stats = await db.get_sighting_stats(venue_id)
+    except Exception:
+        stats = {"total_sightings": 0, "avg_duration_seconds": 0, "active_slots": 0}
+    return stats
