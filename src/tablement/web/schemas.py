@@ -160,6 +160,7 @@ class BatchReservationRequest(BaseModel):
     drop_time: DropTimeIn | None = None   # drop policy for unreleased dates
     book_earliest: bool = False           # "earliest available" toggle
     latest_notify_hours: float = Field(default=2.0, ge=0.5, le=48.0)
+    notification_email: str | None = None  # email for booking confirmation
 
 
 class ReservationOut(BaseModel):

@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESR — Grab the Impossible NYC Reservations</title>
+    <title>TablePass — Grab the Impossible NYC Reservations</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -165,9 +166,9 @@
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-                    <span class="text-slate-900 font-black text-sm">R</span>
+                    <span class="text-slate-900 font-black text-sm">T</span>
                 </div>
-                <span class="text-xl font-bold text-white tracking-tight">RESR</span>
+                <span class="text-xl font-bold text-white tracking-tight" style="font-family: 'DM Serif Display', serif;">TablePass</span>
             </a>
             <div class="hidden md:flex items-center gap-10">
                 <a href="#how-it-works" class="font-semibold text-[15px] transition-colors"
@@ -206,7 +207,7 @@
                     <div class="flex-1 lg:max-w-3xl">
                         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 mb-8 anim-1">
                             <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
-                            <span class="text-brand-400 text-xs font-semibold tracking-wide uppercase">Now booking 39+ restaurants</span>
+                            <span class="text-brand-400 text-xs font-semibold tracking-wide uppercase">Now booking <span x-text="restaurants.length > 0 ? restaurants.length + '+' : '90+'"></span> restaurants</span>
                         </div>
                         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] mb-6 anim-2">
                             Secure the<br><span class="text-gradient">impossible</span> NYC<br>reservations.
@@ -227,7 +228,7 @@
                     </div>
                     <!-- Right: phone image + stats -->
                     <div class="hidden lg:flex flex-1 justify-center anim-3 relative">
-                        <img src="/static/hero-phone.jpeg" alt="RESR booking confirmation on iPhone"
+                        <img src="/static/hero-phone.jpeg" alt="TablePass booking confirmation on iPhone"
                             class="w-80 xl:w-96 rounded-3xl shadow-2xl shadow-brand-500/10 border border-slate-800/50">
                         <!-- Floating stat cards -->
                         <div class="absolute -left-8 top-16 glass rounded-2xl border border-slate-700/40 px-5 py-4 shadow-xl anim-4">
@@ -251,7 +252,7 @@
                             <p class="text-slate-500 text-xs">Success rate</p>
                         </div>
                         <div class="glass rounded-xl border border-slate-700/40 px-5 py-3">
-                            <p class="text-brand-400 text-2xl font-extrabold">39+</p>
+                            <p class="text-brand-400 text-2xl font-extrabold" x-text="restaurants.length > 0 ? restaurants.length + '+' : '90+'"></p>
                             <p class="text-slate-500 text-xs">Restaurants</p>
                         </div>
                     </div>
@@ -264,7 +265,7 @@
             <div class="max-w-4xl mx-auto px-6">
                 <div class="rounded-2xl border border-brand-500/15 bg-brand-500/[0.03] px-8 py-6 sm:px-12 sm:py-8 text-center overflow-hidden">
                     <p class="text-white text-lg sm:text-xl font-semibold mb-5">
-                        Access to <span class="text-gradient font-bold">39+ exclusive restaurants</span> in New York
+                        Access to <span class="text-gradient font-bold"><span x-text="restaurants.length > 0 ? restaurants.length + '+' : '90+'"></span> exclusive restaurants</span> in New York
                     </p>
                     <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
                         <div class="marquee-track text-slate-600 text-xs sm:text-sm font-semibold tracking-widest uppercase whitespace-nowrap">
@@ -273,22 +274,30 @@
                             <span class="mx-4 sm:mx-6">Semma</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Coqodaq</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Carbone</span><span class="text-brand-500/20 mx-1">&middot;</span>
-                            <span class="mx-4 sm:mx-6">Don Angie</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Crown Shy</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Torrisi</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Lilia</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Le Bernardin</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Jean-Georges</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Peter Luger</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Tatiana</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">COTE</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">PDT</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <!-- Duplicate for seamless loop -->
                             <span class="mx-4 sm:mx-6">4 Charles</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Atomix</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Semma</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Coqodaq</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Carbone</span><span class="text-brand-500/20 mx-1">&middot;</span>
-                            <span class="mx-4 sm:mx-6">Don Angie</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Crown Shy</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Torrisi</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Lilia</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Le Bernardin</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Jean-Georges</span><span class="text-brand-500/20 mx-1">&middot;</span>
                             <span class="mx-4 sm:mx-6">Peter Luger</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Tatiana</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">COTE</span><span class="text-brand-500/20 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">PDT</span><span class="text-brand-500/20 mx-1">&middot;</span>
                         </div>
                     </div>
                 </div>
@@ -486,9 +495,14 @@
     <footer class="border-t border-slate-800/30 py-10 text-center text-slate-600 text-sm">
         <div class="flex items-center justify-center gap-2.5 mb-3">
             <div class="w-6 h-6 rounded-md bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center">
-                <span class="text-slate-900 font-black text-[10px]">R</span>
+                <span class="text-slate-900 font-black text-[10px]">T</span>
             </div>
-            <span class="font-semibold text-slate-500">RESR</span>
+            <span class="font-semibold text-slate-500" style="font-family: 'DM Serif Display', serif;">TablePass</span>
+        </div>
+        <div class="flex items-center justify-center gap-4 mb-3">
+            <a href="/terms" class="text-slate-500 hover:text-brand-400 transition-colors">Terms</a>
+            <span class="text-slate-700">|</span>
+            <a href="/privacy" class="text-slate-500 hover:text-brand-400 transition-colors">Privacy</a>
         </div>
         <p>NYC restaurant reservations, automated.</p>
     </footer>
@@ -620,7 +634,7 @@
 
             get featuredRestaurants() {
                 // Show 8 popular ones
-                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'don angie', 'le bernardin', 'lilia', 'peter luger'];
+                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'crown shy', 'le bernardin', 'lilia', 'peter luger'];
                 const featured = this.restaurants.filter(r =>
                     names.some(n => r.name && r.name.toLowerCase().includes(n))
                 );
@@ -628,11 +642,11 @@
             },
 
             faqs: [
-                { q: 'How does RESR actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
-                { q: 'Do I need a Resy account?', a: 'Yes. RESR books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely. We never store your password in plain text.', open: false },
+                { q: 'How does TablePass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
+                { q: 'Do I need a Resy account?', a: 'Yes. TablePass books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely. We never store your password in plain text.', open: false },
                 { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
-                { q: 'Which restaurants do you support?', a: 'We support 39+ of NYC\'s most competitive restaurants on Resy, including Carbone, Don Angie, Torrisi, 4 Charles Prime Rib, Lilia, and more. We\'re adding new restaurants regularly.', open: false },
-                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The RESR fee is non-refundable once the booking is confirmed.', open: false },
+                { q: 'Which restaurants do you support?', a: 'We support 90+ of NYC\'s most competitive restaurants on Resy, including Carbone, Torrisi, 4 Charles Prime Rib, Lilia, Crown Shy, Jean-Georges, and many more Michelin-starred and hardest-to-book spots. We\'re adding new restaurants regularly.', open: false },
+                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The TablePass fee is non-refundable once the booking is confirmed.', open: false },
             ],
 
             async init() {

@@ -191,6 +191,10 @@ def create_app() -> FastAPI:
     async def landing(request: Request):
         return templates.TemplateResponse("landing.html", {"request": request})
 
+    @app.get("/v2")
+    async def landing_v2(request: Request):
+        return templates.TemplateResponse("landing_v2.html", {"request": request})
+
     @app.get("/admin")
     async def admin_page(request: Request):
         return templates.TemplateResponse("admin_vip.html", {"request": request})
@@ -218,5 +222,15 @@ def create_app() -> FastAPI:
     async def settings_page(request: Request):
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/browse?modal=settings", status_code=302)
+
+    # --- Legal pages ---
+
+    @app.get("/terms")
+    async def terms_page(request: Request):
+        return templates.TemplateResponse("terms.html", {"request": request})
+
+    @app.get("/privacy")
+    async def privacy_page(request: Request):
+        return templates.TemplateResponse("privacy.html", {"request": request})
 
     return app

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TablePass — NYC's Hardest Reservations, Handled</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        sand: {
+                            50: '#fefdfb', 100: '#fdf9f3', 200: '#faf0e1',
+                            300: '#f5e1c4', 400: '#e8c894', 500: '#d4a96a',
+                            600: '#b8864a', 700: '#96683a',
+                        },
+                        ink: {
+                            50: '#f6f7f9', 100: '#e8eaef', 200: '#d4d8e1',
+                            300: '#a8b0c0', 400: '#6b7690',
+                            500: '#4a5568', 600: '#2d3748', 700: '#1a202c',
+                            800: '#111827', 900: '#0a0e17',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #fefdfb;
+            min-height: 100vh;
+            color: #1a202c;
+        }
+
+        /* Serif accent */
+        .font-editorial { font-family: 'Playfair Display', Georgia, serif; }
+
+        /* Subtle grain texture */
+        .grain::after {
+            content: '';
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Warm gradient text */
+        .text-warm-gradient {
+            background: linear-gradient(135deg, #96683a, #d4a96a, #b8864a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Soft shadow cards */
+        .card-soft {
+            background: #fff;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.03);
+            transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+        }
+        .card-soft:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 20px 48px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .anim-1 { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.1s both; }
+        .anim-2 { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.25s both; }
+        .anim-3 { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s both; }
+        .anim-4 { animation: fadeInUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.55s both; }
+        .slide-enter { animation: fadeInUp 0.3s ease-out; }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0; transform: translateY(30px);
+            transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* Marquee */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-track {
+            display: flex;
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+        .marquee-track:hover { animation-play-state: paused; }
+
+        /* Restaurant card */
+        .restaurant-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .restaurant-card:hover {
+            transform: scale(1.03) translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+        }
+
+        /* Phone input */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        .otp-digit {
+            width: 52px; height: 60px;
+            text-align: center; font-size: 1.5rem; font-weight: 600;
+            caret-color: #96683a;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .otp-digit:focus { border-color: #96683a; box-shadow: 0 0 0 3px rgba(150,104,58,0.15); }
+        .otp-digit.filled { border-color: #d4a96a; background: rgba(212,169,106,0.06); }
+
+        /* Divider */
+        .divider-dots {
+            display: flex; align-items: center; gap: 8px; justify-content: center;
+        }
+        .divider-dots::before, .divider-dots::after {
+            content: ''; flex: 1; height: 1px; background: rgba(0,0,0,0.08);
+        }
+
+        /* Step connector line */
+        .step-line {
+            position: absolute; top: 28px; left: calc(50% + 32px); right: calc(-50% + 32px);
+            height: 2px; background: linear-gradient(to right, #d4a96a, rgba(212,169,106,0.2));
+        }
+
+        /* Pricing highlight */
+        .pricing-popular {
+            background: linear-gradient(135deg, #fdf9f3 0%, #fefdfb 100%);
+            border: 2px solid #d4a96a;
+            position: relative;
+        }
+        .pricing-popular::before {
+            content: '';
+            position: absolute; inset: -2px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(212,169,106,0.15), transparent);
+            z-index: -1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+
+        /* Number counter animation */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased" x-data="landingApp()" x-init="init()">
+
+    <!-- Toast -->
+    <div x-show="toastMsg" x-cloak
+        class="fixed top-6 right-6 z-[100] max-w-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-8"
+        x-transition:enter-end="opacity-1 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-1 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-8">
+        <div class="bg-white rounded-xl border border-black/[0.06] px-5 py-3.5 flex items-center gap-3 shadow-lg">
+            <span class="text-lg">&#x1F37D;</span>
+            <p class="text-sm text-ink-700" x-text="toastMsg"></p>
+        </div>
+    </div>
+
+    <!-- ═══ NAV ═══ -->
+    <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+         :class="scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-black/[0.06] shadow-sm' : ''">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-ink-800 flex items-center justify-center">
+                    <span class="text-sand-200 font-black text-sm">T</span>
+                </div>
+                <span class="text-xl font-bold text-ink-800 tracking-tight" style="font-family: 'DM Serif Display', serif;">TablePass</span>
+            </a>
+            <div class="hidden md:flex items-center gap-10">
+                <a href="#how-it-works" class="font-semibold text-[15px] transition-colors"
+                    :class="activeSection === 'how-it-works' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">How it Works</a>
+                <a href="#pricing" class="font-semibold text-[15px] transition-colors"
+                    :class="activeSection === 'pricing' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">Pricing</a>
+                <a href="#restaurants" class="font-semibold text-[15px] transition-colors"
+                    :class="activeSection === 'restaurants' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">Restaurants</a>
+                <a href="#faq" class="font-semibold text-[15px] transition-colors"
+                    :class="activeSection === 'faq' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">FAQ</a>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/admin" class="text-ink-200 hover:text-ink-400 text-xs transition-colors hidden sm:block">Admin</a>
+                <button @click="openAuth()"
+                    class="px-5 py-2.5 rounded-xl border border-ink-200 text-ink-600 hover:border-ink-400 hover:text-ink-800 font-semibold transition-all text-sm">
+                    Log In
+                </button>
+                <button @click="openAuth()"
+                    class="px-5 py-2.5 rounded-xl bg-ink-800 text-white hover:bg-ink-900 font-semibold transition-all text-sm">
+                    Sign Up
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- ═══ HERO ═══ -->
+        <section class="min-h-screen flex items-center relative overflow-hidden grain">
+            <!-- Warm ambient -->
+            <div class="absolute top-0 right-0 w-[600px] h-[600px] rounded-full bg-sand-200/40 blur-[120px] pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-sand-100/50 blur-[100px] pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-6 lg:px-16 w-full py-32 sm:py-0 relative z-10">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                    <!-- Left: text -->
+                    <div class="flex-1 lg:max-w-3xl">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sand-100 border border-sand-300/40 mb-8 anim-1">
+                            <span class="w-2 h-2 rounded-full bg-sand-600 animate-pulse"></span>
+                            <span class="text-sand-700 text-xs font-semibold tracking-wide uppercase">Now booking <span x-text="restaurantCount"></span>+ restaurants</span>
+                        </div>
+                        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-ink-800 leading-[1.08] mb-6 anim-2">
+                            The city's best<br>tables, <span class="font-editorial italic text-warm-gradient">secured</span>.
+                        </h1>
+                        <p class="text-lg sm:text-xl text-ink-400 max-w-xl mb-10 anim-3 leading-relaxed">
+                            We book NYC's most impossible reservations the instant they drop. Carbone. Torrisi. Atomix. You just show up and eat.
+                        </p>
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 anim-4">
+                            <button @click="openAuth()"
+                                class="px-8 py-4 rounded-2xl bg-ink-800 hover:bg-ink-900 text-white font-bold text-lg transition-all shadow-lg shadow-ink-900/10 w-full sm:w-auto">
+                                Start Booking Free
+                            </button>
+                            <a href="#how-it-works"
+                                class="px-8 py-4 rounded-2xl border border-ink-200 hover:border-ink-400 text-ink-600 hover:text-ink-800 font-semibold text-lg transition-all w-full sm:w-auto text-center">
+                                Learn More
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Right: phone image + stats -->
+                    <div class="hidden lg:flex flex-1 justify-center anim-3 relative">
+                        <div class="relative">
+                            <img src="/static/hero-phone.jpeg" alt="TablePass booking confirmation on iPhone"
+                                class="w-80 xl:w-96 rounded-3xl shadow-2xl shadow-black/10 border border-black/[0.06]">
+                            <!-- Floating stat cards -->
+                            <div class="absolute -left-12 top-16 card-soft rounded-2xl px-5 py-4 anim-4">
+                                <p class="text-sand-700 text-3xl font-extrabold leading-none">500+</p>
+                                <p class="text-ink-300 text-xs font-medium mt-1">Happy diners</p>
+                            </div>
+                            <div class="absolute -right-8 bottom-24 card-soft rounded-2xl px-5 py-4 anim-4">
+                                <p class="text-sand-700 text-3xl font-extrabold leading-none">98%</p>
+                                <p class="text-ink-300 text-xs font-medium mt-1">Success rate</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile stats -->
+                    <div class="flex lg:hidden gap-4 mt-6 anim-4">
+                        <div class="card-soft rounded-xl px-5 py-3 flex-1 text-center">
+                            <p class="text-sand-700 text-2xl font-extrabold">500+</p>
+                            <p class="text-ink-300 text-xs">Happy diners</p>
+                        </div>
+                        <div class="card-soft rounded-xl px-5 py-3 flex-1 text-center">
+                            <p class="text-sand-700 text-2xl font-extrabold">98%</p>
+                            <p class="text-ink-300 text-xs">Success rate</p>
+                        </div>
+                        <div class="card-soft rounded-xl px-5 py-3 flex-1 text-center">
+                            <p class="text-sand-700 text-2xl font-extrabold" x-text="restaurantCount + '+'"></p>
+                            <p class="text-ink-300 text-xs">Restaurants</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ SOCIAL PROOF MARQUEE ═══ -->
+        <section class="-mt-16 sm:-mt-24 pb-10 pt-0 relative z-10">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="rounded-2xl border border-sand-300/30 bg-white px-8 py-6 sm:px-12 sm:py-8 text-center overflow-hidden shadow-sm">
+                    <p class="text-ink-700 text-lg sm:text-xl font-semibold mb-5">
+                        Booking <span class="text-warm-gradient font-bold" x-text="restaurantCount + '+ restaurants'"></span> across New York City
+                    </p>
+                    <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
+                        <div class="marquee-track text-ink-300 text-xs sm:text-sm font-semibold tracking-widest uppercase whitespace-nowrap">
+                            <span class="mx-4 sm:mx-6">4 Charles</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Atomix</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Carbone</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Torrisi</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Don Angie</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Le Bernardin</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Lilia</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Peter Luger</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Coqodaq</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Semma</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <!-- Duplicate for seamless loop -->
+                            <span class="mx-4 sm:mx-6">4 Charles</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Atomix</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Carbone</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Torrisi</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Don Angie</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Le Bernardin</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Lilia</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Peter Luger</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Coqodaq</span><span class="text-sand-300 mx-1">&middot;</span>
+                            <span class="mx-4 sm:mx-6">Semma</span><span class="text-sand-300 mx-1">&middot;</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ HOW IT WORKS ═══ -->
+        <section id="how-it-works" class="py-20 sm:py-28">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-16 reveal">
+                    <p class="text-sand-600 text-sm font-bold tracking-wider uppercase mb-3">How it works</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-800">Three steps to <span class="font-editorial italic">your</span> table</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 relative">
+                    <!-- Connector lines (desktop only) -->
+                    <div class="hidden md:block absolute top-[44px] left-[calc(16.67%+32px)] right-[calc(16.67%+32px)] h-[2px] bg-gradient-to-r from-sand-300 via-sand-200 to-sand-300/30"></div>
+
+                    <!-- Step 1 -->
+                    <div class="reveal text-center relative">
+                        <div class="w-14 h-14 rounded-2xl bg-ink-800 flex items-center justify-center mx-auto mb-6 relative z-10">
+                            <span class="text-white font-extrabold text-xl">1</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-ink-800 mb-3">Link your Resy</h3>
+                        <p class="text-ink-400 text-sm md:text-base leading-relaxed">Connect your Resy account securely. We never store your password.</p>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="reveal text-center relative" style="transition-delay: 0.1s;">
+                        <div class="w-14 h-14 rounded-2xl bg-sand-600 flex items-center justify-center mx-auto mb-6 relative z-10">
+                            <span class="text-white font-extrabold text-xl">2</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-ink-800 mb-3">Pick your restaurant</h3>
+                        <p class="text-ink-400 text-sm md:text-base leading-relaxed">Choose restaurants, dates, times, and party size. We handle the rest.</p>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="reveal text-center relative" style="transition-delay: 0.2s;">
+                        <div class="w-14 h-14 rounded-2xl bg-sand-700 flex items-center justify-center mx-auto mb-6 relative z-10">
+                            <span class="text-white font-extrabold text-xl">3</span>
+                        </div>
+                        <h3 class="text-xl md:text-2xl font-bold text-ink-800 mb-3">Show up and eat</h3>
+                        <p class="text-ink-400 text-sm md:text-base leading-relaxed">We book the instant a slot opens and text you when it's confirmed.</p>
+                    </div>
+                </div>
+
+                <!-- Speed badge -->
+                <div class="flex justify-center mt-14 reveal">
+                    <div class="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-sand-50 border border-sand-300/40">
+                        <svg class="w-5 h-5 text-sand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span class="text-sand-700 font-bold text-sm tracking-wide">Sub-second booking &mdash; fastest on the market</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ WHY TABLEPASS (New section for V2) ═══ -->
+        <section class="py-16 sm:py-24 bg-ink-800 relative overflow-hidden grain">
+            <div class="absolute inset-0 bg-gradient-to-br from-ink-800 via-ink-900 to-ink-800"></div>
+            <div class="max-w-6xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-14 reveal">
+                    <p class="text-sand-400 text-sm font-bold tracking-wider uppercase mb-3">Why TablePass</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">Built different</h2>
+                    <p class="text-white/50 text-lg max-w-2xl mx-auto">While you're sleeping, we're watching every slot. While you're refreshing, we've already booked.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 reveal">
+                    <div class="bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] p-8">
+                        <div class="w-12 h-12 rounded-xl bg-sand-500/20 flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Millisecond Speed</h3>
+                        <p class="text-white/40 text-sm leading-relaxed">Our servers sit in the same datacenter as Resy. We book in under 100ms.</p>
+                    </div>
+                    <div class="bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] p-8">
+                        <div class="w-12 h-12 rounded-xl bg-sand-500/20 flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Cancellation Sniping</h3>
+                        <p class="text-white/40 text-sm leading-relaxed">We monitor for cancellations 24/7. When someone drops their table, it's yours.</p>
+                    </div>
+                    <div class="bg-white/[0.04] backdrop-blur-sm rounded-2xl border border-white/[0.06] p-8 sm:col-span-2 lg:col-span-1">
+                        <div class="w-12 h-12 rounded-xl bg-sand-500/20 flex items-center justify-center mb-5">
+                            <svg class="w-6 h-6 text-sand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">Secure & Private</h3>
+                        <p class="text-white/40 text-sm leading-relaxed">Your Resy credentials are encrypted. We never share your data with third parties.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ PRICING ═══ -->
+        <section id="pricing" class="py-16 sm:py-24">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="text-center mb-14 reveal">
+                    <p class="text-sand-600 text-sm font-bold tracking-wider uppercase mb-3">Pricing</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-800 mb-4">Simple, transparent pricing</h2>
+                    <p class="text-ink-400 text-lg">Only charged on successful reservations. No subscription.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-3xl mx-auto">
+                    <!-- Per-booking -->
+                    <div class="reveal card-soft rounded-2xl p-10 text-center">
+                        <h3 class="text-lg font-semibold text-ink-600 mb-4">Per Booking</h3>
+                        <div class="mb-6">
+                            <span class="text-6xl font-extrabold text-ink-800">$12</span>
+                            <span class="text-ink-300 ml-1 text-lg">/ reservation</span>
+                        </div>
+                        <ul class="text-ink-500 text-sm space-y-4 mb-8 text-left">
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Only charged on confirmed bookings
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                98% booking success rate
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                SMS notifications
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-4 rounded-xl bg-ink-800 hover:bg-ink-900 text-white font-bold text-sm transition-all">
+                            Get Started
+                        </button>
+                    </div>
+                    <!-- 5-pack -->
+                    <div class="reveal pricing-popular rounded-2xl p-10 text-center" style="transition-delay: 0.1s;">
+                        <div class="absolute top-4 right-4 px-3 py-1 rounded-lg bg-sand-100 text-sand-700 text-xs font-bold border border-sand-300/50">Best value</div>
+                        <h3 class="text-lg font-semibold text-ink-600 mb-4">5 Pack</h3>
+                        <div class="mb-6">
+                            <span class="text-6xl font-extrabold text-ink-800">$10</span>
+                            <span class="text-ink-300 ml-1 text-lg">/ reservation</span>
+                        </div>
+                        <ul class="text-ink-500 text-sm space-y-4 mb-8 text-left">
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Save $2 per booking
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Everything in Per Booking
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <svg class="w-5 h-5 text-sand-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Credits never expire
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-4 rounded-xl border-2 border-sand-500 text-sand-700 hover:bg-sand-600 hover:text-white hover:border-sand-600 font-bold text-sm transition-all">
+                            Buy 5 Pack
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ RESTAURANTS ═══ -->
+        <section id="restaurants" class="py-20 sm:py-28 bg-sand-50/50">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-14 reveal">
+                    <p class="text-sand-600 text-sm font-bold tracking-wider uppercase mb-3">Our Restaurants</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-800 mb-4">The spots <span class="font-editorial italic">everyone</span> wants</h2>
+                    <p class="text-ink-400 text-lg">Michelin stars. James Beard winners. The places you can't get into. We get you in.</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 reveal">
+                    <template x-for="r in featuredRestaurants" :key="r.venue_id">
+                        <div class="restaurant-card rounded-xl overflow-hidden border border-black/[0.06] bg-white cursor-default">
+                            <div class="relative h-32 sm:h-40 overflow-hidden bg-sand-100">
+                                <img :src="r.image_url" :alt="r.name"
+                                    class="w-full h-full object-cover"
+                                    @error="$event.target.style.display='none'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                                <div class="absolute top-2 left-2">
+                                    <span class="px-2 py-0.5 rounded-md bg-white/80 backdrop-blur-sm text-[10px] font-medium text-ink-600"
+                                        x-text="r.cuisine"></span>
+                                </div>
+                            </div>
+                            <div class="p-3">
+                                <h3 class="text-sm font-semibold text-ink-800 leading-tight" x-text="r.name"></h3>
+                                <p class="text-ink-300 text-xs mt-0.5" x-text="r.neighborhood"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="text-center mt-10 reveal">
+                    <button @click="openAuth()"
+                        class="px-8 py-3.5 rounded-xl bg-ink-800 text-white hover:bg-ink-900 font-semibold text-sm transition-all shadow-sm">
+                        Sign up to see all restaurants &rarr;
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ FAQ ═══ -->
+        <section id="faq" class="py-20 sm:py-28">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="text-center mb-14 reveal">
+                    <p class="text-sand-600 text-sm font-bold tracking-wider uppercase mb-3">FAQ</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-800">Questions & answers</h2>
+                </div>
+                <div class="space-y-3 reveal">
+                    <template x-for="(faq, i) in faqs" :key="i">
+                        <div class="rounded-xl border border-black/[0.06] bg-white overflow-hidden transition-all"
+                             :class="faq.open ? 'shadow-md' : 'hover:shadow-sm'">
+                            <button @click="faq.open = !faq.open"
+                                class="w-full px-6 py-5 flex items-center justify-between text-left">
+                                <span class="font-medium text-ink-700 text-sm pr-4" x-text="faq.q"></span>
+                                <svg class="w-5 h-5 text-ink-300 flex-shrink-0 transition-transform duration-200 ml-4"
+                                    :class="faq.open && 'rotate-180'"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="faq.open" x-collapse>
+                                <div class="px-6 pb-5 text-ink-400 text-sm leading-relaxed" x-text="faq.a"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ FINAL CTA ═══ -->
+        <section class="py-20 sm:py-28 bg-ink-800 relative overflow-hidden grain">
+            <div class="absolute inset-0 bg-gradient-to-br from-ink-800 via-ink-900 to-ink-800"></div>
+            <div class="max-w-3xl mx-auto px-6 text-center relative z-10 reveal">
+                <h2 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">Ready to <span class="font-editorial italic text-sand-300">eat</span>?</h2>
+                <p class="text-white/50 text-lg mb-10">Stop refreshing Resy. Let us handle it.</p>
+                <button @click="openAuth()"
+                    class="px-10 py-4 rounded-2xl bg-white text-ink-800 hover:bg-sand-50 font-bold text-lg transition-all shadow-lg">
+                    Get Started Free
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="border-t border-black/[0.06] py-10 text-center text-ink-300 text-sm bg-white">
+        <div class="flex items-center justify-center gap-2.5 mb-3">
+            <div class="w-6 h-6 rounded-md bg-ink-800 flex items-center justify-center">
+                <span class="text-sand-200 font-black text-[10px]">T</span>
+            </div>
+            <span class="font-semibold text-ink-500" style="font-family: 'DM Serif Display', serif;">TablePass</span>
+        </div>
+        <p>NYC restaurant reservations, automated.</p>
+    </footer>
+
+    <!-- ═══ AUTH MODAL ═══ -->
+    <div x-show="showAuth" x-cloak
+        class="fixed inset-0 z-[80] flex items-center justify-center"
+        @keydown.escape.window="showAuth = false">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="showAuth = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 bg-white rounded-2xl border border-black/[0.06] p-8 shadow-2xl"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100">
+
+            <button @click="showAuth = false" class="absolute top-4 right-4 text-ink-300 hover:text-ink-700 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Step 1: Phone -->
+            <div x-show="authStep === 'phone'" class="slide-enter">
+                <h2 class="text-xl font-bold text-ink-800 mb-1">Sign in with your phone</h2>
+                <p class="text-ink-400 text-sm mb-8">We'll text you a verification code.</p>
+                <form @submit.prevent="sendOtp()">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="flex items-center px-4 py-3 rounded-xl bg-ink-50 border border-ink-200/60">
+                            <span class="text-ink-400 text-lg font-medium select-none">+1</span>
+                        </div>
+                        <div class="flex-1">
+                            <input type="tel" x-ref="phoneInput"
+                                x-model="phoneDisplay"
+                                @input="formatPhoneInput($event)"
+                                @keydown="phoneKeydown($event)"
+                                placeholder="(555) 123-4567"
+                                maxlength="14" inputmode="numeric" autocomplete="tel-national"
+                                class="w-full px-4 py-3 rounded-xl bg-ink-50 border border-ink-200/60 text-ink-800 text-lg tracking-wide placeholder-ink-300 focus:outline-none focus:border-sand-500 focus:ring-2 focus:ring-sand-500/20"
+                                required>
+                        </div>
+                    </div>
+                    <button type="submit" :disabled="loading || phoneDigits.length !== 10"
+                        class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                        :class="phoneDigits.length === 10
+                            ? 'bg-ink-800 hover:bg-ink-900 text-white'
+                            : 'bg-ink-100 text-ink-300 cursor-not-allowed'">
+                        <span x-show="!loading">Send Code</span>
+                        <span x-show="loading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                            </svg>
+                            Sending...
+                        </span>
+                    </button>
+                </form>
+                <p x-show="error" x-transition class="mt-4 text-red-500 text-sm" x-text="error"></p>
+                <button x-show="devMode" x-cloak
+                    @click="devSkip()"
+                    class="w-full mt-3 py-2.5 text-ink-300 hover:text-ink-500 text-xs transition-colors">
+                    Skip for now (dev mode)
+                </button>
+                <button @click="devSkip()"
+                    class="w-full mt-4 py-2.5 rounded-xl border border-ink-100 text-ink-300 hover:text-ink-600 hover:border-ink-300 text-xs font-medium transition-all">
+                    Skip (Admin) &rarr;
+                </button>
+            </div>
+
+            <!-- Step 2: OTP -->
+            <div x-show="authStep === 'otp'" class="slide-enter">
+                <h2 class="text-xl font-bold text-ink-800 mb-1">Enter verification code</h2>
+                <p class="text-ink-400 text-sm mb-8">
+                    Sent to <span class="text-ink-600">+1 <span x-text="phoneDisplay"></span></span>
+                </p>
+                <div class="flex justify-center gap-3 mb-6" @paste.prevent="handleOtpPaste($event)">
+                    <template x-for="(digit, i) in otpDigits" :key="i">
+                        <input type="text" inputmode="numeric" maxlength="1"
+                            :x-ref="'otp' + i" :value="digit"
+                            @input="handleOtpInput($event, i)"
+                            @keydown="handleOtpKeydown($event, i)"
+                            @focus="$event.target.select()"
+                            class="otp-digit rounded-xl bg-ink-50 border border-ink-200/60 text-ink-800 focus:outline-none"
+                            :class="{ 'filled': digit !== '' }">
+                    </template>
+                </div>
+                <button @click="verifyOtp()" :disabled="loading || otpDigits.join('').length !== 6"
+                    class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                    :class="otpDigits.join('').length === 6
+                        ? 'bg-ink-800 hover:bg-ink-900 text-white'
+                        : 'bg-ink-100 text-ink-300 cursor-not-allowed'">
+                    <span x-show="!loading">Verify</span>
+                    <span x-show="loading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                        </svg>
+                        Verifying...
+                    </span>
+                </button>
+                <div class="mt-5 flex items-center justify-between">
+                    <button @click="authStep = 'phone'; error = ''" class="text-ink-400 hover:text-ink-700 text-sm transition-colors">
+                        &larr; Change number
+                    </button>
+                    <button @click="resendOtp()" :disabled="resendCooldown > 0" class="text-sm transition-colors"
+                        :class="resendCooldown > 0 ? 'text-ink-200 cursor-not-allowed' : 'text-sand-600 hover:text-sand-700'">
+                        <span x-show="resendCooldown > 0" x-text="'Resend in ' + resendCooldown + 's'"></span>
+                        <span x-show="resendCooldown === 0">Resend code</span>
+                    </button>
+                </div>
+                <p x-show="error" x-transition class="mt-4 text-red-500 text-sm" x-text="error"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function landingApp() {
+        return {
+            showAuth: false,
+            authStep: 'phone',
+            phoneDisplay: '',
+            phoneDigits: '',
+            otpDigits: ['', '', '', '', '', ''],
+            loading: false,
+            error: '',
+            resendCooldown: 0,
+            _resendTimer: null,
+            toastMsg: '',
+            devMode: false,
+            activeSection: '',
+            scrolled: false,
+            restaurants: [],
+            restaurantCount: '39',
+
+            get featuredRestaurants() {
+                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'don angie', 'le bernardin', 'lilia', 'peter luger'];
+                const featured = this.restaurants.filter(r =>
+                    names.some(n => r.name && r.name.toLowerCase().includes(n))
+                );
+                return featured.length > 0 ? featured.slice(0, 8) : this.restaurants.slice(0, 8);
+            },
+
+            faqs: [
+                { q: 'How does TablePass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
+                { q: 'Do I need a Resy account?', a: 'Yes. TablePass books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely.', open: false },
+                { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
+                { q: 'Which restaurants do you support?', a: 'We support NYC\'s most competitive restaurants on Resy, including Carbone, Torrisi, Don Angie, 4 Charles Prime Rib, Atomix, and many more. We\'re adding new restaurants regularly.', open: false },
+                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The TablePass fee is non-refundable once the booking is confirmed.', open: false },
+                { q: 'Is my Resy account safe?', a: 'Absolutely. We use encrypted connections and never store your password in plain text. Your Resy credentials are used solely to make bookings on your behalf.', open: false },
+            ],
+
+            async init() {
+                if (localStorage.getItem('tablement_token')) {
+                    window.location.href = '/browse';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/api/auth/dev-mode');
+                    if (resp.ok) { const data = await resp.json(); this.devMode = data.dev === true; }
+                } catch (e) {}
+                try {
+                    const resp = await fetch('/api/curated/');
+                    const data = await resp.json();
+                    this.restaurants = data.restaurants || [];
+                    if (this.restaurants.length > 0) {
+                        this.restaurantCount = String(this.restaurants.length);
+                    }
+                } catch (e) {}
+
+                // Scroll spy
+                const spyIds = ['how-it-works', 'restaurants', 'pricing', 'faq'];
+                const onScroll = () => {
+                    this.scrolled = window.scrollY > 10;
+                    const offset = window.scrollY + window.innerHeight * 0.4;
+                    let current = '';
+                    for (const id of spyIds) {
+                        const el = document.getElementById(id);
+                        if (el && el.offsetTop <= offset) current = id;
+                    }
+                    this.activeSection = current;
+                };
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+
+                // Intersection observer for reveal animations
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+                }, { threshold: 0.15 });
+                document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+            },
+
+            openAuth() {
+                this.showAuth = true;
+                this.authStep = 'phone';
+                this.$nextTick(() => this.$refs.phoneInput && this.$refs.phoneInput.focus());
+            },
+
+            _formatPhone(raw) {
+                let f = '';
+                if (raw.length > 0) f += '(' + raw.slice(0, 3);
+                if (raw.length >= 3) f += ') ';
+                if (raw.length > 3) f += raw.slice(3, 6);
+                if (raw.length > 6) f += '-' + raw.slice(6);
+                return f;
+            },
+            formatPhoneInput(e) {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+                this.phoneDigits = raw;
+                const formatted = this._formatPhone(raw);
+                this.phoneDisplay = formatted;
+                this.$nextTick(() => { e.target.value = formatted; e.target.setSelectionRange(formatted.length, formatted.length); });
+            },
+            phoneKeydown(e) {
+                const passthrough = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (passthrough.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    if (this.phoneDigits.length > 0) {
+                        this.phoneDigits = this.phoneDigits.slice(0, -1);
+                        const formatted = this._formatPhone(this.phoneDigits);
+                        this.phoneDisplay = formatted;
+                        this.$nextTick(() => { e.target.value = formatted; e.target.setSelectionRange(formatted.length, formatted.length); });
+                    }
+                    return;
+                }
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+            },
+            getE164Phone() { return '+1' + this.phoneDigits; },
+
+            handleOtpInput(e, idx) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length === 0) { this.otpDigits[idx] = ''; return; }
+                this.otpDigits[idx] = val.slice(-1);
+                e.target.value = this.otpDigits[idx];
+                if (idx < 5) this.$nextTick(() => { const n = this.$refs['otp' + (idx + 1)]; if (n) n.focus(); });
+                if (this.otpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyOtp());
+            },
+            handleOtpKeydown(e, idx) {
+                if (e.key === 'Backspace') {
+                    if (this.otpDigits[idx] === '' && idx > 0) {
+                        this.$nextTick(() => { const p = this.$refs['otp' + (idx - 1)]; if (p) { p.focus(); this.otpDigits[idx - 1] = ''; p.value = ''; } });
+                    } else { this.otpDigits[idx] = ''; e.target.value = ''; }
+                    e.preventDefault(); return;
+                }
+                if (e.key === 'ArrowLeft' && idx > 0) { this.$refs['otp' + (idx - 1)]?.focus(); e.preventDefault(); return; }
+                if (e.key === 'ArrowRight' && idx < 5) { this.$refs['otp' + (idx + 1)]?.focus(); e.preventDefault(); return; }
+                if (!/^\d$/.test(e.key) && !['Tab', 'Escape', 'Enter'].includes(e.key) && !(e.ctrlKey || e.metaKey)) e.preventDefault();
+            },
+            handleOtpPaste(e) {
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                for (let i = 0; i < 6; i++) this.otpDigits[i] = pasted[i] || '';
+                this.$nextTick(() => {
+                    for (let i = 0; i < 6; i++) { const el = this.$refs['otp' + i]; if (el) el.value = this.otpDigits[i]; }
+                    this.$refs['otp' + Math.min(pasted.length, 5)]?.focus();
+                    if (pasted.length === 6) this.verifyOtp();
+                });
+            },
+
+            async sendOtp() {
+                this.error = ''; this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/send-otp', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ phone: this.getE164Phone() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to send code');
+                    this.authStep = 'otp';
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.startResendCooldown();
+                    this.toastMsg = `Code sent to +1 ${this.phoneDisplay}`;
+                    setTimeout(() => { this.toastMsg = ''; }, 3000);
+                    this.$nextTick(() => { const f = this.$refs['otp0']; if (f) f.focus(); });
+                } catch (e) { this.error = e.message; }
+                finally { this.loading = false; }
+            },
+            async verifyOtp() {
+                const code = this.otpDigits.join('');
+                if (code.length !== 6) return;
+                this.error = ''; this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/verify-otp', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ phone: this.getE164Phone(), code }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Invalid code');
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_refresh', data.refresh_token);
+                    window.location.href = '/browse';
+                } catch (e) {
+                    this.error = e.message;
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.$nextTick(() => {
+                        for (let i = 0; i < 6; i++) { const el = this.$refs['otp' + i]; if (el) el.value = ''; }
+                        this.$refs['otp0']?.focus();
+                    });
+                } finally { this.loading = false; }
+            },
+            async resendOtp() { if (this.resendCooldown > 0) return; await this.sendOtp(); },
+            startResendCooldown() {
+                this.resendCooldown = 30;
+                if (this._resendTimer) clearInterval(this._resendTimer);
+                this._resendTimer = setInterval(() => {
+                    this.resendCooldown--;
+                    if (this.resendCooldown <= 0) clearInterval(this._resendTimer);
+                }, 1000);
+            },
+            async devSkip() {
+                try {
+                    const resp = await fetch('/api/auth/dev-skip', { method: 'POST' });
+                    if (!resp.ok) throw new Error('Dev skip failed');
+                    const data = await resp.json();
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_dev_user', 'true');
+                    window.location.href = '/browse';
+                } catch (e) { this.error = 'Dev skip failed: ' + e.message; }
+            },
+        }
+    }
+    </script>
+</body>
+</html>

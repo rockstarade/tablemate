@@ -469,6 +469,7 @@ async def create_batch_reservations(
             book_earliest=body.book_earliest,
             latest_notify_hours=body.latest_notify_hours,
             poll_tier=poll_tier,
+            notification_email=body.notification_email,
         )
         reservation_id = row["id"]
         reservation_ids.append(reservation_id)
@@ -1156,6 +1157,7 @@ async def _run_snipe(
             if result.success and not is_dry_run_success:
                 asyncio.create_task(_notify_booking_confirmed(
                     user_id=user_id,
+                    reservation_id=reservation_id,
                     venue_name=config.venue_name or f"Venue {config.venue_id}",
                     slot_time=result.slot.date.start if result.slot else "",
                     target_date=config.date.isoformat(),
@@ -1220,6 +1222,7 @@ async def _run_snipe(
 async def _notify_booking_confirmed(
     *,
     user_id: str,
+    reservation_id: str,
     venue_name: str,
     slot_time: str,
     target_date: str,
@@ -1228,15 +1231,29 @@ async def _notify_booking_confirmed(
 ) -> None:
     """Look up user contact info and send confirmation notification.
 
+    Checks for notification_email on the reservation row first (collected at
+    booking time), then falls back to the user's Supabase auth email/phone.
     Runs as a fire-and-forget task — never blocks the booking flow.
     """
     try:
         from tablement.web.notify import get_user_contact, send_booking_confirmation
 
+        # Check reservation row for notification_email (collected at booking time)
+        notification_email = None
+        try:
+            row = await db.get_reservation(reservation_id, user_id)
+            if row:
+                notification_email = row.get("notification_email")
+        except Exception:
+            pass
+
+        # Fall back to Supabase auth contact info
         contact = await get_user_contact(user_id)
+        email = notification_email or contact.get("email")
+
         await send_booking_confirmation(
             phone=contact.get("phone"),
-            email=contact.get("email"),
+            email=email,
             venue_name=venue_name,
             slot_time=slot_time,
             target_date=target_date,
@@ -1448,6 +1465,7 @@ async def _cancellation_snipe_loop(
                         # Notify user (SMS / email) — fire-and-forget
                         asyncio.create_task(_notify_booking_confirmed(
                             user_id=user_id,
+                            reservation_id=reservation_id,
                             venue_name=config.venue_name or f"Venue {config.venue_id}",
                             slot_time=selected.date.start,
                             target_date=config.date.isoformat(),

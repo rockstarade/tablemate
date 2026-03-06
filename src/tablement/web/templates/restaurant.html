@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESR — Book</title>
+    <title>TablePass — Book</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -183,9 +184,9 @@
             </a>
             <a href="/browse" class="flex items-center gap-2">
                 <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: var(--logo-bg);">
-                    <span class="font-extrabold text-[10px]" style="color: var(--logo-text);">R</span>
+                    <span class="font-extrabold text-[10px]" style="color: var(--logo-text);">T</span>
                 </div>
-                <span class="text-sm font-bold tracking-tight" style="color: var(--c1);">RESR</span>
+                <span class="text-sm font-bold tracking-tight" style="color: var(--c1); font-family: 'DM Serif Display', serif;">TablePass</span>
             </a>
         </div>
     </header>
@@ -460,21 +461,53 @@
     <!-- ═══ FIXED BOTTOM CTA ═══ -->
     <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
         <div class="max-w-2xl mx-auto">
-            <button @click="submitBooking()" :disabled="submitting"
-                class="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all flex items-center justify-center gap-2"
-                :style="submitting
-                    ? 'background: var(--btn-bg); opacity: 0.6; color: var(--btn-text); cursor: wait;'
-                    : 'background: var(--btn-bg); color: var(--btn-text); box-shadow: var(--shadow-lg);'">
-                <template x-if="!submitting">
-                    <span>Get This Table</span>
-                </template>
-                <template x-if="submitting">
-                    <span class="flex items-center gap-2">
-                        <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
-                        Setting up your watch...
-                    </span>
-                </template>
-            </button>
+
+            <!-- Email prompt (shows when user clicks "Get This Table" without saved email) -->
+            <template x-if="showEmailPrompt && !submitting">
+                <div class="anim-in">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <svg class="w-4 h-4 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <p class="text-xs font-semibold" style="color: var(--c2);">Get notified when your table is booked</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="email" x-model="notifyEmail" x-ref="emailInput"
+                            placeholder="your@email.com"
+                            @keydown.enter="submitBooking()"
+                            class="flex-1 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition-all"
+                            style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                            @focus="$el.style.borderColor = 'var(--accent)'"
+                            @blur="$el.style.borderColor = 'var(--border)'">
+                        <button @click="submitBooking()"
+                            class="px-5 py-3 rounded-xl font-bold text-sm transition-all shrink-0"
+                            style="background: var(--btn-bg); color: var(--btn-text);">
+                            Book
+                        </button>
+                    </div>
+                    <button @click="skipEmail()" class="w-full text-center mt-2">
+                        <span class="text-[11px] font-medium" style="color: var(--c4);">Skip &mdash; don't notify me</span>
+                    </button>
+                </div>
+            </template>
+
+            <!-- Normal CTA button -->
+            <template x-if="!showEmailPrompt || submitting">
+                <button @click="handleBookClick()" :disabled="submitting"
+                    class="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all flex items-center justify-center gap-2"
+                    :style="submitting
+                        ? 'background: var(--btn-bg); opacity: 0.6; color: var(--btn-text); cursor: wait;'
+                        : 'background: var(--btn-bg); color: var(--btn-text); box-shadow: var(--shadow-lg);'">
+                    <template x-if="!submitting">
+                        <span>Get This Table</span>
+                    </template>
+                    <template x-if="submitting">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Setting up your watch...
+                        </span>
+                    </template>
+                </button>
+            </template>
+
         </div>
     </div>
 
@@ -494,6 +527,8 @@
             submitting: false, toast: null,
             venueId: {{ venue_id }},
             theme: localStorage.getItem('resr_theme') || 'dark',
+            showEmailPrompt: false,
+            notifyEmail: localStorage.getItem('resr_notify_email') || '',
 
             get currentStep() {
                 if (this.selectedDates.length > 0 && this.selectedTimes.length > 0) return 3;
@@ -513,7 +548,7 @@
                     const data = await resp.json();
                     if (data.restaurant) {
                         this.restaurant = data.restaurant;
-                        document.title = `RESR — ${this.restaurant.name}`;
+                        document.title = `TablePass — ${this.restaurant.name}`;
                     } else { this.error = 'Restaurant not found'; }
                 } catch (e) { this.error = 'Failed to load restaurant data'; }
                 this.loading = false;
@@ -625,11 +660,36 @@
             get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading; },
 
             // ═══ Submit ═══
+            handleBookClick() {
+                if (this.submitting || !this.canSubmit) return;
+                // If no email saved and prompt not showing yet, show the email prompt
+                const savedEmail = localStorage.getItem('resr_notify_email');
+                if (!savedEmail && !this.showEmailPrompt) {
+                    this.showEmailPrompt = true;
+                    this.$nextTick(() => { if (this.$refs.emailInput) this.$refs.emailInput.focus(); });
+                    return;
+                }
+                // If email already saved, go straight to submit
+                this.submitBooking();
+            },
+
+            skipEmail() {
+                // User doesn't want notifications — submit without email
+                this.notifyEmail = '';
+                this.showEmailPrompt = false;
+                this.submitBooking();
+            },
+
             async submitBooking() {
                 if (this.submitting || !this.canSubmit) return;
                 this.submitting = true;
+                this.showEmailPrompt = false;
                 const token = localStorage.getItem('tablement_token');
                 if (!token) { window.location.href = '/'; return; }
+
+                // Save notification email for future bookings
+                const email = this.notifyEmail ? this.notifyEmail.trim() : '';
+                if (email) localStorage.setItem('resr_notify_email', email);
 
                 let dropTime = null;
                 if (this.restaurant.drop_days_ahead) {
@@ -639,6 +699,7 @@
                     venue_id: this.venueId, venue_name: this.restaurant.name, party_size: this.partySize,
                     dates: this.selectedDates, time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
                     drop_time: dropTime, book_earliest: this.bookEarliest, latest_notify_hours: parseFloat(this.latestNotify),
+                    notification_email: email || null,
                 };
 
                 try {
