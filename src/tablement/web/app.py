@@ -10,7 +10,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -222,6 +222,39 @@ def create_app() -> FastAPI:
     async def settings_page(request: Request):
         from fastapi.responses import RedirectResponse
         return RedirectResponse("/browse?modal=settings", status_code=302)
+
+    # --- Legal pages ---
+
+    # --- SEO ---
+
+    @app.get("/robots.txt", response_class=PlainTextResponse)
+    async def robots_txt():
+        return (
+            "User-agent: *\n"
+            "Allow: /\n"
+            "Disallow: /api/\n"
+            "Disallow: /admin\n"
+            "Disallow: /browse\n"
+            "Disallow: /settings\n"
+            "Disallow: /reservations\n"
+            "\n"
+            "Sitemap: https://tablepass.nyc/sitemap.xml\n"
+        )
+
+    @app.get("/sitemap.xml")
+    async def sitemap_xml():
+        from starlette.responses import Response as StarletteResponse
+        xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        pages = [
+            ("https://tablepass.nyc/", "daily", "1.0"),
+            ("https://tablepass.nyc/terms", "monthly", "0.3"),
+            ("https://tablepass.nyc/privacy", "monthly", "0.3"),
+        ]
+        for url, freq, priority in pages:
+            xml += f"  <url><loc>{url}</loc><changefreq>{freq}</changefreq><priority>{priority}</priority></url>\n"
+        xml += "</urlset>"
+        return StarletteResponse(content=xml, media_type="application/xml")
 
     # --- Legal pages ---
 

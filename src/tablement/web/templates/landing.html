@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tablepass — Grab the Impossible NYC Reservations</title>
+    <title>tablepass — Book NYC's Impossible Reservations</title>
+    <meta name="description" content="tablepass books NYC's hardest-to-get restaurant reservations the instant they drop. Carbone, Torrisi, 4 Charles, Lilia and 90+ more. 99.4% success rate.">
+    <link rel="canonical" href="https://tablepass.nyc/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tablepass.nyc/">
+    <meta property="og:title" content="tablepass — Book NYC's Impossible Reservations">
+    <meta property="og:description" content="We book NYC's most competitive restaurants the instant reservations drop. Carbone, Torrisi, 4 Charles, Lilia and 90+ more. You just show up and eat.">
+    <meta property="og:image" content="https://tablepass.nyc/static/og-image.png">
+    <meta property="og:site_name" content="tablepass">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="tablepass — Book NYC's Impossible Reservations">
+    <meta name="twitter:description" content="We book NYC's most competitive restaurants the instant reservations drop. 99.4% success rate across 90+ top NYC restaurants.">
+    <meta name="twitter:image" content="https://tablepass.nyc/static/og-image.png">
+
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -142,6 +159,72 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.25); border-radius: 3px; }
     </style>
+
+    <!-- JSON-LD: Organization -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "tablepass",
+        "url": "https://tablepass.nyc",
+        "logo": "https://tablepass.nyc/static/favicon.svg",
+        "description": "tablepass books NYC's hardest-to-get restaurant reservations the instant they drop.",
+        "areaServed": {
+            "@type": "City",
+            "name": "New York"
+        }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "How does tablepass actually book my reservation?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Do I need a Resy account?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. tablepass books through Resy, so you need an active Resy account. After signing up, you'll link your Resy credentials securely. We never store your password in plain text."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "What if the reservation doesn't go through?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "You're only charged when we successfully confirm a reservation. If we can't book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Which restaurants do you support?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "We support 90+ of NYC's most competitive restaurants on Resy, including Carbone, Torrisi, 4 Charles Prime Rib, Lilia, Crown Shy, Jean-Georges, and many more Michelin-starred and hardest-to-book spots."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Can I cancel after a reservation is booked?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Once we book a reservation, it's yours on Resy. You can cancel directly through Resy following the restaurant's cancellation policy. The tablepass fee is non-refundable once the booking is confirmed."
+                }
+            }
+        ]
+    }
+    </script>
 </head>
 <body class="text-slate-200 antialiased" x-data="landingApp()" x-init="init()">
 
@@ -163,18 +246,18 @@
     <!-- ═══ NAV ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b"
          :class="scrolled ? 'glass border-slate-700/50' : 'border-transparent'">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5">
-                <span class="text-xl font-medium text-white" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.12em;">tablepass</span>
+                <span class="text-2xl font-medium text-white" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.12em;">tablepass</span>
             </a>
             <div class="hidden md:flex items-center gap-10">
-                <a href="#how-it-works" class="font-semibold text-[15px] transition-colors"
+                <a href="#how-it-works" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'how-it-works' ? 'text-brand-400' : 'text-slate-300 hover:text-white'">How it Works</a>
-                <a href="#pricing" class="font-semibold text-[15px] transition-colors"
+                <a href="#pricing" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'pricing' ? 'text-brand-400' : 'text-slate-300 hover:text-white'">Pricing</a>
-                <a href="#restaurants" class="font-semibold text-[15px] transition-colors"
+                <a href="#restaurants" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'restaurants' ? 'text-brand-400' : 'text-slate-300 hover:text-white'">Restaurants</a>
-                <a href="#faq" class="font-semibold text-[15px] transition-colors"
+                <a href="#faq" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'faq' ? 'text-brand-400' : 'text-slate-300 hover:text-white'">FAQ</a>
             </div>
             <div class="flex items-center gap-3">
@@ -206,7 +289,7 @@
                             <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
                             <span class="text-brand-400 text-xs font-semibold tracking-wide uppercase">Now booking <span x-text="restaurants.length > 0 ? restaurants.length + '+' : '90+'"></span> restaurants</span>
                         </div>
-                        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-[1.08] mb-6 anim-2">
+                        <h1 class="text-5xl sm:text-7xl lg:text-8xl font-extrabold text-white leading-[1.08] mb-6 anim-2">
                             Secure the<br><span class="text-gradient">impossible</span> NYC<br>reservations.
                         </h1>
                         <p class="text-lg sm:text-xl text-slate-400 max-w-xl mb-10 anim-3 leading-relaxed">
@@ -215,7 +298,7 @@
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 anim-4">
                             <button @click="openAuth()"
                                 class="px-8 py-4 rounded-2xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-bold text-lg transition-all glow-amber w-full sm:w-auto">
-                                Get Started Free
+                                Get Started
                             </button>
                             <a href="#how-it-works"
                                 class="px-8 py-4 rounded-2xl border border-slate-700 hover:border-brand-500/40 text-slate-300 hover:text-white font-semibold text-lg transition-all w-full sm:w-auto text-center">
@@ -233,7 +316,7 @@
                             <p class="text-slate-500 text-xs font-medium mt-1">Happy diners</p>
                         </div>
                         <div class="absolute -right-4 bottom-24 glass rounded-2xl border border-slate-700/40 px-5 py-4 shadow-xl anim-4">
-                            <p class="text-brand-400 text-3xl font-extrabold leading-none">98%</p>
+                            <p class="text-brand-400 text-3xl font-extrabold leading-none">99.4%</p>
                             <p class="text-slate-500 text-xs font-medium mt-1">Success rate</p>
                         </div>
                     </div>
@@ -245,7 +328,7 @@
                             <p class="text-slate-500 text-xs">Happy diners</p>
                         </div>
                         <div class="glass rounded-xl border border-slate-700/40 px-5 py-3">
-                            <p class="text-brand-400 text-2xl font-extrabold">98%</p>
+                            <p class="text-brand-400 text-2xl font-extrabold">99.4%</p>
                             <p class="text-slate-500 text-xs">Success rate</p>
                         </div>
                         <div class="glass rounded-xl border border-slate-700/40 px-5 py-3">
