@@ -567,7 +567,12 @@
             },
             get lastReleasedDate() {
                 if (!this.restaurant || !this.restaurant.drop_days_ahead) return null;
-                const d = new Date(); d.setDate(d.getDate() + this.restaurant.drop_days_ahead); d.setHours(0,0,0,0);
+                const now = new Date();
+                const dropH = this.restaurant.drop_hour ?? 10;
+                const dropM = this.restaurant.drop_minute ?? 0;
+                const droppedToday = now.getHours() > dropH || (now.getHours() === dropH && now.getMinutes() >= dropM);
+                const ahead = droppedToday ? this.restaurant.drop_days_ahead : this.restaurant.drop_days_ahead - 1;
+                const d = new Date(); d.setDate(d.getDate() + ahead); d.setHours(0,0,0,0);
                 return d;
             },
             isReleasedDate(dateStr) {
