@@ -226,7 +226,7 @@ def _build_email_html(
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
   <div style="text-align: center; margin-bottom: 32px;">
-    <h1 style="font-size: 20px; font-weight: 500; margin: 0; font-family: 'Outfit', sans-serif; letter-spacing: 0.12em;">tablepass</h1>
+    <h1 style="font-size: 20px; font-weight: 600; margin: 0; font-family: 'Manrope', 'Helvetica Neue', sans-serif; letter-spacing: 0.08em;">tablepass</h1>
   </div>
 
   <div style="background: #f8f8f8; border-radius: 16px; padding: 32px; text-align: center;">
