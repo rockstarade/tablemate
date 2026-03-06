@@ -119,7 +119,7 @@ def _format_message(
     if resy_token:
         lines.append(f"Confirmation: {resy_token}")
     lines.append("")
-    lines.append("— TablePass")
+    lines.append("— tablepass")
     return "\n".join(lines)
 
 
@@ -182,7 +182,7 @@ async def _send_email(
     import httpx
 
     api_key = os.environ["RESEND_API_KEY"]
-    from_email = os.environ.get("RESEND_FROM_EMAIL", "TablePass <onboarding@resend.dev>")
+    from_email = os.environ.get("RESEND_FROM_EMAIL", "tablepass <onboarding@resend.dev>")
 
     # Build a simple HTML email
     html = _build_email_html(
@@ -226,7 +226,7 @@ def _build_email_html(
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a;">
   <div style="text-align: center; margin-bottom: 32px;">
-    <h1 style="font-size: 20px; font-weight: 700; margin: 0; font-family: 'Georgia', serif;">TablePass</h1>
+    <h1 style="font-size: 20px; font-weight: 500; margin: 0; font-family: 'Outfit', sans-serif; letter-spacing: 0.12em;">tablepass</h1>
   </div>
 
   <div style="background: #f8f8f8; border-radius: 16px; padding: 32px; text-align: center;">
@@ -257,7 +257,7 @@ def _build_email_html(
   </div>
 
   <p style="text-align: center; color: #999; font-size: 12px; margin-top: 32px;">
-    TablePass &mdash; NYC Restaurant Reservations
+    tablepass &mdash; NYC Restaurant Reservations
   </p>
 </body>
 </html>"""

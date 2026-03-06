@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TablePass — NYC's Hardest Reservations, Handled</title>
+    <title>tablepass — NYC's Hardest Reservations, Handled</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -195,10 +195,8 @@
          :class="scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-black/[0.06] shadow-sm' : ''">
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-ink-800 flex items-center justify-center">
-                    <span class="text-sand-200 font-black text-sm">T</span>
-                </div>
-                <span class="text-xl font-bold text-ink-800 tracking-tight" style="font-family: 'DM Serif Display', serif;">TablePass</span>
+                <svg class="w-8 h-8 flex-shrink-0" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="#1a1a2e"/><circle cx="18" cy="18" r="9.5" stroke="#e8dcc8" stroke-width="2" fill="none"/><circle cx="18" cy="18" r="5.5" stroke="#e8dcc8" stroke-width="1" fill="none" opacity="0.35"/><path d="M14 18.5l3 3 5.5-5.5" stroke="#e8dcc8" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span class="text-xl font-medium text-ink-800" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.12em;">tablepass</span>
             </a>
             <div class="hidden md:flex items-center gap-10">
                 <a href="#how-it-works" class="font-semibold text-[15px] transition-colors"
@@ -380,7 +378,7 @@
             <div class="absolute inset-0 bg-gradient-to-br from-ink-800 via-ink-900 to-ink-800"></div>
             <div class="max-w-6xl mx-auto px-6 relative z-10">
                 <div class="text-center mb-14 reveal">
-                    <p class="text-sand-400 text-sm font-bold tracking-wider uppercase mb-3">Why TablePass</p>
+                    <p class="text-sand-400 text-sm font-bold tracking-wider uppercase mb-3">Why tablepass</p>
                     <h2 class="text-4xl sm:text-5xl font-extrabold text-white mb-4">Built different</h2>
                     <p class="text-white/50 text-lg max-w-2xl mx-auto">While you're sleeping, we're watching every slot. While you're refreshing, we've already booked.</p>
                 </div>
@@ -559,10 +557,8 @@
     <!-- ═══ FOOTER ═══ -->
     <footer class="border-t border-black/[0.06] py-10 text-center text-ink-300 text-sm bg-white">
         <div class="flex items-center justify-center gap-2.5 mb-3">
-            <div class="w-6 h-6 rounded-md bg-ink-800 flex items-center justify-center">
-                <span class="text-sand-200 font-black text-[10px]">T</span>
-            </div>
-            <span class="font-semibold text-ink-500" style="font-family: 'DM Serif Display', serif;">TablePass</span>
+            <svg class="w-6 h-6 flex-shrink-0" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="#1a1a2e"/><circle cx="18" cy="18" r="9.5" stroke="#e8dcc8" stroke-width="2" fill="none"/><path d="M14 18.5l3 3 5.5-5.5" stroke="#e8dcc8" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="font-medium text-ink-500" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.12em;">tablepass</span>
         </div>
         <p>NYC restaurant reservations, automated.</p>
     </footer>
@@ -702,11 +698,11 @@
             },
 
             faqs: [
-                { q: 'How does TablePass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
-                { q: 'Do I need a Resy account?', a: 'Yes. TablePass books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely.', open: false },
+                { q: 'How does tablepass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
+                { q: 'Do I need a Resy account?', a: 'Yes. tablepass books through Resy, so you need an active Resy account. After signing up, you\'ll link your Resy credentials securely.', open: false },
                 { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
                 { q: 'Which restaurants do you support?', a: 'We support NYC\'s most competitive restaurants on Resy, including Carbone, Torrisi, Don Angie, 4 Charles Prime Rib, Atomix, and many more. We\'re adding new restaurants regularly.', open: false },
-                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The TablePass fee is non-refundable once the booking is confirmed.', open: false },
+                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The tablepass fee is non-refundable once the booking is confirmed.', open: false },
                 { q: 'Is my Resy account safe?', a: 'Absolutely. We use encrypted connections and never store your password in plain text. Your Resy credentials are used solely to make bookings on your behalf.', open: false },
             ],
 
