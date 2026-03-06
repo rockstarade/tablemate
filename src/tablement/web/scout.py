@@ -428,11 +428,20 @@ class ScoutOrchestrator:
                     continue
 
                 # ===== PHASE 1: WARM =====
-                warmup_offset = random.uniform(
-                    settings.get("drop_warmup_min_minutes", 15),
-                    settings.get("drop_warmup_max_minutes", 25),
-                )
-                warmup_time = drop_time - timedelta(minutes=warmup_offset) + timedelta(seconds=stagger_s)
+                minutes_until_drop = (drop_time - now_et).total_seconds() / 60
+                warmup_min = settings.get("drop_warmup_min_minutes", 15)
+                warmup_max = settings.get("drop_warmup_max_minutes", 25)
+
+                if minutes_until_drop <= warmup_max:
+                    # Drop is within the warmup window — skip random delay, warm immediately
+                    warmup_time = now_et - timedelta(seconds=1)  # Already past → triggers warmup now
+                    logger.info(
+                        "Drop scout %s: only %.1f min until drop — skipping random delay, warming immediately",
+                        venue_name, minutes_until_drop,
+                    )
+                else:
+                    warmup_offset = random.uniform(warmup_min, warmup_max)
+                    warmup_time = drop_time - timedelta(minutes=warmup_offset) + timedelta(seconds=stagger_s)
                 verify_max = settings.get("drop_verify_max_minutes", 3)
                 verify_boundary = drop_time - timedelta(minutes=verify_max)
 

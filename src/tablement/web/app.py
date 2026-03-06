@@ -207,7 +207,10 @@ def create_app() -> FastAPI:
 
     @app.get("/browse")
     async def browse_page(request: Request):
-        return templates.TemplateResponse("browse.html", {"request": request})
+        return templates.TemplateResponse("browse.html", {
+            "request": request,
+            "stripe_pk": os.environ.get("STRIPE_PUBLISHABLE_KEY", ""),
+        })
 
     @app.get("/restaurant/{venue_id}")
     async def restaurant_page(request: Request, venue_id: int):

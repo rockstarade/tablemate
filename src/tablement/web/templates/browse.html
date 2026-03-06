@@ -35,6 +35,8 @@
             }
         }
     </script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>window.__STRIPE_PK__ = "{{ stripe_pk }}";</script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -1004,6 +1006,94 @@
                     </div>
                 </div>
 
+                <!-- Payment & Credits -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Payment</p>
+                    <div class="p-4 rounded-xl space-y-3" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+
+                        <!-- Card on file -->
+                        <template x-if="cardBrand">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--status-confirmed-bg);">
+                                        <svg class="w-4 h-4" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium" style="color: var(--c1);"><span x-text="cardBrand" class="capitalize"></span> ···· <span x-text="cardLast4"></span></p>
+                                        <p class="text-xs" style="color: var(--c3);">Default card</p>
+                                    </div>
+                                </div>
+                                <button @click="removeCard()" class="text-xs transition-colors" style="color: var(--c3);"
+                                    onmouseover="this.style.color='var(--status-failed)';" onmouseout="this.style.color='var(--c3)';">Remove</button>
+                            </div>
+                        </template>
+
+                        <!-- No card -->
+                        <template x-if="!cardBrand && !showCardForm">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: var(--status-failed-bg);">
+                                        <svg class="w-4 h-4" style="color: var(--status-failed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium" style="color: var(--c1);">No card linked</p>
+                                        <p class="text-xs" style="color: var(--c3);">Required for bookings</p>
+                                    </div>
+                                </div>
+                                <button @click="startCardSetup()"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                                    style="background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent);">
+                                    Add Card
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Stripe card form -->
+                        <div x-show="showCardForm" x-cloak>
+                            <div id="card-element-browse" class="px-4 py-3 rounded-xl" style="background: var(--bg-card); border: 1px solid var(--border);"></div>
+                            <p x-show="cardError" x-cloak class="mt-2 text-xs" style="color: var(--status-failed);" x-text="cardError"></p>
+                            <div class="flex gap-2 mt-3">
+                                <button @click="confirmCard()" :disabled="cardLoading"
+                                    class="flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+                                    style="background: var(--accent); color: var(--accent-text, #fff);">
+                                    <span x-show="!cardLoading">Save Card</span>
+                                    <span x-show="cardLoading" class="flex items-center justify-center">
+                                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                                    </span>
+                                </button>
+                                <button @click="showCardForm = false"
+                                    class="px-3 py-2.5 rounded-lg text-xs transition-colors" style="color: var(--c3); border: 1px solid var(--border);">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Credits row -->
+                        <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                            <div class="flex items-center justify-between mb-2">
+                                <div>
+                                    <p class="text-sm font-medium" style="color: var(--c1);">Credits</p>
+                                    <p class="text-xs" style="color: var(--c3);">Used automatically on success</p>
+                                </div>
+                                <span class="text-xl font-bold" style="color: var(--accent);" x-text="credits"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="buyCredits('single')" :disabled="!cardBrand || buyingCredits"
+                                    class="flex-1 py-2 rounded-lg text-xs font-medium transition-all"
+                                    :style="cardBrand ? 'color: var(--c1); border: 1px solid var(--border);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
+                                    1 for $12
+                                </button>
+                                <button @click="buyCredits('five_pack')" :disabled="!cardBrand || buyingCredits"
+                                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                                    :style="cardBrand ? 'color: var(--accent); border: 1px solid var(--accent-border); background: var(--accent-bg);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
+                                    5 for $50
+                                </button>
+                            </div>
+                            <p class="text-[10px] mt-2" style="color: var(--c4);">No credits? $12 charged per successful booking.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Theme -->
                 <div>
                     <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Appearance</p>
@@ -1324,6 +1414,20 @@
             resyLoading: false,
             resyError: '',
 
+            // Payment
+            cardBrand: null,
+            cardLast4: null,
+            cardPmId: null,
+            showCardForm: false,
+            cardLoading: false,
+            cardError: '',
+            credits: 0,
+            buyingCredits: false,
+            _stripe: null,
+            _stripeElements: null,
+            _cardElement: null,
+            _setupClientSecret: null,
+
             // Toast
             toast: { show: false, message: '', icon: '', exiting: false },
 
@@ -1338,6 +1442,8 @@
                 }
                 await Promise.all([
                     this.loadProfile(),
+                    this.loadPaymentMethods(),
+                    this.loadCredits(),
                     this.loadRestaurants(),
                     this.loadReservations(),
                 ]);
@@ -1393,6 +1499,162 @@
                         }
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
+            },
+
+            // ── Payment Methods ──
+            async loadPaymentMethods() {
+                try {
+                    const resp = await fetch('/api/payments/methods', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    if (data.methods && data.methods.length > 0) {
+                        const m = data.methods[0];
+                        this.cardBrand = m.brand;
+                        this.cardLast4 = m.last_four;
+                        this.cardPmId = m.id;
+                    }
+                } catch (e) { console.error('Payment methods load failed:', e); }
+            },
+
+            async startCardSetup() {
+                this.cardError = '';
+                this.cardLoading = false;
+                this.showCardForm = true;
+                try {
+                    const resp = await fetch('/api/payments/setup-intent', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json();
+                        this.cardError = err.detail || 'Failed to initialize';
+                        return;
+                    }
+                    const data = await resp.json();
+                    this._setupClientSecret = data.client_secret;
+
+                    if (!this._stripe) {
+                        this._stripe = Stripe(window.__STRIPE_PK__ || '');
+                    }
+                    this._stripeElements = this._stripe.elements();
+                    const isDark = this.theme === 'dark';
+                    this._cardElement = this._stripeElements.create('card', {
+                        style: {
+                            base: {
+                                color: isDark ? '#e2e8f0' : '#1e293b',
+                                fontFamily: 'system-ui, sans-serif',
+                                fontSize: '14px',
+                                '::placeholder': { color: isDark ? '#64748b' : '#94a3b8' },
+                            },
+                            invalid: { color: '#f87171' },
+                        },
+                    });
+                    this.$nextTick(() => {
+                        const el = document.getElementById('card-element-browse');
+                        if (el) this._cardElement.mount(el);
+                    });
+                } catch (e) {
+                    this.cardError = 'Failed to initialize payment form';
+                    console.error(e);
+                }
+            },
+
+            async confirmCard() {
+                if (!this._stripe || !this._cardElement || !this._setupClientSecret) return;
+                this.cardLoading = true;
+                this.cardError = '';
+                try {
+                    const { setupIntent, error } = await this._stripe.confirmCardSetup(
+                        this._setupClientSecret,
+                        { payment_method: { card: this._cardElement } },
+                    );
+                    if (error) {
+                        this.cardError = error.message;
+                        this.cardLoading = false;
+                        return;
+                    }
+                    const resp = await fetch('/api/payments/methods', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token,
+                        },
+                        body: JSON.stringify({ stripe_payment_method_id: setupIntent.payment_method }),
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json();
+                        this.cardError = err.detail || 'Failed to save card';
+                        this.cardLoading = false;
+                        return;
+                    }
+                    const pm = await resp.json();
+                    this.cardBrand = pm.brand;
+                    this.cardLast4 = pm.last_four;
+                    this.cardPmId = pm.id;
+                    this.showCardForm = false;
+                    this.showToast('Card saved!', '💳');
+                } catch (e) {
+                    this.cardError = 'Something went wrong';
+                    console.error(e);
+                } finally {
+                    this.cardLoading = false;
+                }
+            },
+
+            async removeCard() {
+                if (!this.cardPmId) return;
+                if (!confirm('Remove this card?')) return;
+                try {
+                    await fetch('/api/payments/methods/' + this.cardPmId, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    this.cardBrand = null;
+                    this.cardLast4 = null;
+                    this.cardPmId = null;
+                    this.showToast('Card removed');
+                } catch (e) { console.error(e); }
+            },
+
+            async loadCredits() {
+                try {
+                    const resp = await fetch('/api/payments/credits', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    this.credits = data.credits || 0;
+                } catch (e) { console.error('Credits load failed:', e); }
+            },
+
+            async buyCredits(pkg) {
+                if (!this.cardBrand) {
+                    this.showToast('Add a card first', '⚠️');
+                    return;
+                }
+                const label = pkg === 'five_pack' ? '5 credits for $50' : '1 credit for $12';
+                if (!confirm('Purchase ' + label + '?')) return;
+                this.buyingCredits = true;
+                try {
+                    const resp = await fetch('/api/payments/buy-credits', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token,
+                        },
+                        body: JSON.stringify({ package: pkg }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Purchase failed');
+                    this.credits = data.new_balance;
+                    this.showToast(data.new_balance + ' credits remaining', '✅');
+                } catch (e) {
+                    this.showToast(e.message, '❌');
+                } finally {
+                    this.buyingCredits = false;
+                }
             },
 
             async loadRestaurants() {

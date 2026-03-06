@@ -305,6 +305,12 @@ async def create_reservation(
         _drop_dt = _sched.calculate_drop_datetime(_config)
         if _drop_dt < datetime.now(_drop_dt.tzinfo):
             raise HTTPException(400, "Drop time has already passed")
+        _minutes_until = (_drop_dt - datetime.now(_drop_dt.tzinfo)).total_seconds() / 60
+        if _minutes_until < 10:
+            raise HTTPException(
+                400,
+                f"Drop is only {_minutes_until:.0f} minutes away — minimum 10 minutes needed for warmup",
+            )
 
     # Check user has linked Resy account
     profile = await db.get_profile(user_id)
@@ -1149,9 +1155,9 @@ async def _run_snipe(
                 update_fields["error"] = result.error
             await db.update_reservation(reservation_id, **update_fields)
 
-            # Stripe: capture on success, release on failure (skip for dry run)
-            if not is_dry_run_success:
-                _handle_stripe_result(reservation_id, result)
+            # Stripe: charge on success (fire-and-forget, never blocks booking)
+            if result.success and not is_dry_run_success:
+                asyncio.create_task(_handle_stripe_result(reservation_id, user_id, result))
 
             # Notify user (SMS / email) — fire-and-forget, never blocks
             if result.success and not is_dry_run_success:
@@ -1483,7 +1489,7 @@ async def _cancellation_snipe_loop(
                             booking_path=result.booking_path or None,
                             slot=selected, attempts=attempt, elapsed_seconds=0,
                         )
-                        _handle_stripe_result(reservation_id, snipe_result)
+                        asyncio.create_task(_handle_stripe_result(reservation_id, user_id, snipe_result))
                         break
 
             except httpx.HTTPStatusError as e:
@@ -1794,11 +1800,10 @@ async def _snipe_loop(
                 booked_slot = top_matches[i]
 
                 try:
-                    # Step 4: Single-path booking (direct from EC2 = fastest)
-                    # Dual-path (proxy + direct simultaneously) is suspicious —
-                    # two IPs booking the same slot at the same instant.
-                    # Direct from EC2 in us-east-1 is already 5-15ms RTT.
-                    result = await client.book(
+                    # Step 4: Race booking via direct EC2 + proxy simultaneously.
+                    # book_token is single-use — second request fails harmlessly.
+                    # Cancellation snipe already uses dual_book (line 1442).
+                    result = await client.dual_book(
                         book_token=book_token,
                         payment_method_id=payment_id,
                     )
@@ -1988,22 +1993,21 @@ def _row_to_out(row: dict) -> ReservationOut:
     )
 
 
-def _handle_stripe_result(reservation_id: str, result: SnipeResult):
-    """Capture Stripe payment on success, release on failure."""
+async def _handle_stripe_result(reservation_id: str, user_id: str, result: SnipeResult):
+    """Charge the user on successful booking, log on failure."""
+    if not result.success:
+        return
+
     try:
-        import stripe
-
-        stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
-        if not stripe_key:
-            return
-
-        stripe.api_key = stripe_key
-
-        # We'd need to look up the payment_intent_id from DB
-        # For now this is a placeholder — will be connected in Phase 4
-        # when Stripe is fully integrated
-    except ImportError:
-        pass
+        from tablement.web.routes.payments import charge_for_booking
+        charge_result = await charge_for_booking(user_id, reservation_id)
+        logger.info(
+            "Stripe result for %s: %s",
+            reservation_id, charge_result,
+        )
+    except Exception as e:
+        # Never let billing errors affect the booking outcome
+        logger.error("Billing error for reservation %s: %s", reservation_id, e)
 
 
 # ---------------------------------------------------------------------------

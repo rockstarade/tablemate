@@ -20,6 +20,8 @@
             }
         }
     </script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>window.__STRIPE_PK__ = "{{ stripe_pk }}";</script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -147,8 +149,80 @@
                 </div>
             </div>
 
-            <!-- Preferences -->
+            <!-- Payment & Credits -->
             <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d1">
+                <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Payment</h2>
+
+                <!-- Card on file -->
+                <div x-show="cardBrand" class="flex items-center justify-between py-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-7 rounded-md bg-slate-700/60 flex items-center justify-center text-xs font-bold text-slate-300 uppercase" x-text="cardBrand"></div>
+                        <div>
+                            <p class="text-white text-sm font-medium">
+                                <span x-text="cardBrand" class="capitalize"></span> ending in <span x-text="cardLast4"></span>
+                            </p>
+                            <p class="text-slate-500 text-xs mt-0.5">Default payment method</p>
+                        </div>
+                    </div>
+                    <button @click="removeCard()" class="text-slate-500 hover:text-red-400 text-xs transition-colors">Remove</button>
+                </div>
+
+                <!-- No card -->
+                <div x-show="!cardBrand && !showCardForm" class="text-center py-4">
+                    <div class="text-3xl mb-2">💳</div>
+                    <p class="text-slate-400 text-sm mb-4">Add a card to enable automatic billing on successful bookings.</p>
+                    <button @click="startCardSetup()"
+                        class="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all">
+                        Add Card
+                    </button>
+                </div>
+
+                <!-- Stripe card form -->
+                <div x-show="showCardForm" x-cloak class="mt-4">
+                    <div id="card-element" class="px-4 py-3.5 rounded-xl bg-slate-800/60 border border-slate-600/50"></div>
+                    <p x-show="cardError" x-cloak class="mt-2 text-red-400 text-xs" x-text="cardError"></p>
+                    <div class="flex gap-3 mt-4">
+                        <button @click="confirmCard()" :disabled="cardLoading"
+                            class="flex-1 py-3 rounded-xl bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50">
+                            <span x-show="!cardLoading">Save Card</span>
+                            <span x-show="cardLoading" class="flex items-center justify-center gap-2">
+                                <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            </span>
+                        </button>
+                        <button @click="showCardForm = false"
+                            class="px-4 py-3 rounded-xl border border-slate-600/50 text-slate-400 text-sm hover:text-white transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Credits -->
+                <div class="border-t border-slate-700/20 mt-4 pt-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-white text-sm font-medium">Reservation Credits</p>
+                            <p class="text-slate-500 text-xs mt-0.5">Credits are used automatically when a booking succeeds</p>
+                        </div>
+                        <span class="text-2xl font-bold text-brand-400" x-text="credits"></span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="buyCredits('single')" :disabled="!cardBrand || buyingCredits"
+                            class="flex-1 py-3 rounded-xl border border-slate-600/50 text-sm transition-all"
+                            :class="cardBrand ? 'text-white hover:border-brand-500 hover:text-brand-400' : 'text-slate-600 cursor-not-allowed'">
+                            1 Credit — $12
+                        </button>
+                        <button @click="buyCredits('five_pack')" :disabled="!cardBrand || buyingCredits"
+                            class="flex-1 py-3 rounded-xl border border-brand-500/50 text-sm transition-all"
+                            :class="cardBrand ? 'text-brand-400 hover:bg-brand-500/10 font-medium' : 'text-slate-600 border-slate-600/50 cursor-not-allowed'">
+                            5 Credits — $50
+                        </button>
+                    </div>
+                    <p class="text-slate-600 text-xs mt-3">No credits? You'll be charged $12 per successful reservation automatically.</p>
+                </div>
+            </div>
+
+            <!-- Preferences -->
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d2">
                 <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Preferences</h2>
 
                 <!-- Default party size -->
@@ -188,7 +262,7 @@
             </div>
 
             <!-- Notifications -->
-            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d2">
+            <div class="glass rounded-2xl border border-slate-700/30 p-6 mb-6 fade-in-d3">
                 <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-5">Notifications</h2>
 
                 <!-- SMS toggle -->
@@ -284,6 +358,20 @@
             relinkError: '',
             toast: { show: false, message: '', icon: '' },
 
+            // Payment state
+            cardBrand: null,
+            cardLast4: null,
+            cardPmId: null,
+            showCardForm: false,
+            cardLoading: false,
+            cardError: '',
+            credits: 0,
+            buyingCredits: false,
+            stripe: null,
+            stripeElements: null,
+            cardElement: null,
+            setupClientSecret: null,
+
             // User preferences (stored in localStorage for now, will be DB-backed)
             prefs: {
                 defaultPartySize: parseInt(localStorage.getItem('tablement_pref_party') || '2'),
@@ -295,6 +383,8 @@
             async init() {
                 if (!this.token) { window.location.href = '/'; return; }
                 await this.loadProfile();
+                await this.loadPaymentMethods();
+                await this.loadCredits();
 
                 // Watch preferences and save on change
                 this.$watch('prefs', (val) => {
@@ -316,6 +406,177 @@
                     this.resyEmail = data.resy_email || '';
                 } catch (e) {
                     console.error('Failed to load profile:', e);
+                }
+            },
+
+            // --- Payment Methods ---
+            async loadPaymentMethods() {
+                try {
+                    const resp = await fetch('/api/payments/methods', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    if (data.methods && data.methods.length > 0) {
+                        const m = data.methods[0];
+                        this.cardBrand = m.brand;
+                        this.cardLast4 = m.last_four;
+                        this.cardPmId = m.id;
+                    }
+                } catch (e) {
+                    console.error('Failed to load payment methods:', e);
+                }
+            },
+
+            async startCardSetup() {
+                this.cardError = '';
+                this.cardLoading = false;
+                this.showCardForm = true;
+
+                // Get SetupIntent from backend
+                try {
+                    const resp = await fetch('/api/payments/setup-intent', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json();
+                        this.cardError = err.detail || 'Failed to initialize card form';
+                        return;
+                    }
+                    const data = await resp.json();
+                    this.setupClientSecret = data.client_secret;
+
+                    // Initialize Stripe Elements
+                    if (!this.stripe) {
+                        this.stripe = Stripe(window.__STRIPE_PK__ || '');
+                    }
+                    this.stripeElements = this.stripe.elements();
+                    this.cardElement = this.stripeElements.create('card', {
+                        style: {
+                            base: {
+                                color: '#e2e8f0',
+                                fontFamily: 'system-ui, sans-serif',
+                                fontSize: '14px',
+                                '::placeholder': { color: '#64748b' },
+                            },
+                            invalid: { color: '#f87171' },
+                        },
+                    });
+
+                    // Mount after DOM update
+                    this.$nextTick(() => {
+                        const el = document.getElementById('card-element');
+                        if (el) this.cardElement.mount(el);
+                    });
+                } catch (e) {
+                    this.cardError = 'Failed to initialize payment form';
+                    console.error(e);
+                }
+            },
+
+            async confirmCard() {
+                if (!this.stripe || !this.cardElement || !this.setupClientSecret) return;
+                this.cardLoading = true;
+                this.cardError = '';
+
+                try {
+                    const { setupIntent, error } = await this.stripe.confirmCardSetup(
+                        this.setupClientSecret,
+                        { payment_method: { card: this.cardElement } },
+                    );
+                    if (error) {
+                        this.cardError = error.message;
+                        this.cardLoading = false;
+                        return;
+                    }
+
+                    // Save payment method to our DB
+                    const resp = await fetch('/api/payments/methods', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token,
+                        },
+                        body: JSON.stringify({ stripe_payment_method_id: setupIntent.payment_method }),
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json();
+                        this.cardError = err.detail || 'Failed to save card';
+                        this.cardLoading = false;
+                        return;
+                    }
+                    const pm = await resp.json();
+                    this.cardBrand = pm.brand;
+                    this.cardLast4 = pm.last_four;
+                    this.cardPmId = pm.id;
+                    this.showCardForm = false;
+                    this.showToast('Card saved!', '💳');
+                } catch (e) {
+                    this.cardError = 'Something went wrong. Please try again.';
+                    console.error(e);
+                } finally {
+                    this.cardLoading = false;
+                }
+            },
+
+            async removeCard() {
+                if (!this.cardPmId) return;
+                if (!confirm('Remove this card? You won\'t be charged for future bookings until you add a new one.')) return;
+                try {
+                    await fetch('/api/payments/methods/' + this.cardPmId, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    this.cardBrand = null;
+                    this.cardLast4 = null;
+                    this.cardPmId = null;
+                    this.showToast('Card removed', '🗑');
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            // --- Credits ---
+            async loadCredits() {
+                try {
+                    const resp = await fetch('/api/payments/credits', {
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    this.credits = data.credits || 0;
+                } catch (e) {
+                    console.error('Failed to load credits:', e);
+                }
+            },
+
+            async buyCredits(pkg) {
+                if (!this.cardBrand) {
+                    this.showToast('Please add a card first', '⚠️');
+                    return;
+                }
+                const label = pkg === 'five_pack' ? '5 credits for $50' : '1 credit for $12';
+                if (!confirm(`Purchase ${label}?`)) return;
+
+                this.buyingCredits = true;
+                try {
+                    const resp = await fetch('/api/payments/buy-credits', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + this.token,
+                        },
+                        body: JSON.stringify({ package: pkg }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Purchase failed');
+                    this.credits = data.new_balance;
+                    this.showToast(`Purchased! You now have ${data.new_balance} credit${data.new_balance !== 1 ? 's' : ''}`, '✅');
+                } catch (e) {
+                    this.showToast(e.message, '❌');
+                } finally {
+                    this.buyingCredits = false;
                 }
             },
 

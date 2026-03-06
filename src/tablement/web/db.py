@@ -173,6 +173,82 @@ async def delete_payment_method(pm_id: str, user_id: str) -> None:
     )
 
 
+# --- Credits + Transactions ---
+
+
+async def get_user_credits(user_id: str) -> int:
+    """Return the user's current credit balance."""
+    profile = await get_profile(user_id)
+    return (profile or {}).get("credits", 0)
+
+
+async def add_credits(user_id: str, amount: int) -> int:
+    """Add credits to a user's balance. Returns new balance."""
+    profile = await get_profile(user_id)
+    current = (profile or {}).get("credits", 0)
+    new_balance = current + amount
+    await upsert_profile(user_id, credits=new_balance)
+    return new_balance
+
+
+async def deduct_credit(user_id: str) -> bool:
+    """Deduct 1 credit. Returns True if successful, False if insufficient."""
+    profile = await get_profile(user_id)
+    current = (profile or {}).get("credits", 0)
+    if current <= 0:
+        return False
+    await upsert_profile(user_id, credits=current - 1)
+    return True
+
+
+async def create_transaction(user_id: str, **fields) -> dict:
+    """Record a billing transaction."""
+    data = {"user_id": user_id, **fields}
+    resp = await get_service_client().table("transactions").insert(data).execute()
+    return resp.data[0]
+
+
+async def list_transactions(user_id: str, limit: int = 50) -> list[dict]:
+    """List billing transactions for a user, newest first."""
+    resp = (
+        await get_service_client()
+        .table("transactions")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    return resp.data
+
+
+async def get_default_payment_method(user_id: str) -> dict | None:
+    """Get the user's default payment method."""
+    resp = (
+        await get_service_client()
+        .table("payment_methods")
+        .select("*")
+        .eq("user_id", user_id)
+        .eq("is_default", True)
+        .limit(1)
+        .execute()
+    )
+    rows = resp.data
+    if rows:
+        return rows[0]
+    # Fallback: grab the most recent one
+    resp = (
+        await get_service_client()
+        .table("payment_methods")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
 # ---------------------------------------------------------------------------
 # Drop Intelligence — tracked venues, observations, snapshots
 # ---------------------------------------------------------------------------

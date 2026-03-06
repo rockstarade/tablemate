@@ -217,6 +217,28 @@ class SavePaymentMethodRequest(BaseModel):
     stripe_payment_method_id: str
 
 
+class CreditBalanceResponse(BaseModel):
+    credits: int
+
+
+class BuyCreditsRequest(BaseModel):
+    package: str  # "single" ($12, 1 credit) or "five_pack" ($50, 5 credits)
+
+
+class TransactionOut(BaseModel):
+    id: str
+    type: str
+    amount_cents: int
+    credits_delta: int = 0
+    description: str | None = None
+    reservation_id: str | None = None
+    created_at: str
+
+
+class TransactionListResponse(BaseModel):
+    transactions: list[TransactionOut]
+
+
 # ---------------------------------------------------------------------------
 # Snipe — SSE status (kept for backward compat + real-time updates)
 # ---------------------------------------------------------------------------

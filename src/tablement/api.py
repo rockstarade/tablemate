@@ -200,6 +200,9 @@ class ResyApiClient:
         if self._client:
             self._client.headers["X-Resy-Auth-Token"] = token
             self._client.headers["X-Resy-Universal-Auth"] = token
+        if self._direct_client:
+            self._direct_client.headers["X-Resy-Auth-Token"] = token
+            self._direct_client.headers["X-Resy-Universal-Auth"] = token
 
     def set_snipe_mode(self, enabled: bool = True) -> None:
         """Switch to tighter timeouts for the snipe loop."""
@@ -562,25 +565,18 @@ class ResyApiClient:
         headers = template["headers"]
 
         async def _book_via(client: httpx.AsyncClient, label: str) -> BookResponse:
-            try:
-                resp = await client.get("/3/book", params=params, headers=headers)
-                resp.raise_for_status()
-                result = BookResponse.model_validate(orjson.loads(resp.content))
-                result.booking_path = label
-                logger.info("Booking won via %s path", label)
-                return result
-            except Exception:
-                # GET failed, try POST fallback
-                resp = await client.post(
-                    "/3/book",
-                    data=params,
-                    headers={**headers, "Content-Type": "application/x-www-form-urlencoded"},
-                )
-                resp.raise_for_status()
-                result = BookResponse.model_validate(orjson.loads(resp.content))
-                result.booking_path = label
-                logger.info("Booking won via %s path (POST fallback)", label)
-                return result
+            # POST directly — GET was patched by Resy (returns 405).
+            # Matches book() which already uses POST-first.
+            resp = await client.post(
+                "/3/book",
+                data=params,
+                headers={**headers, "Content-Type": "application/x-www-form-urlencoded"},
+            )
+            resp.raise_for_status()
+            result = BookResponse.model_validate(orjson.loads(resp.content))
+            result.booking_path = label
+            logger.info("Booking won via %s path", label)
+            return result
 
         # Race both paths — first to succeed wins
         tasks = [
