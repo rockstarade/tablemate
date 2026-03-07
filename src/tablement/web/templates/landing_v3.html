@@ -177,28 +177,28 @@
     <!-- ═══ NAV ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
          :class="scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-black/[0.06] shadow-sm' : ''">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5">
                 <span class="text-xl font-medium text-ink-800" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.12em;">tablepass</span>
             </a>
             <div class="hidden md:flex items-center gap-10">
-                <a href="#how-it-works" class="font-semibold text-[15px] transition-colors"
+                <a href="#how-it-works" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'how-it-works' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">How it Works</a>
-                <a href="#pricing" class="font-semibold text-[15px] transition-colors"
+                <a href="#pricing" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'pricing' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">Pricing</a>
-                <a href="#restaurants" class="font-semibold text-[15px] transition-colors"
+                <a href="#restaurants" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'restaurants' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">Restaurants</a>
-                <a href="#faq" class="font-semibold text-[15px] transition-colors"
+                <a href="#faq" class="font-semibold text-base transition-colors"
                     :class="activeSection === 'faq' ? 'text-sand-700' : 'text-ink-400 hover:text-ink-700'">FAQ</a>
             </div>
             <div class="flex items-center gap-3">
                 <a href="/admin" class="text-ink-200 hover:text-ink-400 text-xs transition-colors hidden sm:block">Admin</a>
                 <button @click="openAuth()"
-                    class="px-5 py-2.5 rounded-xl border border-ink-200 text-ink-600 hover:border-ink-400 hover:text-ink-800 font-semibold transition-all text-sm">
+                    class="px-6 py-3 rounded-xl border border-ink-200 text-ink-600 hover:border-ink-400 hover:text-ink-800 font-semibold transition-all text-[15px]">
                     Log In
                 </button>
                 <button @click="openAuth()"
-                    class="px-5 py-2.5 rounded-xl bg-ink-800 text-white hover:bg-ink-900 font-semibold transition-all text-sm">
+                    class="px-6 py-3 rounded-xl bg-ink-800 text-white hover:bg-ink-900 font-semibold transition-all text-[15px]">
                     Sign Up
                 </button>
             </div>
@@ -220,10 +220,10 @@
                             <span class="w-2 h-2 rounded-full bg-sand-600 animate-pulse"></span>
                             <span class="text-sand-600 text-xs font-semibold tracking-wide uppercase">Now booking <span x-text="restaurantCount"></span>+ restaurants</span>
                         </div>
-                        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-ink-800 leading-[1.08] mb-6 anim-2">
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-ink-800 leading-[1.08] mb-6 anim-2">
                             Secure the<br><span class="text-warm-gradient font-extrabold">impossible</span> NYC<br>reservations.
                         </h1>
-                        <p class="text-lg sm:text-xl text-ink-500 max-w-xl mb-10 anim-3 leading-relaxed">
+                        <p class="text-xl sm:text-2xl text-ink-500 max-w-xl mb-10 anim-3 leading-relaxed">
                             Book NYC's most competitive restaurants the instant reservations drop. We monitor new drops and cancellations and grab them for you.
                         </p>
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 anim-4">
@@ -241,13 +241,13 @@
                     <div class="hidden lg:flex flex-1 justify-center anim-3 relative">
                         <div class="relative">
                             <img src="/static/hero-phone.jpeg" alt="TablePass booking confirmation on iPhone"
-                                class="w-80 xl:w-96 rounded-3xl shadow-2xl shadow-black/10 border border-black/[0.06]">
+                                class="w-96 xl:w-[28rem] rounded-3xl shadow-2xl shadow-black/10 border border-black/[0.06]">
                             <!-- Floating stat cards -->
-                            <div class="absolute -left-12 top-16 card-soft rounded-2xl px-5 py-4 anim-4">
+                            <div class="absolute -left-20 top-16 card-soft rounded-2xl px-5 py-4 anim-4">
                                 <p class="text-sand-500 text-3xl font-extrabold leading-none">500+</p>
                                 <p class="text-ink-400 text-xs font-medium mt-1">Happy diners</p>
                             </div>
-                            <div class="absolute -right-8 bottom-24 card-soft rounded-2xl px-5 py-4 anim-4">
+                            <div class="absolute -right-16 bottom-24 card-soft rounded-2xl px-5 py-4 anim-4">
                                 <p class="text-sand-500 text-3xl font-extrabold leading-none">99.8%</p>
                                 <p class="text-ink-400 text-xs font-medium mt-1">Success rate</p>
                             </div>
