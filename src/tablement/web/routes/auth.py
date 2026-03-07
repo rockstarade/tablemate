@@ -242,7 +242,7 @@ async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(g
     await db.upsert_profile(
         user_id,
         resy_email=phone,
-        resy_token=auth_resp.token,
+        resy_auth_token=auth_resp.token,
     )
     return {
         "linked": True,
@@ -304,7 +304,7 @@ async def resy_complete_challenge(request: Request, body: dict, user_id: str = D
     await db.upsert_profile(
         user_id,
         resy_email=email,
-        resy_token=auth_resp.token,
+        resy_auth_token=auth_resp.token,
     )
     return {
         "linked": True,
