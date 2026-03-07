@@ -315,30 +315,33 @@ class ResyApiClient:
         raise ValueError("Unexpected response from Resy. Try Email + Password instead.")
 
     async def complete_phone_challenge(self, claim_token: str, challenge_id: str, email: str, phone: str = "") -> AuthResponse:
-        """POST /3/auth/mobile — complete email challenge after phone OTP.
+        """POST /4/auth/challenge — complete email challenge after phone OTP.
 
-        Same endpoint as send/verify — Resy uses /3/auth/mobile for all steps.
-        This step sends claim_token + challenge_id + em_address to finalize auth.
+        IMPORTANT: This uses a DIFFERENT endpoint than send/verify OTP!
+        - Steps 1-2 (send/verify OTP): POST /3/auth/mobile
+        - Step 3 (challenge completion): POST /4/auth/challenge
 
-        Key discovery from testing:
-        - form-encoded WITHOUT mobile_number → Resy 4xx "invalid mobile number"
-        - form-encoded WITH mobile_number → Resy re-sends OTP (wrong path)
-        - Solution: send as JSON with mobile_number included. JSON parser
-          dispatches on claim_token/challenge_id presence, not mobile_number.
+        Discovered by analyzing Resy's frontend JS bundles:
+        - Endpoint: /4/auth/challenge (NOT /3/auth/mobile)
+        - Content-Type: application/x-www-form-urlencoded
+        - Fields: challenge_id, em_address, device_type_id=3 (web), device_token (UUID)
+        - claim_token and mobile_number are NOT sent in this step
         """
         assert self._client is not None
-        logger.info("Resy challenge: posting JSON to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s, phone=%s",
-                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email, phone[:5] + "***" if phone else "none")
+        import uuid as _uuid
+        device_token = str(_uuid.uuid4())
+        logger.info("Resy challenge: POST /4/auth/challenge challenge_id=%s..., em_address=%s, device_token=%s",
+                     challenge_id[:10] if challenge_id else "?", email, device_token[:8])
         payload = {
-            "claim_token": claim_token,
             "challenge_id": challenge_id,
             "em_address": email,
+            "device_type_id": "3",
+            "device_token": device_token,
         }
-        if phone:
-            payload["mobile_number"] = phone
         resp = await self._client.post(
-            "/3/auth/mobile",
-            json=payload,
+            "/4/auth/challenge",
+            data=payload,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         logger.info("Resy challenge response: status=%d, content-type=%s", resp.status_code, resp.headers.get("content-type", "?"))
         if resp.status_code >= 300:
