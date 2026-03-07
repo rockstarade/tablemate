@@ -319,18 +319,18 @@ class ResyApiClient:
 
         Same endpoint as send/verify — Resy uses /3/auth/mobile for all steps.
         This step sends claim_token + challenge_id + em_address to finalize auth.
-        Resy requires mobile_number on every call to this endpoint.
+
+        IMPORTANT: Do NOT include mobile_number here — its presence causes Resy
+        to interpret the request as "send new OTP" instead of challenge completion.
         """
         assert self._client is not None
-        logger.info("Resy challenge: posting to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s, phone=%s",
-                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email, phone[:5] + "***" if phone else "none")
+        logger.info("Resy challenge: posting to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s",
+                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email)
         payload = {
             "claim_token": claim_token,
             "challenge_id": challenge_id,
             "em_address": email,
         }
-        if phone:
-            payload["mobile_number"] = phone
         resp = await self._client.post(
             "/3/auth/mobile",
             data=payload,
