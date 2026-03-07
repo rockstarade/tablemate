@@ -198,39 +198,39 @@
     <!-- ═══ NAV (transparent on dark hero, white when scrolled) ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
          :class="scrolled ? 'bg-white/90 backdrop-blur-xl border-b border-ink-200/60 shadow-sm' : ''">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
             <a href="/" class="flex items-center gap-2.5">
-                <span class="text-lg font-bold tracking-[0.08em] transition-colors font-display"
+                <span class="text-xl font-bold tracking-[0.08em] transition-colors font-display"
                     :class="scrolled ? 'text-ink-900' : 'text-white'">tablepass</span>
             </a>
             <div class="hidden md:flex items-center gap-9">
-                <a href="#how-it-works" class="text-[13px] font-medium tracking-wide uppercase transition-colors"
+                <a href="#how-it-works" class="text-sm font-medium tracking-wide uppercase transition-colors"
                     :class="scrolled
                         ? (activeSection === 'how-it-works' ? 'text-warm-600' : 'text-ink-400 hover:text-ink-800')
-                        : (activeSection === 'how-it-works' ? 'text-warm-400' : 'text-white/50 hover:text-white')">How it Works</a>
-                <a href="#pricing" class="text-[13px] font-medium tracking-wide uppercase transition-colors"
+                        : (activeSection === 'how-it-works' ? 'text-warm-400' : 'text-white/70 hover:text-white')">How it Works</a>
+                <a href="#pricing" class="text-sm font-medium tracking-wide uppercase transition-colors"
                     :class="scrolled
                         ? (activeSection === 'pricing' ? 'text-warm-600' : 'text-ink-400 hover:text-ink-800')
-                        : (activeSection === 'pricing' ? 'text-warm-400' : 'text-white/50 hover:text-white')">Pricing</a>
-                <a href="#restaurants" class="text-[13px] font-medium tracking-wide uppercase transition-colors"
+                        : (activeSection === 'pricing' ? 'text-warm-400' : 'text-white/70 hover:text-white')">Pricing</a>
+                <a href="#restaurants" class="text-sm font-medium tracking-wide uppercase transition-colors"
                     :class="scrolled
                         ? (activeSection === 'restaurants' ? 'text-warm-600' : 'text-ink-400 hover:text-ink-800')
-                        : (activeSection === 'restaurants' ? 'text-warm-400' : 'text-white/50 hover:text-white')">Restaurants</a>
-                <a href="#faq" class="text-[13px] font-medium tracking-wide uppercase transition-colors"
+                        : (activeSection === 'restaurants' ? 'text-warm-400' : 'text-white/70 hover:text-white')">Restaurants</a>
+                <a href="#faq" class="text-sm font-medium tracking-wide uppercase transition-colors"
                     :class="scrolled
                         ? (activeSection === 'faq' ? 'text-warm-600' : 'text-ink-400 hover:text-ink-800')
-                        : (activeSection === 'faq' ? 'text-warm-400' : 'text-white/50 hover:text-white')">FAQ</a>
+                        : (activeSection === 'faq' ? 'text-warm-400' : 'text-white/70 hover:text-white')">FAQ</a>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 <a href="/admin" class="text-white/20 hover:text-white/40 text-xs transition-colors hidden sm:block"
                     :class="scrolled && '!text-ink-200 !hover:text-ink-400'">Admin</a>
                 <button @click="openAuth()"
-                    class="text-sm font-medium transition-colors"
-                    :class="scrolled ? 'text-ink-500 hover:text-ink-800' : 'text-white/60 hover:text-white'">
+                    class="text-[15px] font-medium transition-colors"
+                    :class="scrolled ? 'text-ink-500 hover:text-ink-800' : 'text-white/70 hover:text-white'">
                     Log In
                 </button>
                 <button @click="openAuth()"
-                    class="px-5 py-2 rounded-lg text-sm font-semibold transition-all"
+                    class="px-6 py-2.5 rounded-lg text-[15px] font-semibold transition-all"
                     :class="scrolled
                         ? 'bg-warm-500 hover:bg-warm-600 text-white'
                         : 'bg-white text-surface-dark hover:bg-white/90'">
@@ -249,14 +249,14 @@
                     <div class="flex-1 lg:max-w-[560px]">
                         <div class="inline-flex items-center gap-2.5 px-4 py-2 rounded-full glass mb-10 anim-1">
                             <span class="w-2 h-2 rounded-full bg-warm-400 pulse-warm"></span>
-                            <span class="text-white/60 text-xs font-medium tracking-wide">Booking <span class="text-white/90" x-text="restaurantCount"></span>+ NYC restaurants</span>
+                            <span class="text-white/70 text-sm font-medium tracking-wide">Booking <span class="text-white/90" x-text="restaurantCount"></span>+ NYC restaurants</span>
                         </div>
                         <h1 class="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold text-white leading-[1.08] mb-6 anim-2 tracking-tight font-display">
                             The reservations<br>you can't get.<br>
                             <span class="text-accent-glow">We get them.</span>
                         </h1>
-                        <p class="text-base sm:text-lg text-white/45 max-w-md mb-10 anim-3 leading-relaxed">
-                            Carbone. Torrisi. 4 Charles. Our system books the instant slots drop — faster than any human ever could.
+                        <p class="text-lg sm:text-xl text-white/60 max-w-lg mb-10 anim-3 leading-relaxed">
+                            Book NYC's most competitive restaurants the instant reservations drop. We monitor new drops and cancellations and grab them for you.
                         </p>
                         <div class="flex flex-col sm:flex-row items-center sm:items-start gap-3 anim-4">
                             <button @click="openAuth()"
@@ -273,15 +273,11 @@
                         <div class="flex items-center gap-6 mt-10 anim-4">
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span class="text-white/40 text-xs font-medium">No subscription</span>
+                                <span class="text-white/50 text-sm font-medium">No subscription</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span class="text-white/40 text-xs font-medium">Pay only on success</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-warm-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span class="text-white/40 text-xs font-medium">99.8% success</span>
+                                <span class="text-white/50 text-sm font-medium">Pay only on success</span>
                             </div>
                         </div>
                     </div>
@@ -293,11 +289,11 @@
                             <!-- Glass stat cards -->
                             <div class="absolute -left-20 top-20 glass rounded-2xl px-6 py-4 anim-4">
                                 <p class="text-white text-3xl font-bold leading-none">500+</p>
-                                <p class="text-white/40 text-xs font-medium mt-1.5">Happy diners</p>
+                                <p class="text-white/55 text-xs font-medium mt-1.5">Happy diners</p>
                             </div>
                             <div class="absolute -right-14 bottom-28 glass rounded-2xl px-6 py-4 anim-4">
                                 <p class="text-warm-400 text-3xl font-bold leading-none">99.8%</p>
-                                <p class="text-white/40 text-xs font-medium mt-1.5">Success rate</p>
+                                <p class="text-white/55 text-xs font-medium mt-1.5">Success rate</p>
                             </div>
                         </div>
                     </div>
@@ -306,15 +302,15 @@
                     <div class="flex lg:hidden gap-3 mt-4 anim-4 w-full">
                         <div class="glass rounded-xl px-4 py-3 flex-1 text-center">
                             <p class="text-white text-xl font-bold">500+</p>
-                            <p class="text-white/30 text-xs">Diners served</p>
+                            <p class="text-white/50 text-xs">Diners served</p>
                         </div>
                         <div class="glass rounded-xl px-4 py-3 flex-1 text-center">
                             <p class="text-warm-400 text-xl font-bold">99.8%</p>
-                            <p class="text-white/30 text-xs">Success rate</p>
+                            <p class="text-white/50 text-xs">Success rate</p>
                         </div>
                         <div class="glass rounded-xl px-4 py-3 flex-1 text-center">
                             <p class="text-white text-xl font-bold">&lt;100ms</p>
-                            <p class="text-white/30 text-xs">Book speed</p>
+                            <p class="text-white/50 text-xs">Book speed</p>
                         </div>
                     </div>
                 </div>
@@ -324,8 +320,11 @@
         <!-- ═══ RESTAURANT MARQUEE (transition zone) ═══ -->
         <section class="py-12 bg-ink-50 border-b border-ink-200/60">
             <div class="max-w-6xl mx-auto px-6">
+                <p class="text-ink-700 text-lg sm:text-xl font-semibold mb-6 text-center">
+                    Access to <span class="text-accent-glow font-bold">96+ exclusive restaurants</span> in New York City
+                </p>
                 <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);">
-                    <div class="marquee-track text-ink-300 text-[11px] font-semibold tracking-[0.25em] uppercase whitespace-nowrap">
+                    <div class="marquee-track text-ink-500 text-xs sm:text-sm font-semibold tracking-[0.25em] uppercase whitespace-nowrap">
                         <span class="mx-5 sm:mx-7">4 Charles</span><span class="text-warm-300 mx-2">/</span>
                         <span class="mx-5 sm:mx-7">Atomix</span><span class="text-warm-300 mx-2">/</span>
                         <span class="mx-5 sm:mx-7">Carbone</span><span class="text-warm-300 mx-2">/</span>
@@ -357,7 +356,7 @@
             <div class="max-w-5xl mx-auto px-6">
                 <div class="text-center mb-20 reveal">
                     <p class="text-warm-500 text-xs font-bold tracking-[0.25em] uppercase mb-4">How it works</p>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight font-display">Three steps. That's it.</h2>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-900 tracking-tight font-display">Three steps. That's it.</h2>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
                     <!-- Connector line (desktop) -->
@@ -368,24 +367,24 @@
                         <div class="step-ring w-16 h-16 rounded-full bg-surface-dark flex items-center justify-center mx-auto mb-7 relative z-10">
                             <span class="text-warm-400 font-bold text-xl font-display">01</span>
                         </div>
-                        <h3 class="text-lg font-bold text-ink-900 mb-2 font-display">Link Resy</h3>
-                        <p class="text-ink-400 text-sm leading-relaxed max-w-[240px] mx-auto">Connect your Resy account in 30 seconds. Your credentials are encrypted end-to-end.</p>
+                        <h3 class="text-xl font-bold text-ink-900 mb-2 font-display">Link Resy</h3>
+                        <p class="text-ink-500 text-base leading-relaxed max-w-[260px] mx-auto">Connect your Resy account in 30 seconds. Your credentials are encrypted end-to-end.</p>
                     </div>
                     <!-- Step 2 -->
                     <div class="reveal text-center px-6 pb-8 md:pb-0" style="transition-delay: 0.1s;">
                         <div class="step-ring w-16 h-16 rounded-full bg-surface-dark flex items-center justify-center mx-auto mb-7 relative z-10">
                             <span class="text-warm-400 font-bold text-xl font-display">02</span>
                         </div>
-                        <h3 class="text-lg font-bold text-ink-900 mb-2 font-display">Pick your spots</h3>
-                        <p class="text-ink-400 text-sm leading-relaxed max-w-[240px] mx-auto">Choose restaurants, dates, times, and party size. Set it and forget it.</p>
+                        <h3 class="text-xl font-bold text-ink-900 mb-2 font-display">Pick your spots</h3>
+                        <p class="text-ink-500 text-base leading-relaxed max-w-[260px] mx-auto">Choose restaurants, dates, times, and party size. Set it and forget it.</p>
                     </div>
                     <!-- Step 3 -->
                     <div class="reveal text-center px-6" style="transition-delay: 0.2s;">
                         <div class="step-ring w-16 h-16 rounded-full bg-surface-dark flex items-center justify-center mx-auto mb-7 relative z-10">
                             <span class="text-warm-400 font-bold text-xl font-display">03</span>
                         </div>
-                        <h3 class="text-lg font-bold text-ink-900 mb-2 font-display">Show up hungry</h3>
-                        <p class="text-ink-400 text-sm leading-relaxed max-w-[240px] mx-auto">We text you when it's booked. All you do is walk in and eat.</p>
+                        <h3 class="text-xl font-bold text-ink-900 mb-2 font-display">Show up hungry</h3>
+                        <p class="text-ink-500 text-base leading-relaxed max-w-[260px] mx-auto">We text you when it's booked. All you do is walk in and eat.</p>
                     </div>
                 </div>
             </div>
@@ -398,8 +397,8 @@
                     <!-- Left: section intro -->
                     <div class="lg:w-[320px] lg:sticky lg:top-32 flex-shrink-0">
                         <p class="text-warm-500 text-xs font-bold tracking-[0.25em] uppercase mb-4">Why tablepass</p>
-                        <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight mb-4 font-display">We're not another bot.</h2>
-                        <p class="text-ink-400 text-base leading-relaxed">Purpose-built infrastructure that books before you can blink. Literally.</p>
+                        <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-900 tracking-tight mb-4 font-display">We're not another bot.</h2>
+                        <p class="text-ink-500 text-lg leading-relaxed">Purpose-built infrastructure that books before you can blink. Literally.</p>
                     </div>
                     <!-- Right: feature cards -->
                     <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -407,29 +406,29 @@
                             <div class="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center mb-5">
                                 <svg class="w-5 h-5 text-warm-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
-                            <h3 class="text-base font-bold text-ink-900 mb-1.5 font-display">Sub-100ms booking</h3>
-                            <p class="text-ink-400 text-sm leading-relaxed">Our servers sit next to Resy's. We submit your booking before anyone's finger hits refresh.</p>
+                            <h3 class="text-lg font-bold text-ink-900 mb-1.5 font-display">Sub-100ms booking</h3>
+                            <p class="text-ink-500 text-[15px] leading-relaxed">Our servers sit next to Resy's. We submit your booking before anyone's finger hits refresh.</p>
                         </div>
                         <div class="card-hover rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center mb-5">
                                 <svg class="w-5 h-5 text-warm-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
-                            <h3 class="text-base font-bold text-ink-900 mb-1.5 font-display">24/7 cancellation watch</h3>
-                            <p class="text-ink-400 text-sm leading-relaxed">Someone cancels Carbone at 3am? We grab it before they even close the app.</p>
+                            <h3 class="text-lg font-bold text-ink-900 mb-1.5 font-display">24/7 cancellation watch</h3>
+                            <p class="text-ink-500 text-[15px] leading-relaxed">Someone cancels Carbone at 3am? We grab it before they even close the app.</p>
                         </div>
                         <div class="card-hover rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center mb-5">
                                 <svg class="w-5 h-5 text-warm-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </div>
-                            <h3 class="text-base font-bold text-ink-900 mb-1.5 font-display">Bank-grade security</h3>
-                            <p class="text-ink-400 text-sm leading-relaxed">Encrypted credentials. No password storage. Your Resy account stays yours.</p>
+                            <h3 class="text-lg font-bold text-ink-900 mb-1.5 font-display">Bank-grade security</h3>
+                            <p class="text-ink-500 text-[15px] leading-relaxed">Encrypted credentials. No password storage. Your Resy account stays yours.</p>
                         </div>
                         <div class="card-hover rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-warm-50 flex items-center justify-center mb-5">
                                 <svg class="w-5 h-5 text-warm-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <h3 class="text-base font-bold text-ink-900 mb-1.5 font-display">Only pay on success</h3>
-                            <p class="text-ink-400 text-sm leading-relaxed">No monthly fees. No signup cost. You're only charged when we confirm your table.</p>
+                            <h3 class="text-lg font-bold text-ink-900 mb-1.5 font-display">Only pay on success</h3>
+                            <p class="text-ink-500 text-[15px] leading-relaxed">No monthly fees. No signup cost. You're only charged when we confirm your table.</p>
                         </div>
                     </div>
                 </div>
@@ -441,18 +440,18 @@
             <div class="max-w-4xl mx-auto px-6">
                 <div class="text-center mb-16 reveal">
                     <p class="text-warm-500 text-xs font-bold tracking-[0.25em] uppercase mb-4">Pricing</p>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight mb-3 font-display">Straightforward pricing</h2>
-                    <p class="text-ink-400 text-base">No subscriptions. No hidden fees. Just results.</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-900 tracking-tight mb-3 font-display">Straightforward pricing</h2>
+                    <p class="text-ink-500 text-lg">No subscriptions. No hidden fees. Just results.</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                     <!-- Per-booking -->
-                    <div class="reveal rounded-2xl border border-ink-200 bg-white p-9 text-center">
-                        <h3 class="text-sm font-semibold text-ink-400 uppercase tracking-wider mb-5">Per Booking</h3>
+                    <div class="reveal rounded-2xl border border-ink-200 bg-white p-10 text-center">
+                        <h3 class="text-base font-semibold text-ink-500 uppercase tracking-wider mb-5">Per Successful Booking</h3>
                         <div class="mb-7">
-                            <span class="text-5xl font-extrabold text-ink-900 font-display">$12</span>
-                            <span class="text-ink-300 ml-1 text-sm">/ reservation</span>
+                            <span class="text-6xl font-extrabold text-ink-900 font-display">$12</span>
+                            <span class="text-ink-400 ml-1 text-base">/ reservation</span>
                         </div>
-                        <ul class="text-ink-500 text-sm space-y-3.5 mb-8 text-left">
+                        <ul class="text-ink-500 text-[15px] space-y-3.5 mb-8 text-left">
                             <li class="flex items-center gap-3">
                                 <svg class="w-4 h-4 text-warm-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 Only charged on confirmed bookings
@@ -472,15 +471,15 @@
                         </button>
                     </div>
                     <!-- 5-pack -->
-                    <div class="reveal rounded-2xl bg-surface-dark p-9 text-center relative overflow-hidden" style="transition-delay: 0.1s;">
+                    <div class="reveal rounded-2xl bg-surface-dark p-10 text-center relative overflow-hidden" style="transition-delay: 0.1s;">
                         <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-warm-400 via-warm-500 to-warm-400"></div>
-                        <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md bg-warm-500 text-white text-[10px] font-bold tracking-wide uppercase">Best Value</div>
-                        <h3 class="text-sm font-semibold text-white/40 uppercase tracking-wider mb-5">5 Pack</h3>
+                        <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md bg-warm-500 text-white text-xs font-bold tracking-wide uppercase">Best Value</div>
+                        <h3 class="text-base font-semibold text-white/55 uppercase tracking-wider mb-5">5 Pack</h3>
                         <div class="mb-7">
-                            <span class="text-5xl font-extrabold text-white font-display">$10</span>
-                            <span class="text-white/30 ml-1 text-sm">/ reservation</span>
+                            <span class="text-6xl font-extrabold text-white font-display">$10</span>
+                            <span class="text-white/45 ml-1 text-base">/ reservation</span>
                         </div>
-                        <ul class="text-white/50 text-sm space-y-3.5 mb-8 text-left">
+                        <ul class="text-white/60 text-[15px] space-y-3.5 mb-8 text-left">
                             <li class="flex items-center gap-3">
                                 <svg class="w-4 h-4 text-warm-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 Save $2 per booking
@@ -508,8 +507,8 @@
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-14 reveal">
                     <p class="text-warm-500 text-xs font-bold tracking-[0.25em] uppercase mb-4">Our Restaurants</p>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight mb-3 font-display">The tables everyone's after</h2>
-                    <p class="text-ink-400 text-base">Michelin stars. James Beard winners. The ones your friends can't believe you got.</p>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-900 tracking-tight mb-3 font-display">The tables everyone's after</h2>
+                    <p class="text-ink-500 text-lg">Michelin stars. James Beard winners. The ones your friends can't believe you got.</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 reveal">
                     <template x-for="r in featuredRestaurants" :key="r.venue_id">
@@ -520,8 +519,8 @@
                                     @error="$event.target.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                                 <div class="absolute bottom-3 left-3">
-                                    <h3 class="text-sm font-bold text-white leading-tight drop-shadow-sm" x-text="r.name"></h3>
-                                    <p class="text-white/60 text-xs mt-0.5" x-text="r.neighborhood"></p>
+                                    <h3 class="text-base font-bold text-white leading-tight drop-shadow-sm" x-text="r.name"></h3>
+                                    <p class="text-white/70 text-sm mt-0.5" x-text="r.neighborhood"></p>
                                 </div>
                             </div>
                         </div>
@@ -541,7 +540,7 @@
             <div class="max-w-3xl mx-auto px-6">
                 <div class="text-center mb-14 reveal">
                     <p class="text-warm-500 text-xs font-bold tracking-[0.25em] uppercase mb-4">FAQ</p>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-ink-900 tracking-tight font-display">Common questions</h2>
+                    <h2 class="text-4xl sm:text-5xl font-extrabold text-ink-900 tracking-tight font-display">Common questions</h2>
                 </div>
                 <div class="space-y-3 reveal">
                     <template x-for="(faq, i) in faqs" :key="i">
@@ -549,7 +548,7 @@
                              :class="faq.open ? 'shadow-sm border-warm-200' : ''">
                             <button @click="faq.open = !faq.open"
                                 class="w-full px-6 py-5 flex items-center justify-between text-left">
-                                <span class="font-semibold text-ink-800 text-[15px] pr-4" x-text="faq.q"></span>
+                                <span class="font-semibold text-ink-800 text-base pr-4" x-text="faq.q"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-200 ml-4"
                                     :class="faq.open ? 'rotate-180 text-warm-500' : 'text-ink-300'"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -557,7 +556,7 @@
                                 </svg>
                             </button>
                             <div x-show="faq.open" x-collapse>
-                                <div class="px-6 pb-5 text-ink-400 text-sm leading-relaxed" x-text="faq.a"></div>
+                                <div class="px-6 pb-5 text-ink-500 text-[15px] leading-relaxed" x-text="faq.a"></div>
                             </div>
                         </div>
                     </template>
@@ -568,8 +567,8 @@
         <!-- ═══ FINAL CTA (Dark) ═══ -->
         <section class="hero-bg py-24 sm:py-32 relative">
             <div class="max-w-3xl mx-auto px-6 text-center relative z-10 reveal">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight font-display">Stop refreshing.<br><span class="text-accent-glow">Start eating.</span></h2>
-                <p class="text-white/40 text-base mb-10 max-w-md mx-auto">Join hundreds of New Yorkers who never miss a reservation again.</p>
+                <h2 class="text-4xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight font-display">Stop refreshing.<br><span class="text-accent-glow">Start eating.</span></h2>
+                <p class="text-white/55 text-lg mb-10 max-w-md mx-auto">Join hundreds of New Yorkers who never miss a reservation again.</p>
                 <button @click="openAuth()"
                     class="px-10 py-4 rounded-xl bg-warm-500 hover:bg-warm-600 text-white font-bold text-base transition-all shadow-lg shadow-warm-500/20">
                     Get Started — It's Free to Join
@@ -714,7 +713,7 @@
             restaurantCount: '39',
 
             get featuredRestaurants() {
-                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'don angie', 'le bernardin', 'lilia', 'peter luger'];
+                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'don angie', 'le bernardin', 'lilia', 'peter luger', 'semma'];
                 const featured = this.restaurants.filter(r =>
                     names.some(n => r.name && r.name.toLowerCase().includes(n))
                 );
