@@ -80,9 +80,18 @@ PRE_DROP_POLL_MAX_MS = 60   # ~17 req/s at slowest, avg ~20 req/s
 # Legacy pre-fire offset (still used for busy-wait precision entry)
 PRE_FIRE_MS = 200
 
-# Warmup timing (Phase 6: earlier warmup)
-WARMUP_BEFORE_SECONDS = 30  # Was 5s — earlier warmup for better TCP window
-PING_INTERVAL_SECONDS = 10  # Was 15s — more frequent keep-alive
+# Auth timing: randomized per-snipe so each user authenticates at a different time
+AUTH_BEFORE_MIN_SECONDS = 40   # earliest auth: T-40s before drop
+AUTH_BEFORE_MAX_SECONDS = 88   # latest auth: T-88s before drop
+
+# Warmup timing: randomized per-snipe
+WARMUP_BEFORE_MIN_SECONDS = 15  # earliest warmup: T-15s
+WARMUP_BEFORE_MAX_SECONDS = 30  # latest warmup: T-30s
+
+# Keep-alive ping timing: randomized per-ping
+PING_INTERVAL_MIN_SECONDS = 6
+PING_INTERVAL_MAX_SECONDS = 11
+PING_WARMUP_BUFFER_SECONDS = 4  # no ping within 4s of warmup start
 
 # Parallel booking: get_details on top N matching slots simultaneously
 PARALLEL_DETAILS_SLOTS = 3
@@ -121,11 +130,11 @@ CANCEL_SLOWDOWN_EXTRA = (3, 8)      # add 3-8s to whatever tier interval
 
 
 async def _ensure_scout_for_venue(app, venue_id: int, venue_name: str = "") -> None:
-    """Auto-start a drop scout ONLY when 2+ snipes target the same venue.
+    """Auto-start a drop scout when 1+ snipes target the same venue.
 
-    With 1 snipe, the snipe polls on its own — no scout overhead.
-    With 2+ snipes, a shared scout polls once and broadcasts to all subscribers,
-    saving duplicate requests and giving instant detection to everyone.
+    Even a single snipe benefits from a shared scout — it centralizes polling
+    into one stream per venue, saving EIP slots and reducing duplicate requests.
+    With multiple snipes, the scout broadcasts to all subscribers.
 
     Also a no-op if a scout is already running (e.g. manually started from admin).
     """
@@ -140,10 +149,10 @@ async def _ensure_scout_for_venue(app, venue_id: int, venue_name: str = "") -> N
         logger.debug("Scout already running for venue %d", venue_id)
         return
 
-    # Only auto-start if 2+ active snipes for this venue
+    # Auto-start if 1+ active snipes for this venue
     active_count = await db.count_active_snipes_for_venue(venue_id)
-    if active_count < 2:
-        logger.debug("Only %d snipe(s) for venue %d — no scout needed", active_count, venue_id)
+    if active_count < 1:
+        logger.debug("No snipes for venue %d — no scout needed", venue_id)
         return
 
     # Look up curated restaurant for drop time config
@@ -170,7 +179,7 @@ async def _ensure_scout_for_venue(app, venue_id: int, venue_name: str = "") -> N
 
 
 async def _maybe_stop_scout_for_venue(app, venue_id: int) -> None:
-    """Stop an AUTO-STARTED scout when snipe count drops below 2.
+    """Stop an AUTO-STARTED scout when no snipes remain for the venue.
 
     Only stops scouts that were auto-started. Manually started scouts
     (from admin panel) are never auto-stopped — admin controls those.
@@ -183,13 +192,13 @@ async def _maybe_stop_scout_for_venue(app, venue_id: int) -> None:
     if not scout.is_auto_started(venue_id, "drop"):
         return
 
-    # Check if enough snipes remain to justify the scout
+    # Check if any snipes remain to justify the scout
     remaining = await db.count_active_snipes_for_venue(venue_id)
-    if remaining >= 2:
-        logger.debug("Scout for venue %d: %d snipes still active, keeping scout", venue_id, remaining)
+    if remaining >= 1:
+        logger.debug("Scout for venue %d: %d snipe(s) still active, keeping scout", venue_id, remaining)
         return
 
-    # Less than 2 snipes — scout no longer needed
+    # No snipes left — scout no longer needed
     from tablement.web.scout import _task_key
     key = _task_key(venue_id, "drop")
     if key in scout._tasks and not scout._tasks[key].done():
@@ -719,15 +728,15 @@ def _schedule_snipe(app, reservation_id: str, user_id: str, body, profile: dict,
     now = datetime.now(drop_dt.tzinfo)
     seconds_until_drop = (drop_dt - now).total_seconds()
 
-    if seconds_until_drop <= 60:
+    if seconds_until_drop <= AUTH_BEFORE_MAX_SECONDS:
         # Drop is imminent or past — run now
         job = app.state.jobs.create(reservation_id, user_id)
         job.task = asyncio.create_task(
             _run_snipe(app, reservation_id, user_id, config, profile, dry_run, job)
         )
     elif scheduler:
-        # Schedule to start at T-60s
-        run_at = drop_dt - timedelta(seconds=60)
+        # Schedule to start at T-88s (max auth window) — actual auth time is randomized inside
+        run_at = drop_dt - timedelta(seconds=AUTH_BEFORE_MAX_SECONDS)
         scheduler.add_job(
             _run_snipe_from_scheduler,
             trigger="date",
@@ -859,12 +868,15 @@ async def _run_snipe(
 
         # Single persistent connection with per-user fingerprint + proxy + dedicated IP
         async with ResyApiClient(user_id=user_id, local_address=local_ip) as client:
-            # Wait until T-60 then authenticate
-            auth_time = drop_dt - timedelta(seconds=60)
+            # Randomized auth time: T-40s to T-88s (each user authenticates at different time)
+            auth_before = random.uniform(AUTH_BEFORE_MIN_SECONDS, AUTH_BEFORE_MAX_SECONDS)
+            auth_time = drop_dt - timedelta(seconds=auth_before)
+            logger.info("Snipe %s: auth at T-%.1fs (randomized 40-88s)", reservation_id, auth_before)
+
             now = datetime.now(drop_dt.tzinfo)
             wait_secs = (auth_time - now).total_seconds()
 
-            # Countdown until T-60
+            # Countdown until randomized auth time
             while wait_secs > 0:
                 remaining = (drop_dt - datetime.now(drop_dt.tzinfo)).total_seconds()
                 job.broadcast("countdown_tick", {
@@ -875,7 +887,7 @@ async def _run_snipe(
                 await asyncio.sleep(sleep_time)
                 wait_secs = (auth_time - datetime.now(drop_dt.tzinfo)).total_seconds()
 
-            # Authenticate at T-60 (with retry)
+            # Authenticate at randomized time (with retry)
             _set_phase(SnipePhase.AUTHENTICATING, "Authenticating with Resy...")
             for _auth_attempt in range(3):
                 try:
@@ -900,9 +912,15 @@ async def _run_snipe(
             client.prepare_book_template(payment_id)
             logger.info("Auth complete, book template prepared")
 
-            # Keep-alive pings until T-30 (was T-5)
-            warmup_time = drop_dt - timedelta(seconds=WARMUP_BEFORE_SECONDS)
+            # Randomized warmup time: T-15s to T-30s
+            warmup_before = random.uniform(WARMUP_BEFORE_MIN_SECONDS, WARMUP_BEFORE_MAX_SECONDS)
+            warmup_time = drop_dt - timedelta(seconds=warmup_before)
+            ping_cutoff = warmup_time - timedelta(seconds=PING_WARMUP_BUFFER_SECONDS)
+            logger.info("Snipe %s: warmup at T-%.1fs (randomized 15-30s)", reservation_id, warmup_before)
+
+            # Keep-alive pings until warmup (randomized 6-11s intervals, stop 4s before warmup)
             last_ping = time_module.monotonic()
+            next_ping_interval = random.uniform(PING_INTERVAL_MIN_SECONDS, PING_INTERVAL_MAX_SECONDS)
             while True:
                 now = datetime.now(drop_dt.tzinfo)
                 remaining = (drop_dt - now).total_seconds()
@@ -912,12 +930,15 @@ async def _run_snipe(
                     "seconds_remaining": remaining,
                     "phase": "authenticating",
                 })
-                if time_module.monotonic() - last_ping > PING_INTERVAL_SECONDS:
+                # Ping if interval elapsed AND not within 4s of warmup
+                if (time_module.monotonic() - last_ping > next_ping_interval
+                        and (ping_cutoff - now).total_seconds() > 0):
                     await client.ping()
                     last_ping = time_module.monotonic()
+                    next_ping_interval = random.uniform(PING_INTERVAL_MIN_SECONDS, PING_INTERVAL_MAX_SECONDS)
                 await asyncio.sleep(min((warmup_time - now).total_seconds(), 1.0))
 
-            # Warmup at T-30: proxy connection + Resy clock cal + direct client
+            # Warmup at randomized time: proxy connection + Resy clock cal + direct client
             _set_phase(SnipePhase.WARMING, "Warming connections + calibrating clock...")
             warmup_results = await asyncio.gather(
                 client.find_slots(config.venue_id, day_str, config.party_size),
@@ -957,8 +978,9 @@ async def _run_snipe(
             except Exception as e:
                 logger.warning("Imperva pre-warm / latency check failed (non-critical): %s", e)
 
-            # Continue pinging until pre-drop polling window
+            # Continue pinging until pre-drop polling window (randomized 6-11s intervals)
             poll_entry = drop_dt - timedelta(seconds=PRE_DROP_POLL_SECONDS)
+            next_ping_interval = random.uniform(PING_INTERVAL_MIN_SECONDS, PING_INTERVAL_MAX_SECONDS)
             while True:
                 now = datetime.now(drop_dt.tzinfo)
                 remaining = (drop_dt - now).total_seconds()
@@ -968,9 +990,10 @@ async def _run_snipe(
                     "seconds_remaining": remaining,
                     "phase": "warming",
                 })
-                if time_module.monotonic() - last_ping > PING_INTERVAL_SECONDS:
+                if time_module.monotonic() - last_ping > next_ping_interval:
                     await client.ping()
                     last_ping = time_module.monotonic()
+                    next_ping_interval = random.uniform(PING_INTERVAL_MIN_SECONDS, PING_INTERVAL_MAX_SECONDS)
                 await asyncio.sleep(min((poll_entry - now).total_seconds(), 1.0))
 
             # Switch to snipe mode (tighter timeouts)
