@@ -255,18 +255,18 @@
                 <div class="card p-5 sm:p-6 mb-4 anim-in-d1">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="text-base font-bold" style="color: var(--c1);">When do you want to go?</h2>
-                            <p class="text-xs mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
+                            <h2 class="text-base md:text-xl font-bold" style="color: var(--c1);">When do you want to go?</h2>
+                            <p class="text-xs md:text-base mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
                         </div>
-                        <div class="flex items-center gap-1.5">
+                        <div class="flex items-center gap-1.5 md:gap-2.5">
                             <template x-for="i in 5" :key="'dot-'+i">
-                                <div class="w-2 h-2 rounded-full transition-colors"
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors"
                                     :style="i <= selectedDates.length
                                         ? 'background: var(--accent);'
                                         : 'background: var(--border);'">
                                 </div>
                             </template>
-                            <span class="text-xs font-bold ml-1 tabular-nums"
+                            <span class="text-xs md:text-sm font-bold ml-1 md:ml-2 tabular-nums"
                                 :style="selectedDates.length > 0 ? 'color: var(--accent);' : 'color: var(--c4);'"
                                 x-text="selectedDates.length + '/5'"></span>
                         </div>
@@ -274,12 +274,12 @@
 
                     <!-- Month nav -->
                     <div class="flex items-center justify-between mb-3">
-                        <button @click="prevMonth()" class="p-1.5 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        <button @click="prevMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="monthLabel"></h3>
-                        <button @click="nextMonth()" class="p-1.5 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        <h3 class="text-sm md:text-lg font-bold" style="color: var(--c1);" x-text="monthLabel"></h3>
+                        <button @click="nextMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     </div>
 
