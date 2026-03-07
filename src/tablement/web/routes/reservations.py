@@ -53,6 +53,24 @@ from tablement.web.state import JobState, SnipePhase
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+
+async def _cleanup_claims(reservation_id: str, terminal_status: str) -> None:
+    """Update slot_claims when a reservation reaches a terminal state.
+
+    Maps reservation status → claim status:
+      confirmed → completed
+      failed / cancelled / dry_run → cancelled
+    Fire-and-forget safe — never raises.
+    """
+    claim_status = "completed" if terminal_status == "confirmed" else "cancelled"
+    try:
+        n = await db.update_claims_by_reservation(str(reservation_id), claim_status)
+        if n:
+            logger.debug("Cleaned %d claim(s) for reservation %s → %s", n, reservation_id, claim_status)
+    except Exception as e:
+        logger.debug("Claim cleanup skipped for %s: %s", reservation_id, e)
+
+
 # Pre-drop polling: start hammering find_slots() this many seconds BEFORE drop
 PRE_DROP_POLL_SECONDS = 2.0
 # Polling interval range (jittered to avoid detection)
@@ -480,6 +498,22 @@ async def create_batch_reservations(
         reservation_id = row["id"]
         reservation_ids.append(reservation_id)
 
+        # Register slot claims for conflict detection
+        for tp in body.time_preferences:
+            try:
+                await db.create_slot_claim(
+                    user_id=user_id,
+                    venue_id=body.venue_id,
+                    venue_name=body.venue_name,
+                    target_date=date_str,
+                    preferred_time=tp.time,
+                    seating_type=tp.seating_type or "",
+                    reservation_id=str(reservation_id),
+                )
+            except Exception as claim_err:
+                # Non-fatal — duplicate claim or DB error shouldn't block the snipe
+                logger.debug("Slot claim create skipped: %s", claim_err)
+
         # Schedule the job
         if mode == "snipe":
             _schedule_snipe(request.app, reservation_id, user_id,
@@ -567,6 +601,7 @@ async def cancel_reservation(
 
     # Update DB
     await db.update_reservation(reservation_id, status="cancelled", error="Cancelled by user")
+    await _cleanup_claims(reservation_id, "cancelled")
 
     # Auto-stop scout if this was the last snipe for the venue
     try:
@@ -1155,6 +1190,9 @@ async def _run_snipe(
                 update_fields["error"] = result.error
             await db.update_reservation(reservation_id, **update_fields)
 
+            # Clean up slot claims on terminal state
+            await _cleanup_claims(reservation_id, update_fields["status"])
+
             # Stripe: charge on success (fire-and-forget, never blocks booking)
             if result.success and not is_dry_run_success:
                 asyncio.create_task(_handle_stripe_result(reservation_id, user_id, result))
@@ -1194,6 +1232,7 @@ async def _run_snipe(
     except asyncio.CancelledError:
         _set_phase(SnipePhase.DONE, "Cancelled")
         await db.update_reservation(reservation_id, status="cancelled", error="Cancelled")
+        await _cleanup_claims(reservation_id, "cancelled")
         job.broadcast("snipe_result", {
             "success": False, "error": "Cancelled by user",
             "attempts": job.status.attempt, "elapsed_seconds": 0,
@@ -1203,6 +1242,7 @@ async def _run_snipe(
         safe_msg = _safe_error(e)
         _set_phase(SnipePhase.DONE, f"Error: {safe_msg}")
         await db.update_reservation(reservation_id, status="failed", error=str(e))
+        await _cleanup_claims(reservation_id, "failed")
         job.broadcast("snipe_result", {
             "success": False, "error": safe_msg,
             "attempts": job.status.attempt, "elapsed_seconds": 0,
@@ -1327,6 +1367,7 @@ async def _cancellation_snipe_loop(
             if target_date < date.today():
                 logger.info("Cancel snipe %s: target date passed", reservation_id)
                 await db.update_reservation(reservation_id, status="failed", error="Target date passed")
+                await _cleanup_claims(reservation_id, "failed")
                 job.broadcast("snipe_result", {"success": False, "error": "Target date passed"})
                 break
 
@@ -1457,6 +1498,7 @@ async def _cancellation_snipe_loop(
                             resy_token=result.resy_token,
                             attempts=attempt,
                         )
+                        await _cleanup_claims(reservation_id, "confirmed")
 
                         job.broadcast("snipe_result", {
                             "success": True,
@@ -1528,6 +1570,7 @@ async def _cancellation_snipe_loop(
 
     except asyncio.CancelledError:
         await db.update_reservation(reservation_id, status="cancelled", error="Cancelled")
+        await _cleanup_claims(reservation_id, "cancelled")
     finally:
         app.state.jobs.remove(reservation_id)
 

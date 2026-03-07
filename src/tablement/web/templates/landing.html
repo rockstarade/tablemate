@@ -464,7 +464,7 @@
                     </div>
                     <!-- 5-pack -->
                     <div class="reveal glass rounded-2xl border border-brand-500/30 p-10 text-center relative overflow-hidden glow-amber" style="transition-delay: 0.1s;">
-                        <div class="absolute top-4 right-4 px-3 py-1 rounded-lg bg-brand-500/20 text-brand-400 text-xs font-bold">Best value</div>
+                        <div class="absolute top-4 right-4 px-3 py-1 rounded-lg bg-brand-500/20 text-brand-400 text-xs font-bold">Save 17%</div>
                         <h3 class="text-lg font-semibold text-white mb-4">5 Pack</h3>
                         <div class="mb-6">
                             <span class="text-6xl font-extrabold text-gradient">$10</span>
@@ -652,10 +652,10 @@
                 <p class="text-slate-500 text-sm mb-8">
                     Sent to <span class="text-slate-300">+1 <span x-text="phoneDisplay"></span></span>
                 </p>
-                <div class="flex justify-center gap-3 mb-6" @paste.prevent="handleOtpPaste($event)">
+                <div class="flex justify-center gap-3 mb-6" data-otp-container @paste.prevent="handleOtpPaste($event)">
                     <template x-for="(digit, i) in otpDigits" :key="i">
-                        <input type="text" inputmode="numeric" maxlength="1"
-                            :x-ref="'otp' + i" :value="digit"
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                            :data-otp-idx="i" :value="digit"
                             @input="handleOtpInput($event, i)"
                             @keydown="handleOtpKeydown($event, i)"
                             @focus="$event.target.select()"
@@ -802,31 +802,47 @@
             },
             getE164Phone() { return '+1' + this.phoneDigits; },
 
+            _otpInputs(e) { return e.target.closest('[data-otp-container]').querySelectorAll('input'); },
             handleOtpInput(e, idx) {
                 const val = e.target.value.replace(/\D/g, '');
+                if (val.length > 1) {
+                    const chars = val.split('');
+                    for (let i = 0; i < chars.length && (idx + i) < 6; i++) this.otpDigits[idx + i] = chars[i];
+                    this.$nextTick(() => {
+                        const inputs = this._otpInputs(e);
+                        inputs.forEach((inp, i) => inp.value = this.otpDigits[i]);
+                        inputs[Math.min(idx + val.length, 5)]?.focus();
+                        if (this.otpDigits.every(d => d !== '')) this.verifyOtp();
+                    });
+                    return;
+                }
                 if (val.length === 0) { this.otpDigits[idx] = ''; return; }
-                this.otpDigits[idx] = val.slice(-1);
-                e.target.value = this.otpDigits[idx];
-                if (idx < 5) this.$nextTick(() => { const n = this.$refs['otp' + (idx + 1)]; if (n) n.focus(); });
+                this.otpDigits[idx] = val;
+                e.target.value = val;
+                if (idx < 5) setTimeout(() => { const inputs = this._otpInputs(e); inputs[idx + 1]?.focus(); }, 10);
                 if (this.otpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyOtp());
             },
             handleOtpKeydown(e, idx) {
+                const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
                 if (e.key === 'Backspace') {
                     if (this.otpDigits[idx] === '' && idx > 0) {
-                        this.$nextTick(() => { const p = this.$refs['otp' + (idx - 1)]; if (p) { p.focus(); this.otpDigits[idx - 1] = ''; p.value = ''; } });
+                        this.otpDigits[idx - 1] = '';
+                        inputs[idx - 1].value = '';
+                        setTimeout(() => inputs[idx - 1]?.focus(), 10);
                     } else { this.otpDigits[idx] = ''; e.target.value = ''; }
                     e.preventDefault(); return;
                 }
-                if (e.key === 'ArrowLeft' && idx > 0) { this.$refs['otp' + (idx - 1)]?.focus(); e.preventDefault(); return; }
-                if (e.key === 'ArrowRight' && idx < 5) { this.$refs['otp' + (idx + 1)]?.focus(); e.preventDefault(); return; }
+                if (e.key === 'ArrowLeft' && idx > 0) { inputs[idx - 1]?.focus(); e.preventDefault(); return; }
+                if (e.key === 'ArrowRight' && idx < 5) { inputs[idx + 1]?.focus(); e.preventDefault(); return; }
                 if (!/^\d$/.test(e.key) && !['Tab', 'Escape', 'Enter'].includes(e.key) && !(e.ctrlKey || e.metaKey)) e.preventDefault();
             },
             handleOtpPaste(e) {
                 const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
                 for (let i = 0; i < 6; i++) this.otpDigits[i] = pasted[i] || '';
                 this.$nextTick(() => {
-                    for (let i = 0; i < 6; i++) { const el = this.$refs['otp' + i]; if (el) el.value = this.otpDigits[i]; }
-                    this.$refs['otp' + Math.min(pasted.length, 5)]?.focus();
+                    const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                    inputs.forEach((inp, i) => inp.value = this.otpDigits[i]);
+                    inputs[Math.min(pasted.length, 5)]?.focus();
                     if (pasted.length === 6) this.verifyOtp();
                 });
             },

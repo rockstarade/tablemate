@@ -407,6 +407,32 @@ async def update_slot_claim(claim_id: str, **fields) -> dict | None:
     return resp.data[0] if resp.data else None
 
 
+async def update_claims_by_reservation(reservation_id: str, status: str) -> int:
+    """Update all slot_claims linked to a reservation.
+
+    Returns count of updated claims.
+    """
+    resp = (
+        await get_service_client()
+        .table("slot_claims")
+        .update({"status": status})
+        .eq("reservation_id", reservation_id)
+        .execute()
+    )
+    return len(resp.data)
+
+
+async def get_claims_count(venue_id: int, target_date: str) -> dict[str, int]:
+    """Get count of active claims per time slot (anonymous — no user IDs)."""
+    claims = await get_active_claims(venue_id, target_date)
+    counts: dict[str, int] = {}
+    for c in claims:
+        t = c.get("preferred_time", "")
+        if t:
+            counts[t] = counts.get(t, 0) + 1
+    return counts
+
+
 # ---------------------------------------------------------------------------
 # Curated Restaurants — browse grid
 # ---------------------------------------------------------------------------

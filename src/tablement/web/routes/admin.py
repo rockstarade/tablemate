@@ -1123,6 +1123,46 @@ async def create_claim(body: dict):
     return {"created": True, "claim": claim}
 
 
+@router.post("/vip/claims/override", dependencies=[Depends(_require_admin)])
+async def override_claim(body: dict):
+    """Admin override: cancel conflicting claims and create admin's priority claim.
+
+    This allows the admin to jump the queue on any slot regardless of
+    existing user claims.
+    """
+    venue_id = body.get("venue_id")
+    target_date = body.get("target_date")
+    preferred_time = body.get("preferred_time")
+    admin_user_id = body.get("admin_user_id")
+
+    if not venue_id or not target_date or not preferred_time or not admin_user_id:
+        raise HTTPException(400, "venue_id, target_date, preferred_time, and admin_user_id are required")
+
+    # Cancel all active claims for this exact slot
+    claims = await db.get_active_claims(venue_id, target_date)
+    overridden = []
+    for c in claims:
+        if c["preferred_time"] == preferred_time and c["status"] == "active":
+            await db.update_slot_claim(c["id"], status="overridden")
+            overridden.append(c["id"])
+
+    # Create admin's priority claim
+    claim = await db.create_slot_claim(
+        user_id=admin_user_id,
+        venue_id=venue_id,
+        target_date=target_date,
+        preferred_time=preferred_time,
+        seating_type=body.get("seating_type", ""),
+        venue_name=body.get("venue_name", ""),
+    )
+
+    return {
+        "overridden_count": len(overridden),
+        "overridden_ids": overridden,
+        "admin_claim": claim,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Active Jobs Dashboard
 # ---------------------------------------------------------------------------

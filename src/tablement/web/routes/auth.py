@@ -258,17 +258,36 @@ async def resy_complete_challenge(request: Request, body: dict, user_id: str = D
     claim_token = body.get("claim_token", "").strip()
     challenge_id = body.get("challenge_id", "").strip()
     email = body.get("email", "").strip()
+    phone = body.get("phone", "").strip()
     if not claim_token or not challenge_id or not email:
         raise HTTPException(400, "claim_token, challenge_id, and email are required")
 
+    # Normalize phone if provided (Resy requires mobile_number on challenge completion)
+    if phone:
+        digits = "".join(c for c in phone if c.isdigit())
+        if len(digits) == 10:
+            phone = f"+1{digits}"
+        elif len(digits) == 11 and digits.startswith("1"):
+            phone = f"+{digits}"
+        elif not phone.startswith("+"):
+            phone = f"+{digits}"
+
+    logger.info("resy-complete-challenge: email=%s, phone=%s, claim_token=%s..., challenge_id=%s...",
+                email, phone[:5] + "***" if phone else "EMPTY", claim_token[:10], challenge_id[:10])
+
     try:
         async with ResyApiClient() as client:
-            auth_resp = await client.complete_phone_challenge(claim_token, challenge_id, email)
+            auth_resp = await client.complete_phone_challenge(claim_token, challenge_id, email, phone=phone)
     except Exception as e:
         msg = str(e)
         if hasattr(e, "response") and e.response is not None:
             try:
-                msg = e.response.json().get("message", msg)
+                body = e.response.json()
+                # Resy returns field-level errors: {"mobile_number": "..."} not {"message": "..."}
+                if isinstance(body, dict):
+                    msg = body.get("message") or next(
+                        (v for v in body.values() if isinstance(v, str)), msg
+                    )
             except Exception:
                 pass
         logger.warning("Resy challenge failed: %s", msg)

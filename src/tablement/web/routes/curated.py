@@ -12,6 +12,15 @@ from fastapi import APIRouter
 
 from tablement.web import db
 
+# Scout-observed time slots per venue. Updated as scouts run.
+# Once the known_slots DB column exists, this falls back to DB data.
+# Format: venue_id → list of "HH:MM" strings
+KNOWN_SLOTS: dict[int, list[str]] = {
+    # Semma: observed 2026-03-06 drop for 2026-03-21
+    # 3 clusters at 15-min intervals: early (5pm), prime (7pm), late (9pm)
+    1263: ["17:00", "17:15", "17:30", "19:00", "19:15", "19:30", "21:00", "21:15", "21:30"],
+}
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -46,6 +55,7 @@ async def list_curated():
             "hot_start": r.get("hot_start", "19:00"),
             "hot_end": r.get("hot_end", "20:30"),
             "is_hot": r.get("is_hot", False),
+            "known_slots": r.get("known_slots") or KNOWN_SLOTS.get(r["venue_id"]),
         })
 
     return {"restaurants": restaurants}
@@ -74,5 +84,6 @@ async def get_curated(venue_id: int):
             "service_end": row.get("service_end", "22:00"),
             "hot_start": row.get("hot_start", "19:00"),
             "hot_end": row.get("hot_end", "20:30"),
+            "known_slots": row.get("known_slots") or KNOWN_SLOTS.get(row["venue_id"]),
         }
     }

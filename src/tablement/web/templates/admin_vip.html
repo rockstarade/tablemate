@@ -228,7 +228,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full" :class="(health.resy_latency_ms || 999) < 500 ? 'bg-emerald-400' : 'bg-red-400'"></span>
-                                <span class="text-xs text-slate-400">Resy <span class="text-white tabular-nums" x-text="health.resy_latency_ms ? health.resy_latency_ms + 'ms' : 'N/A'"></span></span>
+                                <span class="text-xs text-slate-400">Resy API <span class="text-white tabular-nums" x-text="health.resy_latency_ms ? health.resy_latency_ms + 'ms' : 'N/A'"></span></span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full" :class="Math.abs(health.ntp_offset_ms || 999) < 100 ? 'bg-emerald-400' : 'bg-brand-400'"></span>
@@ -499,13 +499,19 @@
                             </div>
                         </div>
 
-                        <!-- Dry run + Fire -->
-                        <div class="flex items-center gap-4 pt-2">
+                        <!-- Dry run + Override + Fire -->
+                        <div class="flex items-center gap-4 pt-2 flex-wrap">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" x-model="snipe.dry_run"
                                     class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500">
                                 <span class="text-sm text-slate-300">Dry Run</span>
                                 <span class="text-xs text-slate-500">(skip final book)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="snipe.override_claims"
+                                    class="w-4 h-4 rounded border-slate-600 bg-slate-800 text-red-500 focus:ring-red-500">
+                                <span class="text-sm text-slate-300">Override Claims</span>
+                                <span class="text-xs text-slate-500">(jump queue)</span>
                             </label>
                             <div class="flex-1"></div>
                             <button @click="fireSnipe()"
@@ -1721,6 +1727,7 @@
                 drop_time: { hour: 10, minute: 0, timezone: 'America/New_York', days_ahead: 30 },
                 proxy_override: 'direct',
                 dry_run: true,
+                override_claims: false,
                 detected_policy: null,
             },
             venueResults: [],
@@ -1880,6 +1887,11 @@
             switchTab(id) {
                 this.activeTab = id;
                 if (id === 'dashboard' && !this.analytics.loaded) this.loadAnalytics();
+                if (id === 'dashboard' && this.analytics.loaded) {
+                    // Re-render charts — Chart.js canvases lose dimensions when the
+                    // container was hidden (x-show=false on another tab).
+                    setTimeout(() => this.renderAnalyticsCharts(), 50);
+                }
                 if (id === 'intelligence' && !this.scouts.loaded) this.loadScouts();
                 if (id === 'settings') {
                     if (!this.restMgr.loaded) this.loadRestaurantsMgr();
@@ -2047,7 +2059,7 @@
 
                 if (this.snipe.venue_id && this.snipe.date) {
                     await this.checkSlotConflicts();
-                    if (this.slotConflicts.conflicts.length > 0) {
+                    if (this.slotConflicts.conflicts.length > 0 && !this.snipe.override_claims) {
                         const proceed = confirm(this.slotConflicts.conflicts.length + ' other user(s) are targeting the same time window. Fire anyway?');
                         if (!proceed) { this.snipeFiring = false; return; }
                     }
@@ -2084,15 +2096,27 @@
 
                     try {
                         const firstPref = this.snipe.time_preferences[0];
-                        await fetch('/api/admin/vip/claims/create', {
-                            method: 'POST', headers: this.headers(),
-                            body: JSON.stringify({
-                                user_id: this.snipe.user_id, venue_id: this.snipe.venue_id,
-                                target_date: this.snipe.date, preferred_time: firstPref?.time || '19:00',
-                                seating_type: firstPref?.seating_type || '', window_minutes: this.snipe.window_minutes,
-                                reservation_id: data.reservation_id,
-                            }),
-                        });
+                        const claimPayload = {
+                            user_id: this.snipe.user_id, venue_id: this.snipe.venue_id,
+                            venue_name: this.snipe.venue_name,
+                            target_date: this.snipe.date, preferred_time: firstPref?.time || '19:00',
+                            seating_type: firstPref?.seating_type || '', window_minutes: this.snipe.window_minutes,
+                            reservation_id: data.reservation_id,
+                        };
+                        if (this.snipe.override_claims) {
+                            claimPayload.admin_user_id = this.snipe.user_id;
+                            const overrideResp = await fetch('/api/admin/vip/claims/override', {
+                                method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
+                            });
+                            if (overrideResp.ok) {
+                                const od = await overrideResp.json();
+                                if (od.overridden_count > 0) this.addLog('info', 'Overrode ' + od.overridden_count + ' existing claim(s)');
+                            }
+                        } else {
+                            await fetch('/api/admin/vip/claims/create', {
+                                method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
+                            });
+                        }
                     } catch (e) { console.warn('Slot claim creation failed:', e); }
 
                     this.connectSSE(data.reservation_id);
@@ -2630,7 +2654,12 @@
                     if (successResp.ok) { this.analytics.bookingSuccess = await successResp.json(); }
                     this.analytics.loaded = true;
                     this.loadHeatmap();
-                    this.$nextTick(() => this.renderAnalyticsCharts());
+                    // Use setTimeout instead of $nextTick — $nextTick fires after the
+                    // NEXT Alpine DOM update, but parallel loads from loadInitial() keep
+                    // triggering cascading updates that cause Chart.js ResizeObserver to
+                    // collapse the canvas to 0px. setTimeout defers to after the current
+                    // task queue drains, giving all reactive updates time to settle.
+                    setTimeout(() => this.renderAnalyticsCharts(), 250);
                 } catch (e) { console.warn('Failed to load analytics:', e); }
                 this.analytics.loading = false;
             },

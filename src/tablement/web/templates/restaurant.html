@@ -355,15 +355,43 @@
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="tp in timePills" :key="tp.time">
-                                <button class="time-chip px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5"
+                                <button class="time-chip px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 relative"
                                     :style="timeStyles(tp)"
                                     @click="toggleTime(tp.time)">
                                     <span x-text="tp.label"></span>
                                     <template x-if="tp.isHot && !selectedTimes.includes(tp.time)">
                                         <span class="text-xs opacity-70">&#x1F525;</span>
                                     </template>
+                                    <span x-show="slotClaims[tp.time] > 0"
+                                        class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1"
+                                        style="background: #ef4444;"
+                                        x-text="slotClaims[tp.time]"></span>
                                 </button>
                             </template>
+                        </div>
+                        <!-- Claim conflict warning -->
+                        <div x-show="claimWarning" x-transition x-cloak
+                            class="mt-3 p-3 rounded-xl text-sm"
+                            style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);">
+                            <p class="font-medium" style="color: var(--c1);">
+                                &#x26A0;&#xFE0F; <span x-text="claimWarning?.count"></span> user<span x-show="claimWarning?.count > 1">s</span> already targeting
+                                <span x-text="claimWarning?.time" class="font-bold"></span>
+                            </p>
+                            <p class="mt-1 text-xs" style="color: var(--c3);">You'll be waitlisted if you proceed. Try one of these instead:</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <template x-for="alt in (claimWarning?.alternatives || [])" :key="alt">
+                                    <button @click="selectAlternative(alt)"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                                        style="background: rgba(245,158,11,0.12); color: var(--accent); border: 1px solid rgba(245,158,11,0.3);">
+                                        <span x-text="alt"></span>
+                                    </button>
+                                </template>
+                                <button @click="forceSelectClaimed()"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                    style="background: var(--bg-input); color: var(--c3); border: 1px solid var(--border);">
+                                    Keep anyway
+                                </button>
+                            </div>
                         </div>
                         <div x-show="selectedTimes.length === 1" x-transition
                             class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
@@ -533,6 +561,8 @@
             selectedDates: [], selectedTimes: [],
             partySize: 2, bookEarliest: false, latestNotify: 2,
             submitting: false, toast: null,
+            slotClaims: {},      // { "19:00": 2, "19:15": 1 } — claim counts per time
+            claimWarning: null,  // { time, alternatives: [...], count } — active warning
             venueId: {{ venue_id }},
             theme: localStorage.getItem('resr_theme') || 'dark',
             showEmailPrompt: false,
@@ -657,23 +687,35 @@
                     if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates for released slots'); return; }
                 }
                 this.selectedDates.push(dateStr); this.selectedDates.sort();
+                this.fetchSlotClaims();
             },
 
             // ═══ Times ═══
             get timePills() {
                 if (!this.restaurant) return [];
-                const start = this.parseTime(this.restaurant.service_start || '17:00');
-                const end = this.parseTime(this.restaurant.service_end || '22:00');
                 const hotStart = this.parseTime(this.restaurant.hot_start || '19:00');
                 const hotEnd = this.parseTime(this.restaurant.hot_end || '20:30');
+                const formatPill = (timeStr) => {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    const mins = h * 60 + (m || 0);
+                    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                    const ampm = h >= 12 ? 'pm' : 'am';
+                    return { time: timeStr, label: `${h12}:${String(m || 0).padStart(2,'0')} ${ampm}`, isHot: mins >= hotStart && mins <= hotEnd };
+                };
+                // Use real scout-observed slots when available
+                if (this.restaurant.known_slots && Array.isArray(this.restaurant.known_slots) && this.restaurant.known_slots.length > 0) {
+                    return this.restaurant.known_slots.map(t => formatPill(t));
+                }
+                // Fallback: generate range from service_start to service_end
+                const start = this.parseTime(this.restaurant.service_start || '17:00');
+                const end = this.parseTime(this.restaurant.service_end || '22:00');
+                const interval = this.restaurant.slot_interval || 30;
                 const pills = []; let t = start;
                 while (t <= end) {
                     const h = Math.floor(t/60), m = t%60;
                     const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-                    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-                    const ampm = h >= 12 ? 'pm' : 'am';
-                    pills.push({ time: timeStr, label: `${h12}:${String(m).padStart(2,'0')} ${ampm}`, isHot: t >= hotStart && t <= hotEnd });
-                    t += 30;
+                    pills.push(formatPill(timeStr));
+                    t += interval;
                 }
                 return pills;
             },
@@ -687,8 +729,60 @@
             },
             toggleTime(timeStr) {
                 const idx = this.selectedTimes.indexOf(timeStr);
-                if (idx >= 0) this.selectedTimes.splice(idx, 1);
-                else { this.selectedTimes.push(timeStr); this.selectedTimes.sort(); }
+                if (idx >= 0) {
+                    this.selectedTimes.splice(idx, 1);
+                    this.claimWarning = null;
+                    return;
+                }
+                // Check if slot is claimed by other users
+                if (this.slotClaims[timeStr] > 0) {
+                    this.showClaimWarning(timeStr);
+                    return;
+                }
+                this.selectedTimes.push(timeStr);
+                this.selectedTimes.sort();
+            },
+
+            // ═══ Slot Claims ═══
+            async fetchSlotClaims() {
+                if (!this.venueId || this.selectedDates.length === 0) return;
+                const date = this.selectedDates[0];
+                try {
+                    const resp = await fetch(`/api/slots/claims?venue_id=${this.venueId}&date=${date}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.slotClaims = data.claims || {};
+                    }
+                } catch (e) { console.warn('Failed to fetch slot claims:', e); }
+            },
+            showClaimWarning(timeStr) {
+                const pills = this.timePills.map(p => p.time);
+                const idx = pills.indexOf(timeStr);
+                const alternatives = [];
+                let left = idx - 1, right = idx + 1;
+                while (alternatives.length < 2 && (left >= 0 || right < pills.length)) {
+                    if (right < pills.length && !this.slotClaims[pills[right]] && !this.selectedTimes.includes(pills[right])) {
+                        alternatives.push(pills[right]);
+                    }
+                    if (left >= 0 && !this.slotClaims[pills[left]] && !this.selectedTimes.includes(pills[left]) && alternatives.length < 2) {
+                        alternatives.push(pills[left]);
+                    }
+                    left--; right++;
+                }
+                alternatives.sort();
+                this.claimWarning = { time: timeStr, alternatives, count: this.slotClaims[timeStr] };
+            },
+            selectAlternative(timeStr) {
+                this.selectedTimes.push(timeStr);
+                this.selectedTimes.sort();
+                this.claimWarning = null;
+            },
+            forceSelectClaimed() {
+                if (this.claimWarning) {
+                    this.selectedTimes.push(this.claimWarning.time);
+                    this.selectedTimes.sort();
+                    this.claimWarning = null;
+                }
             },
 
             // ═══ Computed ═══
@@ -813,25 +907,46 @@
                 } catch (e) { this.resyError = e.message; }
                 finally { this.resyLoading = false; }
             },
+            _resyOtpInputs(e) { return e.target.closest('[data-otp-container]').querySelectorAll('input'); },
             handleResyOtpInput(e, idx) {
                 const val = e.target.value.replace(/\D/g, '');
+                if (val.length > 1) {
+                    const chars = val.split('');
+                    for (let i = 0; i < chars.length && (idx + i) < 6; i++) this.resyOtpDigits[idx + i] = chars[i];
+                    this.$nextTick(() => {
+                        const inputs = this._resyOtpInputs(e);
+                        inputs.forEach((inp, i) => inp.value = this.resyOtpDigits[i]);
+                        inputs[Math.min(idx + val.length, 5)]?.focus();
+                        if (this.resyOtpDigits.every(d => d !== '')) this.verifyResyOtp();
+                    });
+                    return;
+                }
                 this.resyOtpDigits[idx] = val.slice(-1) || '';
                 e.target.value = this.resyOtpDigits[idx];
-                if (val && idx < 5) this.$nextTick(() => this.$refs['resyOtp' + (idx + 1)]?.focus());
+                if (val && idx < 5) setTimeout(() => { const inputs = this._resyOtpInputs(e); inputs[idx + 1]?.focus(); }, 10);
                 if (this.resyOtpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyResyOtp());
             },
             handleResyOtpKeydown(e, idx) {
+                const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
                 if (e.key === 'Backspace') {
                     if (this.resyOtpDigits[idx] === '' && idx > 0) {
-                        this.$nextTick(() => { this.$refs['resyOtp' + (idx - 1)]?.focus(); this.resyOtpDigits[idx - 1] = ''; });
+                        this.resyOtpDigits[idx - 1] = '';
+                        inputs[idx - 1].value = '';
+                        setTimeout(() => inputs[idx - 1]?.focus(), 10);
                     } else { this.resyOtpDigits[idx] = ''; e.target.value = ''; }
                     e.preventDefault();
                 }
+                if (e.key === 'ArrowLeft' && idx > 0) { inputs[idx - 1]?.focus(); e.preventDefault(); }
+                if (e.key === 'ArrowRight' && idx < 5) { inputs[idx + 1]?.focus(); e.preventDefault(); }
             },
             handleResyOtpPaste(e) {
                 const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
                 for (let i = 0; i < 6; i++) this.resyOtpDigits[i] = pasted[i] || '';
-                if (pasted.length === 6) this.$nextTick(() => this.verifyResyOtp());
+                this.$nextTick(() => {
+                    const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                    inputs.forEach((inp, i) => inp.value = this.resyOtpDigits[i]);
+                    if (pasted.length === 6) this.verifyResyOtp();
+                });
             },
             async verifyResyOtp() {
                 this.resyLoading = true; this.resyError = '';
@@ -868,6 +983,7 @@
                             claim_token: this.resyClaimToken,
                             challenge_id: this.resyChallengeId,
                             email: this.resyChallengeEmail,
+                            phone: '+1' + this.resyPhoneDigits,
                         }),
                     });
                     const data = await resp.json();
@@ -961,12 +1077,11 @@
                 </div>
                 <div x-show="resyPhoneStep === 'otp'">
                     <p class="text-xs mb-4" style="color: var(--c3);">Enter the 6-digit code sent to your Resy phone number.</p>
-                    <div class="flex justify-center gap-2 mb-4" @paste.prevent="handleResyOtpPaste($event)">
+                    <div class="flex justify-center gap-2 mb-4" data-otp-container @paste.prevent="handleResyOtpPaste($event)">
                         <template x-for="(digit, i) in resyOtpDigits" :key="i">
-                            <input type="text" inputmode="numeric" maxlength="1"
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
                                 autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false"
-                                :name="'otp-digit-' + i + '-' + Date.now()"
-                                :x-ref="'resyOtp' + i" :value="digit"
+                                :data-otp-idx="i" :value="digit"
                                 @input="handleResyOtpInput($event, i)" @keydown="handleResyOtpKeydown($event, i)" @focus="$event.target.select()"
                                 class="w-11 h-12 text-center text-lg font-semibold rounded-xl focus:outline-none"
                                 style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"

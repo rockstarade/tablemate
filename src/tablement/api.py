@@ -314,31 +314,44 @@ class ResyApiClient:
         logger.warning("Resy phone OTP: unexpected response: %s", raw)
         raise ValueError("Unexpected response from Resy. Try Email + Password instead.")
 
-    async def complete_phone_challenge(self, claim_token: str, challenge_id: str, email: str) -> AuthResponse:
+    async def complete_phone_challenge(self, claim_token: str, challenge_id: str, email: str, phone: str = "") -> AuthResponse:
         """POST /3/auth/mobile — complete email challenge after phone OTP.
 
         Same endpoint as send/verify — Resy uses /3/auth/mobile for all steps.
         This step sends claim_token + challenge_id + em_address to finalize auth.
+        Resy requires mobile_number on every call to this endpoint.
         """
         assert self._client is not None
-        logger.info("Resy challenge: posting to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s",
-                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email)
+        logger.info("Resy challenge: posting to /3/auth/mobile with claim_token=%s..., challenge_id=%s..., em_address=%s, phone=%s",
+                     claim_token[:10] if claim_token else "?", challenge_id[:10] if challenge_id else "?", email, phone[:5] + "***" if phone else "none")
+        payload = {
+            "claim_token": claim_token,
+            "challenge_id": challenge_id,
+            "em_address": email,
+        }
+        if phone:
+            payload["mobile_number"] = phone
         resp = await self._client.post(
             "/3/auth/mobile",
-            data={
-                "claim_token": claim_token,
-                "challenge_id": challenge_id,
-                "em_address": email,
-            },
+            data=payload,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
         logger.info("Resy challenge response: status=%d, content-type=%s", resp.status_code, resp.headers.get("content-type", "?"))
         if resp.status_code >= 300:
             try:
                 body = resp.json()
-                msg = body.get("message", resp.text)
+                # Resy sometimes returns field-level errors like {"mobile_number": "..."}
+                msg = body.get("message")
+                if not msg and isinstance(body, dict):
+                    for field, error in body.items():
+                        if isinstance(error, str):
+                            msg = error
+                            break
+                if not msg:
+                    msg = resp.text or f"HTTP {resp.status_code}"
             except Exception:
                 msg = resp.text or f"HTTP {resp.status_code}"
+            logger.warning("Resy challenge error: status=%d, body=%s", resp.status_code, resp.text[:500])
             raise httpx.HTTPStatusError(
                 msg, request=resp.request, response=resp
             )

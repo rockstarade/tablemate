@@ -84,3 +84,20 @@ async def get_available_slots(
         "total_slots": len(slots),
         "slot_groups": slot_groups,
     }
+
+
+@router.get("/claims")
+async def get_slot_claims(
+    venue_id: int = Query(...),
+    date: str = Query(..., pattern=r"^\d{4}-\d{2}-\d{2}$"),
+):
+    """Get anonymous claim counts per time slot for a venue+date.
+
+    No auth required — returns only counts, never user IDs.
+    Used by the frontend to badge time pills with conflict indicators.
+    """
+    try:
+        counts = await db.get_claims_count(venue_id, date)
+    except Exception:
+        counts = {}
+    return {"venue_id": venue_id, "date": date, "claims": counts}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tablepass — NYC's Hardest Reservations, Handled</title>
+    <title>tablepass — NYC's Hardest Reservations, Handled (V5)</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap" rel="stylesheet">
@@ -18,9 +18,9 @@
                     },
                     colors: {
                         sand: {
-                            50: '#FDF3DC', 100: '#FAEAC4', 200: '#F5D98A',
-                            300: '#F0C850', 400: '#E8A830', 500: '#E8A830',
-                            600: '#D49520', 700: '#B07A18',
+                            50: '#FFF5F2', 100: '#FFE5DE', 200: '#FFC5BA',
+                            300: '#FF9E8C', 400: '#F07058', 500: '#DC4A35',
+                            600: '#C03828', 700: '#A02A1C',
                         },
                         ink: {
                             50: '#f6f7f9', 100: '#e8eaef', 200: '#d4d8e1',
@@ -49,7 +49,7 @@
 
         /* Warm gradient text */
         .text-warm-gradient {
-            background: linear-gradient(135deg, #B07A18, #E8A830, #D49520);
+            background: linear-gradient(135deg, #A02A1C, #DC4A35, #C03828);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -118,11 +118,11 @@
         .otp-digit {
             width: 52px; height: 60px;
             text-align: center; font-size: 1.5rem; font-weight: 600;
-            caret-color: #E8A830;
+            caret-color: #DC4A35;
             transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
-        .otp-digit:focus { border-color: #E8A830; box-shadow: 0 0 0 3px rgba(232,168,48,0.15); }
-        .otp-digit.filled { border-color: #F0C850; background: rgba(232,168,48,0.06); }
+        .otp-digit:focus { border-color: #DC4A35; box-shadow: 0 0 0 3px rgba(220,74,53,0.15); }
+        .otp-digit.filled { border-color: #F07058; background: rgba(220,74,53,0.06); }
 
         /* Divider */
         .divider-dots {
@@ -135,13 +135,13 @@
         /* Step connector line */
         .step-line {
             position: absolute; top: 28px; left: calc(50% + 32px); right: calc(-50% + 32px);
-            height: 2px; background: linear-gradient(to right, #E8A830, rgba(232,168,48,0.2));
+            height: 2px; background: linear-gradient(to right, #DC4A35, rgba(220,74,53,0.2));
         }
 
         /* Pricing highlight */
         .pricing-popular {
             background: #fff;
-            border: 2px solid #E8A830;
+            border: 2px solid #DC4A35;
             position: relative;
         }
 
