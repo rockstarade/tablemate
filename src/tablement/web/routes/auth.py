@@ -279,17 +279,24 @@ async def resy_complete_challenge(request: Request, body: dict, user_id: str = D
         async with ResyApiClient() as client:
             auth_resp = await client.complete_phone_challenge(claim_token, challenge_id, email, phone=phone)
     except Exception as e:
-        msg = str(e)
+        msg = str(e) or repr(e)
+        logger.warning("Resy challenge raw exception: type=%s, str=%s", type(e).__name__, msg[:300])
         if hasattr(e, "response") and e.response is not None:
             try:
+                raw_text = e.response.text
+                logger.warning("Resy challenge response body: %s", raw_text[:500])
                 body = e.response.json()
                 # Resy returns field-level errors: {"mobile_number": "..."} not {"message": "..."}
                 if isinstance(body, dict):
-                    msg = body.get("message") or next(
-                        (v for v in body.values() if isinstance(v, str)), msg
+                    extracted = body.get("message") or next(
+                        (v for v in body.values() if isinstance(v, str)), None
                     )
+                    if extracted:
+                        msg = extracted
             except Exception:
                 pass
+        if not msg:
+            msg = "Unknown error — check server logs"
         logger.warning("Resy challenge failed: %s", msg)
         raise HTTPException(401, f"Email verification failed: {msg}")
 
