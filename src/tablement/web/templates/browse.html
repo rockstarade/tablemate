@@ -580,7 +580,7 @@
 
     <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
     <main class="lg:ml-64 pt-[84px] pb-24 lg:pb-8 min-h-screen">
-        <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1400px]">
+        <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1800px] mx-auto">
 
             <!-- Page heading -->
             <div class="mb-8 fade-in">
@@ -592,7 +592,7 @@
             <div x-show="loading" class="space-y-8">
                 <div>
                     <div class="skeleton h-5 w-32 mb-5"></div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
                         <template x-for="i in 4">
                             <div class="rounded-2xl overflow-hidden" style="border: 1px solid var(--border);">
                                 <div class="skeleton h-52 w-full"></div>
@@ -613,7 +613,7 @@
                     <h2 class="text-xl font-extrabold tracking-tight" style="color: var(--c1);">What's hot right now</h2>
                     <span class="text-base">&#x1F525;</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
                     <template x-for="(r, idx) in hotRestaurants" :key="r.venue_id">
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.06) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
@@ -695,7 +695,7 @@
                     </template>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
                     <template x-for="(r, idx) in filteredRestaurants" :key="r.venue_id">
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.04) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
@@ -1759,7 +1759,9 @@
             // ── Restaurant Logic ──
             get hotRestaurants() {
                 // Driven entirely by is_hot flag in DB (toggle from admin)
-                return this.restaurants.filter(r => r.is_hot).slice(0, 4);
+                // Show 5 on ultra-wide, 4 otherwise — matches grid columns
+                const cols = window.innerWidth >= 1536 ? 5 : 4;
+                return this.restaurants.filter(r => r.is_hot).slice(0, cols);
             },
 
             get filteredRestaurants() {
