@@ -264,6 +264,21 @@
         }
         .pulse-dot { animation: pulseDot 1.5s ease-in-out infinite; }
 
+        /* Animated "..." — three dots that appear one by one, then reset */
+        .animated-dots span {
+            opacity: 0;
+            animation: dotFade 1.4s infinite;
+        }
+        .animated-dots span:nth-child(1) { animation-delay: 0s; }
+        .animated-dots span:nth-child(2) { animation-delay: 0.3s; }
+        .animated-dots span:nth-child(3) { animation-delay: 0.6s; }
+        @keyframes dotFade {
+            0% { opacity: 0; }
+            30% { opacity: 1; }
+            60% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         /* ═══════ MISC ═══════ */
         .img-placeholder {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -848,7 +863,9 @@
                                         </div>
                                         <div x-show="res._live" class="flex items-center gap-2 mb-3">
                                             <span class="w-2.5 h-2.5 rounded-full pulse-dot" :style="'background:' + resStatusColor(res.status)"></span>
-                                            <span class="text-sm font-medium" :style="'color:' + resStatusColor(res.status)" x-text="res._liveMessage || resStatusLabel(res.status)"></span>
+                                            <span class="text-sm font-medium" :style="'color:' + resStatusColor(res.status)">
+                                                <span x-text="res._liveMessage || resStatusLabel(res.status)"></span><span x-show="res.status === 'monitoring'" class="animated-dots"><span>.</span><span>.</span><span>.</span></span>
+                                            </span>
                                         </div>
                                         <button @click="confirmCancelId = res.id"
                                             class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
@@ -1865,7 +1882,7 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Scheduled', monitoring: 'Monitoring', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
+                const map = { scheduled: 'Scheduled', monitoring: 'Scanning', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
                 return map[status] || status;
             },
 
@@ -1899,7 +1916,7 @@
                 });
                 es.addEventListener('snipe_attempt', (e) => {
                     const data = JSON.parse(e.data);
-                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Monitoring for openings...';
+                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Scanning for cancellations';
                 });
                 es.addEventListener('countdown_tick', (e) => {
                     const data = JSON.parse(e.data);
@@ -1925,9 +1942,8 @@
                 });
                 es.onerror = () => {
                     es.close(); delete this.eventSources[id];
-                    // Auto-reconnect after 3s if reservation is still active
+                    // Silently reconnect after 3s — no confusing status message
                     if (this.isActiveRes(res.status)) {
-                        res._liveMessage = 'Refreshing connection...';
                         setTimeout(() => {
                             if (this.isActiveRes(res.status)) this.connectSSE(res);
                         }, 3000);
@@ -1937,7 +1953,7 @@
                 };
             },
             friendlyPhase(data) {
-                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Monitoring for openings...' };
+                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Scanning for cancellations' };
                 return map[data.phase] || data.message || 'Working on it...';
             },
             mapPhase(phase) {
