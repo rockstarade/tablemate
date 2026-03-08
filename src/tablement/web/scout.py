@@ -230,7 +230,11 @@ class ScoutOrchestrator:
 
         # Start the task if not already running
         if key not in self._tasks or self._tasks[key].done():
-            if campaign_type == "cancellation":
+            # Platform dispatch: OpenTable venues (80xxx) use OT scouts
+            is_opentable = venue_id >= 80000 and venue_id < 90000
+            if is_opentable:
+                coro = self._run_ot_scout(campaign, campaign_type)
+            elif campaign_type == "cancellation":
                 coro = self._run_cancellation_scout(campaign)
             else:
                 coro = self._run_drop_scout(campaign)
@@ -241,9 +245,10 @@ class ScoutOrchestrator:
             if auto:
                 self._auto_started.add(key)
             logger.info(
-                "Scout started: %s (%d) [%s]%s",
+                "Scout started: %s (%d) [%s]%s%s",
                 venue_name or venue_id, venue_id, campaign_type,
                 " (auto)" if auto else "",
+                " [OpenTable]" if is_opentable else "",
             )
 
         return campaign
@@ -356,6 +361,88 @@ class ScoutOrchestrator:
                     logger.warning("Scout refresh failed: %s", e)
 
             await asyncio.sleep(REFRESH_INTERVAL_S)
+
+    # ------------------------------------------------------------------
+    # OpenTable Scout — delegates to opentable/scout.py
+    # ------------------------------------------------------------------
+
+    async def _run_ot_scout(self, campaign: dict, campaign_type: str) -> None:
+        """Dispatch to OpenTable-specific scout implementation.
+
+        OT scouts use 30s+ poll intervals (OT rate limits are stricter)
+        and Akamai warmup instead of Imperva. All OT-specific logic lives
+        in tablement.opentable.scout — this is just a dispatch wrapper.
+        """
+        venue_id = campaign["venue_id"]
+        venue_name = campaign.get("venue_name", f"OT Venue {venue_id}")
+
+        # Assign IP for this scout
+        scout_ip_key = f"scout-ot-{campaign_type}-{venue_id}"
+        local_ip = ip_pool.get_ip(scout_ip_key)
+
+        # Helper callbacks that bridge OT scout into the orchestrator's state
+        async def _record_snapshot(vid, target_date, slot_count, slots):
+            snapshot = {
+                "venue_id": vid,
+                "target_date": target_date,
+                "slot_count": slot_count,
+                "source": f"ot_{campaign_type}_scout",
+            }
+            if slot_count > 0 and slots:
+                snapshot["slots_json"] = [
+                    {"time": getattr(s, "date_time", ""), "type": getattr(s, "slot_type", "")}
+                    for s in slots[:50]
+                ]
+            await db.insert_slot_snapshot(snapshot)
+
+        async def _log_error(vid, ctype, error_msg):
+            await db.insert_scout_error({
+                "venue_id": vid,
+                "campaign_type": ctype,
+                "error": error_msg,
+            })
+
+        def _broadcast_drop(vid, slots):
+            if vid in self._drop_events:
+                slot_data = [
+                    {"time": getattr(s, "date_time", ""), "type": getattr(s, "slot_type", "")}
+                    for s in (slots or [])
+                ]
+                self._drop_slots[vid] = slot_data
+                self._drop_events[vid].set()
+                logger.info(
+                    "OT drop scout %s: BROADCAST to subscribed snipes (%d slots)",
+                    venue_name, len(slot_data),
+                )
+
+        try:
+            if campaign_type == "cancellation":
+                from tablement.opentable.scout import run_ot_cancellation_scout
+                await run_ot_cancellation_scout(
+                    campaign,
+                    running_check=lambda: self._running,
+                    now_et_fn=self._now_et,
+                    record_snapshot_fn=_record_snapshot,
+                    log_scout_error_fn=_log_error,
+                    local_ip=local_ip,
+                )
+            else:
+                from tablement.opentable.scout import run_ot_drop_scout
+                await run_ot_drop_scout(
+                    campaign,
+                    running_check=lambda: self._running,
+                    now_et_fn=self._now_et,
+                    record_snapshot_fn=_record_snapshot,
+                    broadcast_drop_fn=_broadcast_drop,
+                    log_scout_error_fn=_log_error,
+                    local_ip=local_ip,
+                )
+        except asyncio.CancelledError:
+            logger.info("OT scout %s (%d) [%s] cancelled", venue_name, venue_id, campaign_type)
+        except Exception as e:
+            logger.exception("OT scout %s (%d) [%s] failed: %s", venue_name, venue_id, campaign_type, e)
+        finally:
+            ip_pool.release(scout_ip_key)
 
     # ------------------------------------------------------------------
     # Drop Scout — 5-phase precision polling

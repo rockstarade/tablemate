@@ -333,6 +333,8 @@ async def me(user_id: str = Depends(get_user_id)):
         user_id=user_id,
         resy_linked=bool(profile.get("resy_email")),
         resy_email=profile.get("resy_email"),
+        opentable_linked=bool(profile.get("opentable_linked")),
+        opentable_diner_id=profile.get("opentable_diner_id"),
         stripe_linked=bool(profile.get("stripe_customer_id")),
     )
 

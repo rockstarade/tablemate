@@ -27,3 +27,22 @@ class VenueLookupError(TablementError):
 
 class ConfigError(TablementError):
     """Invalid configuration."""
+
+
+# --- OpenTable-specific errors ---
+
+
+class OpenTableError(TablementError):
+    """Base exception for OpenTable operations."""
+
+
+class OTAuthError(OpenTableError):
+    """OpenTable authentication / token validation failed."""
+
+
+class OTLockError(OpenTableError):
+    """Failed to lock (temporarily hold) an OpenTable slot."""
+
+
+class OTRateLimitError(OpenTableError):
+    """OpenTable rate limit hit — back off before retrying."""

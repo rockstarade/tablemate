@@ -163,9 +163,10 @@ def create_app() -> FastAPI:
     # Security headers on every response
     app.add_middleware(SecurityHeadersMiddleware)
 
-    from tablement.web.routes import admin, auth, curated, policy, reservations, slots, venue
+    from tablement.web.routes import admin, auth, curated, ot_auth, policy, reservations, slots, venue
 
     app.include_router(auth.router, prefix="/api/auth")
+    app.include_router(ot_auth.router, prefix="/api/auth")
     app.include_router(venue.router, prefix="/api/venue")
     app.include_router(policy.router, prefix="/api/policy")
     app.include_router(reservations.router, prefix="/api/reservations")

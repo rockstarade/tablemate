@@ -45,6 +45,8 @@ class UserProfileResponse(BaseModel):
     user_id: str
     resy_linked: bool = False
     resy_email: str | None = None
+    opentable_linked: bool = False
+    opentable_diner_id: str | None = None
     stripe_linked: bool = False
 
 
@@ -143,6 +145,7 @@ class ReservationCreateRequest(BaseModel):
     time_preferences: list[TimePreferenceIn]
     drop_time: DropTimeIn | None = None  # required for snipe mode
     dry_run: bool = False
+    platform: str = "resy"  # "resy" or "opentable"
 
 
 class BatchReservationRequest(BaseModel):
@@ -161,6 +164,7 @@ class BatchReservationRequest(BaseModel):
     book_earliest: bool = False           # "earliest available" toggle
     latest_notify_hours: float = Field(default=2.0, ge=0.5, le=48.0)
     notification_email: str | None = None  # email for booking confirmation
+    platform: str = "resy"  # "resy" or "opentable"
 
 
 class ReservationOut(BaseModel):
@@ -261,3 +265,22 @@ class SnipeStatusResponse(BaseModel):
     message: str = ""
     result: SnipeResultOut | None = None
     drop_datetime_iso: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# OpenTable Auth
+# ---------------------------------------------------------------------------
+
+
+class LinkOpenTableRequest(BaseModel):
+    """Link an OpenTable account by pasting a Bearer token from the mobile app."""
+    bearer_token: str
+    diner_id: str = ""  # Auto-extracted from token validation
+    gpid: str = ""
+    phone: str = ""
+
+
+class LinkOpenTableResponse(BaseModel):
+    linked: bool
+    diner_name: str | None = None
+    diner_id: str | None = None

@@ -568,6 +568,13 @@
             showEmailPrompt: false,
             notifyEmail: localStorage.getItem('resr_notify_email') || '',
 
+            // Platform-aware auth
+            otLinked: false,
+            showOTLink: false,
+            otBearerToken: '',
+            otLoading: false,
+            otError: '',
+
             // Resy link
             resyLinked: false,
             showResyLink: false,
@@ -597,12 +604,13 @@
                 const token = localStorage.getItem('tablement_token');
                 if (!token) { window.location.href = '/'; return; }
 
-                // Check Resy link status
+                // Check Resy + OpenTable link status
                 try {
                     const meResp = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
                     if (meResp.ok) {
                         const meData = await meResp.json();
                         this.resyLinked = meData.resy_linked || false;
+                        this.otLinked = meData.opentable_linked || false;
                     }
                 } catch (e) {}
 
@@ -794,10 +802,12 @@
             // ═══ Submit ═══
             handleBookClick() {
                 if (this.submitting || !this.canSubmit) return;
-                // Check if Resy is linked first
-                if (!this.resyLinked) {
-                    this.showResyLink = true;
-                    return;
+                // Check platform-specific auth
+                const isOT = this.restaurant && this.restaurant.platform === 'opentable';
+                if (isOT) {
+                    if (!this.otLinked) { this.showOTLink = true; return; }
+                } else {
+                    if (!this.resyLinked) { this.showResyLink = true; return; }
                 }
                 // If no email saved and prompt not showing yet, show the email prompt
                 const savedEmail = localStorage.getItem('resr_notify_email');
@@ -832,11 +842,13 @@
                 if (this.restaurant.drop_days_ahead) {
                     dropTime = { hour: this.restaurant.drop_hour || 10, minute: this.restaurant.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: this.restaurant.drop_days_ahead };
                 }
+                const platform = (this.restaurant && this.restaurant.platform === 'opentable') ? 'opentable' : 'resy';
                 const payload = {
                     venue_id: this.venueId, venue_name: this.restaurant.name, party_size: this.partySize,
                     dates: this.selectedDates, time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
                     drop_time: dropTime, book_earliest: this.bookEarliest, latest_notify_hours: parseFloat(this.latestNotify),
                     notification_email: email || null,
+                    platform: platform,
                 };
 
                 try {
@@ -1010,6 +1022,26 @@
                 } catch (e) { this.resyError = e.message; }
                 finally { this.resyLoading = false; }
             },
+
+            // ═══ OpenTable Link ═══
+            async linkOpenTable() {
+                if (!this.otBearerToken.trim()) { this.otError = 'Please paste your OpenTable Bearer token'; return; }
+                this.otLoading = true; this.otError = '';
+                try {
+                    const resp = await fetch('/api/auth/link-opentable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ bearer_token: this.otBearerToken.trim() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link OpenTable');
+                    this.otLinked = true;
+                    this.showOTLink = false;
+                    this.otBearerToken = '';
+                    this.showToast('OpenTable account linked!' + (data.diner_name ? ' (' + data.diner_name + ')' : ''));
+                } catch (e) { this.otError = e.message; }
+                finally { this.otLoading = false; }
+            },
         };
     }
     </script>
@@ -1146,6 +1178,55 @@
                 </form>
             </div>
             <p x-show="resyError" x-cloak class="mt-4 text-red-400 text-sm" x-text="resyError"></p>
+        </div>
+    </div>
+
+    <!-- ═══ OPENTABLE LINK MODAL ═══ -->
+    <div x-show="showOTLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showOTLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showOTLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showOTLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #da3743;">
+                    <span class="text-white text-xs font-bold">OT</span>
+                </div>
+                <h2 class="text-lg font-bold" style="color: var(--c1);">Link your OpenTable account</h2>
+            </div>
+            <p class="text-sm mb-5" style="color: var(--c3);">This restaurant uses OpenTable for reservations. We need your Bearer token to book on your behalf.</p>
+
+            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border);">
+                <p class="text-xs font-semibold mb-2" style="color: var(--c2);">How to get your token:</p>
+                <ol class="text-xs space-y-1.5" style="color: var(--c3); list-style-type: decimal; padding-left: 1.2em;">
+                    <li>Install a network proxy (Charles Proxy or mitmproxy)</li>
+                    <li>Open the OpenTable mobile app on your phone</li>
+                    <li>Look for requests to <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">mobile-api.opentable.com</code></li>
+                    <li>Copy the <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">Authorization: Bearer ...</code> header value</li>
+                </ol>
+            </div>
+
+            <form @submit.prevent="linkOpenTable()">
+                <textarea x-model="otBearerToken" placeholder="Paste your OpenTable Bearer token here..."
+                    rows="3"
+                    class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none resize-none font-mono"
+                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1); font-size: 11px;"
+                    onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                    onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"></textarea>
+                <button type="submit" :disabled="otLoading || !otBearerToken.trim()"
+                    class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                    :style="otBearerToken.trim() ? 'background: #da3743; color: white;' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                    <span x-show="!otLoading">Link OpenTable Account</span>
+                    <span x-show="otLoading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                        Validating...
+                    </span>
+                </button>
+            </form>
+            <p x-show="otError" x-cloak class="mt-4 text-red-400 text-sm" x-text="otError"></p>
         </div>
     </div>
 

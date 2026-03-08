@@ -339,10 +339,15 @@ async def create_reservation(
                 f"Drop is only {_minutes_until:.0f} minutes away — minimum 10 minutes needed for warmup",
             )
 
-    # Check user has linked Resy account
+    # Check user has linked the appropriate platform account
     profile = await db.get_profile(user_id)
-    if not profile or not profile.get("resy_email"):
-        raise HTTPException(400, "Please link your Resy account first (POST /api/auth/link-resy)")
+    platform = getattr(body, "platform", "resy")
+    if platform == "opentable":
+        if not profile or not profile.get("opentable_linked"):
+            raise HTTPException(400, "Please link your OpenTable account first (POST /api/auth/link-opentable)")
+    else:
+        if not profile or not profile.get("resy_email"):
+            raise HTTPException(400, "Please link your Resy account first (POST /api/auth/link-resy)")
 
     # Check for duplicate reservation (same user + venue + date)
     target_date_str = body.date if isinstance(body.date, str) else body.date.isoformat()
@@ -413,10 +418,15 @@ async def create_batch_reservations(
     if monitor_count + monitor_dates_in_batch > 5:
         raise HTTPException(429, f"Would exceed max 5 cancellation monitors (currently {monitor_count} active)")
 
-    # Check user has linked Resy account
+    # Check user has linked the appropriate platform account
     profile = await db.get_profile(user_id)
-    if not profile or not profile.get("resy_email"):
-        raise HTTPException(400, "Please link your Resy account first")
+    platform = getattr(body, "platform", "resy")
+    if platform == "opentable":
+        if not profile or not profile.get("opentable_linked"):
+            raise HTTPException(400, "Please link your OpenTable account first")
+    else:
+        if not profile or not profile.get("resy_email"):
+            raise HTTPException(400, "Please link your Resy account first")
 
     if not body.time_preferences:
         raise HTTPException(400, "At least one time preference is required")
@@ -553,6 +563,7 @@ def _mock_create_request(body: BatchReservationRequest, date_str: str, mode: str
         mode=mode,
         time_preferences=body.time_preferences,
         drop_time=body.drop_time,
+        platform=getattr(body, "platform", "resy"),
     )
 
 
@@ -713,6 +724,42 @@ async def events(
 
 def _schedule_snipe(app, reservation_id: str, user_id: str, body, profile: dict, dry_run: bool):
     """Schedule a snipe job via APScheduler or run immediately if drop is past."""
+    platform = getattr(body, "platform", "resy")
+
+    # Platform dispatch: OpenTable has its own snipe execution
+    if platform == "opentable":
+        from tablement.web.routes.ot_reservations import _run_ot_snipe, _run_ot_snipe_from_scheduler
+
+        config = _build_snipe_config(body)
+        precision_scheduler = PrecisionScheduler()
+        drop_dt = precision_scheduler.calculate_drop_datetime(config)
+        now = datetime.now(drop_dt.tzinfo)
+        seconds_until_drop = (drop_dt - now).total_seconds()
+
+        if seconds_until_drop <= AUTH_BEFORE_MAX_SECONDS:
+            job = app.state.jobs.create(reservation_id, user_id)
+            job.task = asyncio.create_task(
+                _run_ot_snipe(app, reservation_id, user_id, config, profile, dry_run, job)
+            )
+        elif app.state.scheduler:
+            run_at = drop_dt - timedelta(seconds=AUTH_BEFORE_MAX_SECONDS)
+            app.state.scheduler.add_job(
+                _run_ot_snipe_from_scheduler,
+                trigger="date",
+                run_date=run_at,
+                id=f"snipe_{reservation_id}",
+                replace_existing=True,
+                args=[app, reservation_id, user_id, config, profile, dry_run],
+            )
+            logger.info("OT snipe %s scheduled for %s", reservation_id, run_at.isoformat())
+        else:
+            job = app.state.jobs.create(reservation_id, user_id)
+            job.task = asyncio.create_task(
+                _run_ot_snipe(app, reservation_id, user_id, config, profile, dry_run, job)
+            )
+        return
+
+    # --- Resy snipe (existing logic) ---
     scheduler = app.state.scheduler
 
     # Auto-start a drop scout for this venue (idempotent — no-op if already running)
@@ -775,9 +822,31 @@ def _schedule_cancellation_snipe(
     Uses a pure asyncio loop (not APScheduler) for fine-grained control
     over burst/rest cycles, tier switching, and sleep-hour detection.
     """
+    platform = getattr(body, "platform", "resy")
     config = _build_snipe_config(body)
     job = app.state.jobs.create(reservation_id, user_id)
     job.status.phase = SnipePhase.MONITORING
+
+    # Platform dispatch: OpenTable has its own cancellation loop (30s+ intervals)
+    if platform == "opentable":
+        from tablement.web.routes.ot_reservations import _ot_cancellation_snipe_loop
+
+        job.status.message = f"Watching OT cancellations ({poll_tier} tier)"
+        job.task = asyncio.create_task(
+            _ot_cancellation_snipe_loop(
+                app, reservation_id, user_id, config, profile, job,
+                group_id=group_id,
+                poll_tier=poll_tier,
+                latest_notify_hours=latest_notify_hours,
+            )
+        )
+        logger.info(
+            "OT cancellation snipe %s started (tier=%s, group=%s)",
+            reservation_id, poll_tier, group_id or "none",
+        )
+        return
+
+    # --- Resy cancellation (existing logic) ---
     job.status.message = f"Watching for cancellations ({poll_tier} tier)"
     job.task = asyncio.create_task(
         _cancellation_snipe_loop(
@@ -2144,10 +2213,20 @@ async def recover_jobs(app) -> int:
         except Exception:
             profile = None
 
-        if not profile or not profile.get("resy_email"):
-            await db.update_reservation(rid, status="failed", error="Recovery failed: no Resy credentials")
-            failed += 1
-            continue
+        # Determine platform from venue_id (80xxx = OpenTable)
+        venue_id = row.get("venue_id", 0)
+        is_ot = venue_id >= 80000 and venue_id < 90000
+
+        if is_ot:
+            if not profile or not profile.get("opentable_linked"):
+                await db.update_reservation(rid, status="failed", error="Recovery failed: no OpenTable credentials")
+                failed += 1
+                continue
+        else:
+            if not profile or not profile.get("resy_email"):
+                await db.update_reservation(rid, status="failed", error="Recovery failed: no Resy credentials")
+                failed += 1
+                continue
 
         if mode == "snipe":
             # Was mid-execution → state is lost
@@ -2203,8 +2282,12 @@ def _mock_create_request_from_row(row: dict) -> ReservationCreateRequest:
     time_prefs = row.get("time_preferences") or []
     drop_config = row.get("drop_time_config") or {}
 
+    # Determine platform from venue_id (80xxx = OpenTable)
+    venue_id = row.get("venue_id", 0)
+    platform = "opentable" if (venue_id >= 80000 and venue_id < 90000) else "resy"
+
     return ReservationCreateRequest(
-        venue_id=row["venue_id"],
+        venue_id=venue_id,
         venue_name=row.get("venue_name", ""),
         party_size=row.get("party_size", 2),
         date=str(row["target_date"]),
@@ -2223,4 +2306,5 @@ def _mock_create_request_from_row(row: dict) -> ReservationCreateRequest:
             timezone=drop_config.get("timezone", "America/New_York"),
             days_ahead=drop_config.get("days_ahead", 30),
         ) if drop_config else None,
+        platform=platform,
     )
