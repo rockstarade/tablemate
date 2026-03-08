@@ -1,7 +1,8 @@
 """Curated restaurant API routes — public browse grid data.
 
-Serves the list of hand-picked, hardest-to-get NYC restaurants for
+Serves the list of hand-picked, hardest-to-get restaurants for
 the consumer-facing browse page. No auth required for reading.
+Supports both Resy and OpenTable platforms.
 """
 
 from __future__ import annotations
@@ -21,6 +22,24 @@ KNOWN_SLOTS: dict[int, list[str]] = {
     1263: ["17:00", "17:15", "17:30", "19:00", "19:15", "19:30", "21:00", "21:15", "21:30"],
 }
 
+# ── Platform & city mappings ──────────────────────────────────────
+# Stored in code until DB columns are added via Supabase SQL editor.
+# OpenTable restaurants use venue_ids in the 80xxx range.
+OPENTABLE_VENUE_IDS: set[int] = {
+    80001,  # Don Angie
+    80002,  # Soothr
+    80003,  # Una Pizza Napoletana
+    80004,  # Le Veau d'Or
+    80005,  # San Sabino
+    80006,  # Estela
+    80007,  # Altro Paradiso
+}
+
+# venue_id → city slug (everything not listed defaults to "nyc")
+CITY_MAP: dict[int, str] = {
+    73777: "boston",  # Tonino
+}
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -37,13 +56,16 @@ async def list_curated():
     # Build response with image URL convention + service hours
     restaurants = []
     for r in rows:
+        vid = r["venue_id"]
+        platform = "opentable" if vid in OPENTABLE_VENUE_IDS else "resy"
+        city = CITY_MAP.get(vid, "nyc")
         restaurants.append({
-            "venue_id": r["venue_id"],
+            "venue_id": vid,
             "name": r["name"],
             "cuisine": r.get("cuisine", ""),
             "neighborhood": r.get("neighborhood", ""),
             "url_slug": r.get("url_slug", ""),
-            "image_url": r.get("image_url") or f"/static/restaurants/{r['venue_id']}.jpg",
+            "image_url": r.get("image_url") or f"/static/restaurants/{vid}.jpg",
             "tagline": r.get("tagline", ""),
             "slot_interval": r.get("slot_interval", 15),
             "drop_days_ahead": r.get("drop_days_ahead"),
@@ -55,7 +77,9 @@ async def list_curated():
             "hot_start": r.get("hot_start", "19:00"),
             "hot_end": r.get("hot_end", "20:30"),
             "is_hot": r.get("is_hot", False),
-            "known_slots": r.get("known_slots") or KNOWN_SLOTS.get(r["venue_id"]),
+            "known_slots": r.get("known_slots") or KNOWN_SLOTS.get(vid),
+            "platform": platform,
+            "city": city,
         })
 
     return {"restaurants": restaurants}
@@ -68,14 +92,17 @@ async def get_curated(venue_id: int):
     if not row:
         return {"restaurant": None}
 
+    vid = row["venue_id"]
+    platform = "opentable" if vid in OPENTABLE_VENUE_IDS else "resy"
+    city = CITY_MAP.get(vid, "nyc")
     return {
         "restaurant": {
-            "venue_id": row["venue_id"],
+            "venue_id": vid,
             "name": row["name"],
             "cuisine": row.get("cuisine", ""),
             "neighborhood": row.get("neighborhood", ""),
             "url_slug": row.get("url_slug", ""),
-            "image_url": row.get("image_url") or f"/static/restaurants/{row['venue_id']}.jpg",
+            "image_url": row.get("image_url") or f"/static/restaurants/{vid}.jpg",
             "slot_interval": row.get("slot_interval", 15),
             "drop_days_ahead": row.get("drop_days_ahead"),
             "drop_hour": row.get("drop_hour"),
@@ -84,6 +111,8 @@ async def get_curated(venue_id: int):
             "service_end": row.get("service_end", "22:00"),
             "hot_start": row.get("hot_start", "19:00"),
             "hot_end": row.get("hot_end", "20:30"),
-            "known_slots": row.get("known_slots") or KNOWN_SLOTS.get(row["venue_id"]),
+            "known_slots": row.get("known_slots") or KNOWN_SLOTS.get(vid),
+            "platform": platform,
+            "city": city,
         }
     }

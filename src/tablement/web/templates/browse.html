@@ -609,14 +609,22 @@
                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                                <div class="absolute top-3 left-3">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
-                                        x-text="r.cuisine"></span>
-                                </div>
-                                <div class="absolute top-3 right-3">
+                                <!-- Top-right: Hot + Platform badges -->
+                                <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
                                         &#x1F525; Hot
                                     </span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white/90 text-gray-800'"
+                                        x-text="r.platform === 'opentable' ? 'OpenTable' : 'Resy'"></span>
+                                </div>
+                                <!-- Top-left: Cuisine + City -->
+                                <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
+                                        x-text="r.cuisine"></span>
+                                    <span x-show="r.city && r.city !== 'nyc'"
+                                        class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city.toUpperCase()"></span>
                                 </div>
                                 <!-- Restaurant name overlay on image -->
                                 <div class="absolute bottom-3 left-3 right-3">
@@ -683,14 +691,23 @@
                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                                <div class="absolute top-3 left-3">
+                                <!-- Top-left: Cuisine + City -->
+                                <div class="absolute top-3 left-3 flex flex-col gap-1.5">
                                     <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
                                         x-text="r.cuisine"></span>
+                                    <span x-show="r.city && r.city !== 'nyc'"
+                                        class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city.toUpperCase()"></span>
                                 </div>
-                                <div class="absolute top-3 right-3" x-show="isHotRestaurant(r)">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
+                                <!-- Top-right: Hot badge + Platform badge -->
+                                <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                                    <span x-show="isHotRestaurant(r)"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
                                         &#x1F525; Hot
                                     </span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white/90 text-gray-800'"
+                                        x-text="r.platform === 'opentable' ? 'OpenTable' : 'Resy'"></span>
                                 </div>
                                 <div class="absolute bottom-3 left-3 right-3">
                                     <h3 class="text-base font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
