@@ -606,7 +606,13 @@
 
                 // Check Resy + OpenTable link status
                 try {
-                    const meResp = await fetch('/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } });
+                    const meResp = await this.authFetch('/api/auth/me');
+                    if (meResp.status === 401) {
+                        localStorage.removeItem('tablement_token');
+                        localStorage.removeItem('tablement_refresh');
+                        window.location.href = '/';
+                        return;
+                    }
                     if (meResp.ok) {
                         const meData = await meResp.json();
                         this.resyLinked = meData.resy_linked || false;
@@ -623,6 +629,43 @@
                     } else { this.error = 'Restaurant not found'; }
                 } catch (e) { this.error = 'Failed to load restaurant data'; }
                 this.loading = false;
+
+                // Proactive token refresh — keep session alive
+                this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
+            },
+
+            // ── Session Token Refresh ──
+            async _tryRefreshToken() {
+                const rt = localStorage.getItem('tablement_refresh');
+                if (!rt) return false;
+                try {
+                    const resp = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: rt }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        localStorage.setItem('tablement_token', data.access_token);
+                        localStorage.setItem('tablement_refresh', data.refresh_token);
+                        return true;
+                    }
+                } catch (e) { console.warn('Token refresh failed:', e); }
+                return false;
+            },
+
+            async authFetch(url, opts = {}) {
+                const token = this.token;
+                opts.headers = { ...opts.headers, 'Authorization': 'Bearer ' + token };
+                let resp = await fetch(url, opts);
+                if (resp.status === 401) {
+                    const refreshed = await this._tryRefreshToken();
+                    if (refreshed) {
+                        opts.headers['Authorization'] = 'Bearer ' + this.token;
+                        resp = await fetch(url, opts);
+                    }
+                }
+                return resp;
             },
 
             // ═══ Calendar ═══

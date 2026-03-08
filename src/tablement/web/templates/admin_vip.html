@@ -345,17 +345,39 @@
                             </div>
                         </div>
 
-                        <!-- Date + Party -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
-                                <input type="date" x-model="snipe.date"
-                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                        <!-- Dates (multi-select) + Party -->
+                        <div>
+                            <div class="grid grid-cols-2 gap-3 mb-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1.5">
+                                        Dates
+                                        <span x-show="snipe.dates.length > 0" class="text-brand-400 ml-1" x-text="'(' + snipe.dates.length + ' selected)'"></span>
+                                    </label>
+                                    <div class="flex gap-2">
+                                        <input type="date" x-model="snipe.date"
+                                            class="flex-1 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                        <button @click="addSnipeDate()" :disabled="!snipe.date"
+                                            class="px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-brand-500/20 text-brand-400 border border-brand-500/50 hover:bg-brand-500/30 disabled:opacity-30">
+                                            + Add
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Party Size</label>
+                                    <input type="number" x-model.number="snipe.party_size" min="1" max="20"
+                                        class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-400 mb-1.5">Party Size</label>
-                                <input type="number" x-model.number="snipe.party_size" min="1" max="20"
-                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                            <!-- Selected dates as chips -->
+                            <div x-show="snipe.dates.length > 0" class="flex flex-wrap gap-1.5">
+                                <template x-for="(d, idx) in snipe.dates" :key="d">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                                        <span x-text="formatSnipeDate(d)"></span>
+                                        <button @click="snipe.dates.splice(idx, 1)" class="text-brand-400/60 hover:text-red-400 ml-0.5">&times;</button>
+                                    </span>
+                                </template>
+                                <button @click="snipe.dates = []" x-show="snipe.dates.length > 1"
+                                    class="text-xs text-slate-500 hover:text-red-400 px-2 py-1">Clear all</button>
                             </div>
                         </div>
 
@@ -462,7 +484,7 @@
                         </div>
 
                         <!-- Slot Conflict Check -->
-                        <div x-show="snipe.venue_id && snipe.date" class="border-t border-slate-700/50 pt-4">
+                        <div x-show="snipe.venue_id && snipe.dates.length > 0" class="border-t border-slate-700/50 pt-4">
                             <div class="flex items-center justify-between mb-2">
                                 <label class="block text-xs font-medium text-slate-400">Slot Conflicts</label>
                                 <button @click="checkSlotConflicts()" :disabled="slotConflicts.checking"
@@ -515,7 +537,7 @@
                             </label>
                             <div class="flex-1"></div>
                             <button @click="fireSnipe()"
-                                :disabled="!snipe.venue_id || !snipe.user_id || !snipe.date || snipeFiring"
+                                :disabled="!snipe.venue_id || !snipe.user_id || snipe.dates.length === 0 || snipeFiring"
                                 class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-30"
                                 :class="snipe.dry_run ? 'bg-blue-500 hover:bg-blue-400 text-white' : 'bg-brand-500 hover:bg-brand-400 text-slate-900'">
                                 <span x-show="!snipeFiring" x-text="snipe.dry_run ? 'DRY RUN' : 'FIRE'"></span>
@@ -1720,7 +1742,8 @@
                 venue_id: null,
                 venue_name: '',
                 mode: 'snipe',
-                date: new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0],
+                date: '',
+                dates: [],
                 party_size: 2,
                 time_preferences: [{ time: '19:00', seating_type: '' }],
                 window_minutes: 30,
@@ -1890,7 +1913,7 @@
                 if (id === 'dashboard' && this.analytics.loaded) {
                     // Re-render charts — Chart.js canvases lose dimensions when the
                     // container was hidden (x-show=false on another tab).
-                    setTimeout(() => this.renderAnalyticsCharts(), 50);
+                    this._scheduleChartRender();
                 }
                 if (id === 'intelligence' && !this.scouts.loaded) this.loadScouts();
                 if (id === 'settings') {
@@ -1951,6 +1974,11 @@
                     this.loadAdminReservations(),
                     this.loadAnalytics(),
                 ]);
+                // Render charts AFTER all parallel loads complete so Alpine
+                // reactive cascades don't collapse the Chart.js canvases.
+                if (this.analytics.loaded && this.activeTab === 'dashboard') {
+                    this._scheduleChartRender();
+                }
                 this.jobsRefreshTimer = setInterval(() => this.fetchActiveJobs(), 5000);
             },
 
@@ -2019,7 +2047,7 @@
                 this.seatingTypesLoading = true;
                 const seatingPromise = fetch('/api/admin/vip/seating-types', {
                     method: 'POST', headers: this.headers(),
-                    body: JSON.stringify({ venue_id: v.resy_id, party_size: this.snipe.party_size, date: this.snipe.date }),
+                    body: JSON.stringify({ venue_id: v.resy_id, party_size: this.snipe.party_size, date: this.snipe.dates[0] || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }),
                 });
 
                 try {
@@ -2051,77 +2079,100 @@
                 this.seatingTypesLoading = false;
             },
 
+            // ----- Multi-Date Helpers -----
+            addSnipeDate() {
+                if (!this.snipe.date) return;
+                if (!this.snipe.dates.includes(this.snipe.date)) {
+                    this.snipe.dates.push(this.snipe.date);
+                    this.snipe.dates.sort();
+                }
+                this.snipe.date = '';
+            },
+            formatSnipeDate(dateStr) {
+                if (!dateStr) return '';
+                const d = new Date(dateStr + 'T12:00:00');
+                return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            },
+
             // ----- Fire Snipe -----
             async fireSnipe() {
                 this.snipeFiring = true;
                 this.snipeLogs = [];
                 this.snipeResult = null;
 
-                if (this.snipe.venue_id && this.snipe.date) {
-                    await this.checkSlotConflicts();
-                    if (this.slotConflicts.conflicts.length > 0 && !this.snipe.override_claims) {
-                        const proceed = confirm(this.slotConflicts.conflicts.length + ' other user(s) are targeting the same time window. Fire anyway?');
-                        if (!proceed) { this.snipeFiring = false; return; }
+                const dates = this.snipe.dates.length > 0 ? [...this.snipe.dates] : [];
+                if (dates.length === 0) {
+                    this.addLog('error', 'No dates selected');
+                    this.snipeFiring = false;
+                    return;
+                }
+
+                this.addLog('info', 'Launching ' + this.snipe.mode + ' for ' + dates.length + ' date(s)' + (this.snipe.dry_run ? ' (DRY RUN)' : '') + '...');
+
+                let lastReservationId = null;
+                for (const date of dates) {
+                    const payload = {
+                        user_id: this.snipe.user_id,
+                        venue_id: this.snipe.venue_id,
+                        venue_name: this.snipe.venue_name,
+                        party_size: this.snipe.party_size,
+                        date: date,
+                        mode: this.snipe.mode,
+                        time_preferences: this.snipe.time_preferences.filter(tp => tp.time),
+                        window_minutes: this.snipe.window_minutes,
+                        dry_run: this.snipe.dry_run,
+                        proxy_override: this.snipe.proxy_override || undefined,
+                    };
+                    if (this.snipe.mode === 'snipe') payload.drop_time = this.snipe.drop_time;
+
+                    try {
+                        const resp = await fetch('/api/admin/vip/snipe', {
+                            method: 'POST', headers: this.headers(), body: JSON.stringify(payload),
+                        });
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({}));
+                            this.addLog('error', date + ': Launch failed: ' + (err.detail || resp.statusText));
+                            continue;
+                        }
+                        const data = await resp.json();
+                        lastReservationId = data.reservation_id;
+                        this.addLog('phase', date + ': Job created — ' + data.reservation_id.substring(0, 8) + '...');
+
+                        // Slot claim
+                        try {
+                            const firstPref = this.snipe.time_preferences[0];
+                            const claimPayload = {
+                                user_id: this.snipe.user_id, venue_id: this.snipe.venue_id,
+                                venue_name: this.snipe.venue_name,
+                                target_date: date, preferred_time: firstPref?.time || '19:00',
+                                seating_type: firstPref?.seating_type || '', window_minutes: this.snipe.window_minutes,
+                                reservation_id: data.reservation_id,
+                            };
+                            if (this.snipe.override_claims) {
+                                claimPayload.admin_user_id = this.snipe.user_id;
+                                const overrideResp = await fetch('/api/admin/vip/claims/override', {
+                                    method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
+                                });
+                                if (overrideResp.ok) {
+                                    const od = await overrideResp.json();
+                                    if (od.overridden_count > 0) this.addLog('info', date + ': Overrode ' + od.overridden_count + ' existing claim(s)');
+                                }
+                            } else {
+                                await fetch('/api/admin/vip/claims/create', {
+                                    method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
+                                });
+                            }
+                        } catch (e) { console.warn('Slot claim creation failed:', e); }
+
+                    } catch (e) {
+                        this.addLog('error', date + ': Error — ' + e.message);
                     }
                 }
 
-                const payload = {
-                    user_id: this.snipe.user_id,
-                    venue_id: this.snipe.venue_id,
-                    venue_name: this.snipe.venue_name,
-                    party_size: this.snipe.party_size,
-                    date: this.snipe.date,
-                    mode: this.snipe.mode,
-                    time_preferences: this.snipe.time_preferences.filter(tp => tp.time),
-                    window_minutes: this.snipe.window_minutes,
-                    dry_run: this.snipe.dry_run,
-                    proxy_override: this.snipe.proxy_override || undefined,
-                };
-                if (this.snipe.mode === 'snipe') payload.drop_time = this.snipe.drop_time;
-
-                this.addLog('info', 'Launching ' + this.snipe.mode + (this.snipe.dry_run ? ' (DRY RUN)' : '') + '...');
-
-                try {
-                    const resp = await fetch('/api/admin/vip/snipe', {
-                        method: 'POST', headers: this.headers(), body: JSON.stringify(payload),
-                    });
-                    if (!resp.ok) {
-                        const err = await resp.json().catch(() => ({}));
-                        this.addLog('error', 'Launch failed: ' + (err.detail || resp.statusText));
-                        this.snipeFiring = false;
-                        return;
-                    }
-                    const data = await resp.json();
-                    this.addLog('phase', 'Job created: ' + data.reservation_id);
-
-                    try {
-                        const firstPref = this.snipe.time_preferences[0];
-                        const claimPayload = {
-                            user_id: this.snipe.user_id, venue_id: this.snipe.venue_id,
-                            venue_name: this.snipe.venue_name,
-                            target_date: this.snipe.date, preferred_time: firstPref?.time || '19:00',
-                            seating_type: firstPref?.seating_type || '', window_minutes: this.snipe.window_minutes,
-                            reservation_id: data.reservation_id,
-                        };
-                        if (this.snipe.override_claims) {
-                            claimPayload.admin_user_id = this.snipe.user_id;
-                            const overrideResp = await fetch('/api/admin/vip/claims/override', {
-                                method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
-                            });
-                            if (overrideResp.ok) {
-                                const od = await overrideResp.json();
-                                if (od.overridden_count > 0) this.addLog('info', 'Overrode ' + od.overridden_count + ' existing claim(s)');
-                            }
-                        } else {
-                            await fetch('/api/admin/vip/claims/create', {
-                                method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
-                            });
-                        }
-                    } catch (e) { console.warn('Slot claim creation failed:', e); }
-
-                    this.connectSSE(data.reservation_id);
-                } catch (e) {
-                    this.addLog('error', 'Error: ' + e.message);
+                // Connect SSE to the last created job for live monitoring
+                if (lastReservationId) {
+                    this.connectSSE(lastReservationId);
+                } else {
                     this.snipeFiring = false;
                 }
             },
@@ -2654,14 +2705,34 @@
                     if (successResp.ok) { this.analytics.bookingSuccess = await successResp.json(); }
                     this.analytics.loaded = true;
                     this.loadHeatmap();
-                    // Use setTimeout instead of $nextTick — $nextTick fires after the
-                    // NEXT Alpine DOM update, but parallel loads from loadInitial() keep
-                    // triggering cascading updates that cause Chart.js ResizeObserver to
-                    // collapse the canvas to 0px. setTimeout defers to after the current
-                    // task queue drains, giving all reactive updates time to settle.
-                    setTimeout(() => this.renderAnalyticsCharts(), 250);
                 } catch (e) { console.warn('Failed to load analytics:', e); }
                 this.analytics.loading = false;
+            },
+            _scheduleChartRender() {
+                // Robust chart renderer that survives Alpine reactive cascades.
+                // Chart.js canvases can collapse to 0px when Alpine re-processes
+                // the DOM during parallel data loads (Promise.all in loadInitial).
+                if (this._chartRenderTimer) cancelAnimationFrame(this._chartRenderTimer);
+                let attempts = 0;
+                const tryRender = () => {
+                    attempts++;
+                    this.renderAnalyticsCharts();
+                    // Verify canvases actually have dimensions
+                    const hc = document.getElementById('hourChart');
+                    const dc = document.getElementById('dayChart');
+                    const hOk = hc && hc.offsetHeight > 10;
+                    const dOk = dc && dc.offsetHeight > 10;
+                    if ((!hOk || !dOk) && attempts < 8) {
+                        // Exponential back-off: 200, 400, 600, 800 …
+                        setTimeout(() => {
+                            this._chartRenderTimer = requestAnimationFrame(tryRender);
+                        }, 200 * attempts);
+                    }
+                };
+                // Initial delay lets Alpine finish its reactive update cascade
+                setTimeout(() => {
+                    this._chartRenderTimer = requestAnimationFrame(tryRender);
+                }, 400);
             },
             renderAnalyticsCharts() {
                 if (typeof Chart === 'undefined') return;
@@ -2711,13 +2782,14 @@
 
             // ----- Slot Conflict Checking -----
             async checkSlotConflicts() {
-                if (!this.snipe.venue_id || !this.snipe.date) return;
+                const checkDate = this.snipe.dates[0] || this.snipe.date;
+                if (!this.snipe.venue_id || !checkDate) return;
                 this.slotConflicts.checking = true; this.slotConflicts.conflicts = []; this.slotConflicts.checked = false;
                 const firstTime = this.snipe.time_preferences[0]?.time;
                 try {
                     const resp = await fetch('/api/admin/vip/claims/check', {
                         method: 'POST', headers: this.headers(),
-                        body: JSON.stringify({ venue_id: this.snipe.venue_id, target_date: this.snipe.date, preferred_time: firstTime || null, window_minutes: this.snipe.window_minutes }),
+                        body: JSON.stringify({ venue_id: this.snipe.venue_id, target_date: checkDate, preferred_time: firstTime || null, window_minutes: this.snipe.window_minutes }),
                     });
                     if (resp.ok) { const data = await resp.json(); this.slotConflicts.conflicts = data.conflicts || []; this.slotConflicts.checked = true; }
                 } catch (e) { console.warn('Conflict check failed:', e); }

@@ -756,26 +756,26 @@
         </div>
     </main>
 
-    <!-- ═══════════════ RESERVATIONS PANEL (Sidebar) ═══════════════ -->
-    <div x-show="showReservations" x-cloak class="fixed top-0 right-0 bottom-0 z-[60] w-full sm:w-[420px] shadow-2xl panel-bg flex flex-col"
-        style="border-left: 1px solid var(--border);"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
-        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+    <!-- ═══════════════ RESERVATIONS PANEL (Sidebar — left) ═══════════════ -->
+    <div x-show="showReservations" x-cloak class="fixed top-0 left-0 bottom-0 z-[60] w-full sm:w-[540px] shadow-2xl panel-bg flex flex-col"
+        style="border-right: 1px solid var(--border);"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
         @keydown.escape.window="showReservations = false">
 
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
                 <div>
-                    <h2 class="text-lg font-bold" style="color: var(--c1);">My Reservations</h2>
-                    <p class="text-xs mt-0.5" style="color: var(--c3);" x-text="resSummaryText()"></p>
+                    <h2 class="text-xl font-bold" style="color: var(--c1);">My Reservations</h2>
+                    <p class="text-sm mt-1" style="color: var(--c3);" x-text="resSummaryText()"></p>
                 </div>
                 <div class="flex items-center gap-2">
                     <button @click="showReservations = false"
-                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                        class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                         style="background: var(--btn-hot-bg); color: var(--btn-hot-text);">
                         + New Booking
                     </button>
-                    <button @click="showReservations = false" class="flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+                    <button @click="showReservations = false" class="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
                         style="color: var(--c3);"
                         onmouseover="this.style.color='var(--c1)'; this.style.background='var(--bg-hover)';"
                         onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
@@ -804,27 +804,27 @@
                                 <template x-if="res.status === 'confirmed'">
                                     <div>
                                         <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-sm" style="color: var(--status-confirmed);">&#10003;</span>
-                                            <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">Secured</span>
+                                            <span class="text-base" style="color: var(--status-confirmed);">&#10003;</span>
+                                            <span class="text-sm font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">Secured</span>
                                         </div>
-                                        <h3 class="text-base font-bold mb-2" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                        <div class="space-y-1 text-xs" style="color: var(--c2);">
+                                        <h3 class="text-lg font-bold mb-2" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                        <div class="space-y-1 text-sm" style="color: var(--c2);">
                                             <p x-text="formatDateFull(res.target_date)"></p>
                                             <p x-text="'Party of ' + res.party_size"></p>
-                                            <p x-show="res.time_preferences?.length" x-text="formatTimePrefs(res.time_preferences)"></p>
+                                            <p x-show="res.time_preferences?.length" x-text="'Time: ' + formatTimePrefs(res.time_preferences)"></p>
                                         </div>
-                                        <div x-show="res.elapsed_seconds" class="mt-2 text-[11px]" style="color: var(--c4);" x-text="'Booked in ' + (res.elapsed_seconds < 1 ? Math.round(res.elapsed_seconds * 1000) + 'ms' : res.elapsed_seconds.toFixed(1) + 's')"></div>
+                                        <div x-show="res.elapsed_seconds" class="mt-2 text-xs" style="color: var(--c4);" x-text="'Booked in ' + (res.elapsed_seconds < 1 ? Math.round(res.elapsed_seconds * 1000) + 'ms' : res.elapsed_seconds.toFixed(1) + 's')"></div>
                                         <div class="flex gap-2 mt-3">
                                             <a :href="calendarLink(res)" target="_blank"
-                                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                                class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
                                                 style="border: 1px solid var(--border); color: var(--c2);"
                                                 onmouseover="this.style.borderColor='var(--c3)';"
                                                 onmouseout="this.style.borderColor='var(--border)';">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                                 Calendar
                                             </a>
                                             <a :href="'/restaurant/' + res.venue_id"
-                                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                                class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all"
                                                 style="border: 1px solid var(--accent-border); color: var(--accent);">
                                                 Book Again
                                             </a>
@@ -836,21 +836,22 @@
                                 <template x-if="isActiveRes(res.status)">
                                     <div>
                                         <div class="flex items-center justify-between mb-2">
-                                            <h3 class="text-sm font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                                            <h3 class="text-base font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold"
                                                 :style="'background:' + resStatusBg(res.status) + '; color:' + resStatusColor(res.status)"
                                                 x-text="resStatusLabel(res.status)"></span>
                                         </div>
-                                        <div class="flex items-center gap-3 text-xs mb-2" style="color: var(--c3);">
-                                            <span x-text="formatDateShort(res.target_date)"></span>
-                                            <span x-text="'Party of ' + res.party_size"></span>
+                                        <div class="space-y-1 mb-3 text-sm" style="color: var(--c3);">
+                                            <p x-text="resGroupDates(res)"></p>
+                                            <p x-text="'Party of ' + res.party_size"></p>
+                                            <p x-show="res.time_preferences?.length" x-text="'Times: ' + formatTimePrefs(res.time_preferences)"></p>
                                         </div>
-                                        <div x-show="res._live" class="flex items-center gap-2 mb-2">
-                                            <span class="w-2 h-2 rounded-full pulse-dot" :style="'background:' + resStatusColor(res.status)"></span>
-                                            <span class="text-xs font-medium" :style="'color:' + resStatusColor(res.status)" x-text="res._liveMessage || resStatusLabel(res.status)"></span>
+                                        <div x-show="res._live" class="flex items-center gap-2 mb-3">
+                                            <span class="w-2.5 h-2.5 rounded-full pulse-dot" :style="'background:' + resStatusColor(res.status)"></span>
+                                            <span class="text-sm font-medium" :style="'color:' + resStatusColor(res.status)" x-text="res._liveMessage || resStatusLabel(res.status)"></span>
                                         </div>
                                         <button @click="confirmCancelId = res.id"
-                                            class="px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                                             style="border: 1px solid var(--status-failed-bg); color: var(--status-failed);"
                                             onmouseover="this.style.background='var(--status-failed-bg)';"
                                             onmouseout="this.style.background='transparent';">
@@ -858,14 +859,14 @@
                                         </button>
                                         <!-- Cancel confirmation inline -->
                                         <div x-show="confirmCancelId === res.id" x-cloak x-transition
-                                            class="mt-2 p-3 rounded-xl" style="background: var(--status-failed-bg); border: 1px solid var(--status-failed);">
-                                            <p class="text-[11px] font-medium mb-2" style="color: var(--status-failed);">Stop watching for this reservation?</p>
+                                            class="mt-3 p-3 rounded-xl" style="background: var(--status-failed-bg); border: 1px solid var(--status-failed);">
+                                            <p class="text-xs font-medium mb-2" style="color: var(--status-failed);">Stop monitoring this reservation?</p>
                                             <div class="flex gap-2">
                                                 <button @click="cancelRes(res.id); confirmCancelId = null"
-                                                    class="flex-1 py-1.5 rounded-lg text-[11px] font-bold"
+                                                    class="flex-1 py-1.5 rounded-lg text-xs font-bold"
                                                     style="background: var(--status-failed); color: white;">Yes, cancel</button>
                                                 <button @click="confirmCancelId = null"
-                                                    class="flex-1 py-1.5 rounded-lg text-[11px] font-medium"
+                                                    class="flex-1 py-1.5 rounded-lg text-xs font-medium"
                                                     style="border: 1px solid var(--border); color: var(--c3);">Keep it</button>
                                             </div>
                                         </div>
@@ -885,21 +886,21 @@
 
                         <!-- History (compact inline rows) -->
                         <template x-for="res in reservations.filter(r => isHistoryRes(r.status))" :key="res.id">
-                            <div class="flex items-center gap-3 py-2.5 px-1 group" style="opacity: 0.55;">
+                            <div class="flex items-center gap-3 py-3 px-1 group" style="opacity: 0.55;">
                                 <!-- Status icon -->
-                                <span x-show="res.status === 'failed'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                <span x-show="res.status === 'failed'" class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs"
                                     style="background: var(--status-failed-bg); color: var(--status-failed);">✕</span>
-                                <span x-show="res.status === 'cancelled'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                <span x-show="res.status === 'cancelled'" class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs"
                                     style="background: var(--bg-input); color: var(--c3);">—</span>
-                                <span x-show="res.status === 'dry_run'" class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-[10px]"
+                                <span x-show="res.status === 'dry_run'" class="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-xs"
                                     style="background: var(--bg-input); color: var(--c3);">⚡</span>
                                 <!-- Name + date + error inline -->
                                 <div class="flex-1 min-w-0">
-                                    <span class="text-xs font-medium truncate" style="color: var(--c2);" x-text="res.venue_name"></span>
-                                    <p x-show="res.status === 'failed' && res.error" class="text-[10px] truncate mt-0.5" style="color: var(--status-failed);" x-text="res.error"></p>
+                                    <span class="text-sm font-medium truncate" style="color: var(--c2);" x-text="res.venue_name"></span>
+                                    <p x-show="res.status === 'failed' && res.error" class="text-xs truncate mt-0.5" style="color: var(--status-failed);" x-text="res.error"></p>
                                 </div>
-                                <span class="text-[11px] flex-shrink-0" style="color: var(--c4);" x-text="formatDateShort(res.target_date)"></span>
-                                <a :href="'/restaurant/' + res.venue_id" class="text-[11px] font-medium flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--accent);">Retry</a>
+                                <span class="text-xs flex-shrink-0" style="color: var(--c4);" x-text="formatDateShort(res.target_date)"></span>
+                                <a :href="'/restaurant/' + res.venue_id" class="text-xs font-medium flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" style="color: var(--accent);">Retry</a>
                             </div>
                         </template>
 
@@ -1478,6 +1479,44 @@
                     this.showToast(params.get('toast'));
                     window.history.replaceState({}, '', '/browse');
                 }
+
+                // Proactive token refresh — keep session alive
+                this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
+            },
+
+            // ── Session Token Refresh ──
+            async _tryRefreshToken() {
+                const rt = localStorage.getItem('tablement_refresh');
+                if (!rt) return false;
+                try {
+                    const resp = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: rt }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        localStorage.setItem('tablement_token', data.access_token);
+                        localStorage.setItem('tablement_refresh', data.refresh_token);
+                        this.token = data.access_token;
+                        return true;
+                    }
+                } catch (e) { console.warn('Token refresh failed:', e); }
+                return false;
+            },
+
+            async authFetch(url, opts = {}) {
+                // Fetch wrapper that auto-refreshes on 401
+                opts.headers = { ...opts.headers, 'Authorization': 'Bearer ' + this.token };
+                let resp = await fetch(url, opts);
+                if (resp.status === 401) {
+                    const refreshed = await this._tryRefreshToken();
+                    if (refreshed) {
+                        opts.headers['Authorization'] = 'Bearer ' + this.token;
+                        resp = await fetch(url, opts);
+                    }
+                }
+                return resp;
             },
 
             applyTheme() {
@@ -1493,11 +1532,11 @@
             // ── Data Loading ──
             async loadProfile() {
                 try {
-                    const resp = await fetch('/api/auth/me', {
-                        headers: { 'Authorization': 'Bearer ' + this.token },
-                    });
+                    const resp = await this.authFetch('/api/auth/me');
                     if (resp.status === 401) {
+                        // Token refresh already attempted by authFetch — truly expired
                         localStorage.removeItem('tablement_token');
+                        localStorage.removeItem('tablement_refresh');
                         window.location.href = '/';
                         return;
                     }
@@ -1804,6 +1843,19 @@
                 return parts.length ? parts.join(' · ') : 'No active reservations';
             },
 
+            resGroupDates(res) {
+                // Show all dates for reservations in the same group, comma-separated
+                if (res.group_id) {
+                    const siblings = this.reservations.filter(r => r.group_id === res.group_id && this.isActiveRes(r.status));
+                    if (siblings.length > 1) {
+                        // Only show on the first sibling to avoid duplication
+                        if (siblings[0].id !== res.id) return this.formatDateShort(res.target_date);
+                        return siblings.map(r => this.formatDateShort(r.target_date)).join(', ');
+                    }
+                }
+                return this.formatDateShort(res.target_date);
+            },
+
             resStatusColor(status) {
                 const map = { scheduled: 'var(--status-active)', monitoring: 'var(--accent)', sniping: 'var(--status-sniping)' };
                 return map[status] || 'var(--c3)';
@@ -1813,7 +1865,7 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Scheduled', monitoring: 'Watching', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
+                const map = { scheduled: 'Scheduled', monitoring: 'Monitoring', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
                 return map[status] || status;
             },
 
@@ -1847,7 +1899,7 @@
                 });
                 es.addEventListener('snipe_attempt', (e) => {
                     const data = JSON.parse(e.data);
-                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Watching for openings...';
+                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Monitoring for openings...';
                 });
                 es.addEventListener('countdown_tick', (e) => {
                     const data = JSON.parse(e.data);
@@ -1875,7 +1927,7 @@
                     es.close(); delete this.eventSources[id];
                     // Auto-reconnect after 3s if reservation is still active
                     if (this.isActiveRes(res.status)) {
-                        res._liveMessage = 'Reconnecting...';
+                        res._liveMessage = 'Refreshing connection...';
                         setTimeout(() => {
                             if (this.isActiveRes(res.status)) this.connectSSE(res);
                         }, 3000);
@@ -1885,7 +1937,7 @@
                 };
             },
             friendlyPhase(data) {
-                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Watching for openings...' };
+                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Monitoring for openings...' };
                 return map[data.phase] || data.message || 'Working on it...';
             },
             mapPhase(phase) {
@@ -2126,6 +2178,7 @@
 
             signOut() {
                 Object.values(this.eventSources).forEach(es => es.close());
+                if (this._refreshTimer) clearInterval(this._refreshTimer);
                 localStorage.removeItem('tablement_token');
                 localStorage.removeItem('tablement_refresh');
                 window.location.href = '/';

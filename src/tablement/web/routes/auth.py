@@ -340,6 +340,44 @@ async def me(user_id: str = Depends(get_user_id)):
 
 
 # ---------------------------------------------------------------------------
+# Token Refresh — keep sessions alive without re-login
+# ---------------------------------------------------------------------------
+
+
+@router.post("/refresh")
+@limiter.limit("10/minute")
+async def refresh_session(request: Request, body: dict):
+    """Refresh an expired access token using a refresh token.
+
+    Frontend calls this when a 401 is received or proactively every ~50 min.
+    Returns fresh access_token + refresh_token pair from Supabase.
+    """
+    refresh_token = (body.get("refresh_token") or "").strip()
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="refresh_token is required")
+
+    try:
+        client = db.get_client()
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="Auth service unavailable")
+
+    try:
+        resp = await client.auth.refresh_session(refresh_token)
+    except Exception as e:
+        logger.warning("Token refresh failed: %s", e)
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+
+    if not resp or not resp.session:
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+
+    logger.info("Token refreshed for user %s", resp.user.id if resp.user else "unknown")
+    return {
+        "access_token": resp.session.access_token,
+        "refresh_token": resp.session.refresh_token,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Dev Mode — skip phone auth during development
 # ---------------------------------------------------------------------------
 
