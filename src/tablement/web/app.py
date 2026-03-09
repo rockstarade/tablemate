@@ -216,6 +216,10 @@ def create_app() -> FastAPI:
     async def landing_v7(request: Request):
         return templates.TemplateResponse("landing_v7.html", {"request": request})
 
+    @app.get("/v8")
+    async def landing_v8(request: Request):
+        return templates.TemplateResponse("landing_v8.html", {"request": request})
+
     @app.get("/admin")
     async def admin_page(request: Request):
         return templates.TemplateResponse("admin_vip.html", {"request": request})

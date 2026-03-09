@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tablepass — Your Table Is Waiting</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        cream: { 50: '#FDFCFA', 100: '#FAF8F5', 200: '#F5F0EA', 300: '#E8E0D4', 400: '#D4C8B8' },
+                        stone: { 50: '#F9F8F6', 100: '#F0EFEC', 200: '#E0DDD8', 300: '#C8C3BB', 400: '#9E9789', 500: '#7A7468', 600: '#5C5850', 700: '#3D3A35', 800: '#2A2825', 900: '#1A1917', 950: '#0D0D0B' },
+                        gold:  { 50: '#FBF8F0', 100: '#F5EDD8', 200: '#EBD9AF', 300: '#D4B978', 400: '#C5A355', 500: '#B08D3E', 600: '#917030', 700: '#6B5224', 800: '#4A3A1A', 900: '#2E2410' },
+                    }
+                }
+            }
+        }
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #FDFCFA;
+            min-height: 100vh;
+            color: #2A2825;
+        }
+        .font-serif { font-family: 'Playfair Display', Georgia, serif; }
+
+        /* ═══ LUXURY ACCENTS ═══ */
+        .gold-text {
+            background: linear-gradient(135deg, #C5A355 0%, #D4B978 40%, #B08D3E 70%, #C5A355 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .gold-line {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #D4B978 50%, transparent 100%);
+        }
+
+        /* ═══ HERO ═══ */
+        .hero-bg {
+            background: #0D0D0B;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 50% at 50% 45%, rgba(197,163,85,0.04) 0%, transparent 70%),
+                radial-gradient(ellipse 40% 30% at 75% 60%, rgba(197,163,85,0.02) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 240px;
+            background: linear-gradient(to top, #0D0D0B, transparent);
+            pointer-events: none;
+        }
+
+        /* ═══ GRAIN TEXTURE (subtle luxury feel) ═══ */
+        .grain::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        /* ═══ GLASS ═══ */
+        .glass-dark {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .glass-light {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212,185,120,0.12);
+        }
+
+        /* ═══ CARDS ═══ */
+        .luxury-card {
+            border: 1px solid rgba(212,185,120,0.08);
+            transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
+        }
+        .luxury-card:hover {
+            border-color: rgba(212,185,120,0.2);
+            box-shadow: 0 8px 40px rgba(197,163,85,0.06);
+            transform: translateY(-3px);
+        }
+
+        /* ═══ RESTAURANT CARD ═══ */
+        .rest-card {
+            transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), box-shadow 0.5s cubic-bezier(0.22,1,0.36,1);
+        }
+        .rest-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .rest-card:hover img { transform: scale(1.08); }
+
+        /* ═══ ANIMATIONS ═══ */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(32px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim-1 { animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.15s both; }
+        .anim-2 { animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+        .anim-3 { animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.55s both; }
+        .anim-4 { animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.75s both; }
+
+        .reveal {
+            opacity: 0; transform: translateY(28px);
+            transition: opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* ═══ MARQUEE ═══ */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-track {
+            display: flex;
+            animation: marquee 40s linear infinite;
+            width: max-content;
+        }
+        .marquee-track:hover { animation-play-state: paused; }
+
+        /* ═══ STEP CONNECTOR ═══ */
+        .step-number {
+            position: relative;
+        }
+        .step-number::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 1px solid rgba(197,163,85,0.2);
+        }
+
+        /* ═══ OTP ═══ */
+        .otp-digit {
+            width: 52px; height: 60px;
+            text-align: center; font-size: 1.5rem; font-weight: 600;
+            caret-color: #C5A355;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .otp-digit:focus { border-color: #C5A355; box-shadow: 0 0 0 3px rgba(197,163,85,0.12); }
+        .otp-digit.filled { border-color: #D4B978; background: rgba(197,163,85,0.03); }
+
+        /* ═══ SCROLLBAR ═══ */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(197,163,85,0.2); border-radius: 2px; }
+
+        /* ═══ PHONE INPUT ═══ */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        /* ═══ DIVIDER ═══ */
+        .luxury-divider {
+            display: flex; align-items: center; gap: 16px;
+        }
+        .luxury-divider::before, .luxury-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212,185,120,0.15), transparent);
+        }
+
+        /* ═══ PULSE ═══ */
+        @keyframes softPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-gold { animation: softPulse 2.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="antialiased" x-data="landingApp()" x-init="init()">
+
+    <!-- Toast -->
+    <div x-show="toastMsg" x-cloak
+        class="fixed top-6 right-6 z-[100] max-w-sm"
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-x-8"
+        x-transition:enter-end="opacity-1 translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-1 translate-x-0"
+        x-transition:leave-end="opacity-0 translate-x-8">
+        <div class="bg-stone-950 rounded-xl border border-gold-300/20 px-5 py-3.5 flex items-center gap-3 shadow-2xl">
+            <span class="text-gold-400 text-sm">&#10003;</span>
+            <p class="text-sm text-cream-200" x-text="toastMsg"></p>
+        </div>
+    </div>
+
+    <!-- ═══ NAV ═══ -->
+    <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-500"
+         :class="scrolled ? 'bg-cream-50/90 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : ''">
+        <div class="max-w-6xl mx-auto px-6 flex items-center justify-between"
+            :class="scrolled ? 'py-4' : 'py-6'">
+            <a href="/" class="flex items-center gap-2">
+                <span class="text-[22px] font-serif font-medium tracking-[0.02em] transition-colors"
+                    :class="scrolled ? 'text-stone-900' : 'text-white'">tablepass</span>
+            </a>
+            <div class="hidden md:flex items-center gap-10">
+                <a href="#how-it-works" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">How It Works</a>
+                <a href="#pricing" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">Pricing</a>
+                <a href="#restaurants" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">Restaurants</a>
+            </div>
+            <div class="flex items-center gap-5">
+                <a href="/admin" class="text-white/10 hover:text-white/25 text-xs transition-colors hidden sm:block"
+                    :class="scrolled && '!text-stone-200 !hover:text-stone-400'">Admin</a>
+                <button @click="openAuth()"
+                    class="text-[13px] font-medium transition-colors"
+                    :class="scrolled ? 'text-stone-500 hover:text-stone-800' : 'text-white/50 hover:text-white'">
+                    Sign In
+                </button>
+                <button @click="openAuth()"
+                    class="px-6 py-2.5 rounded-lg text-[13px] font-semibold tracking-wide transition-all"
+                    :class="scrolled
+                        ? 'bg-stone-900 hover:bg-stone-800 text-cream-100'
+                        : 'bg-white/10 hover:bg-white/15 text-white border border-white/10'">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- ═══ HERO ═══ -->
+        <section class="hero-bg grain min-h-screen flex items-center relative">
+            <div class="max-w-6xl mx-auto px-6 w-full relative z-10 pt-32 pb-24 sm:pt-0 sm:pb-0">
+                <div class="flex flex-col items-center text-center">
+                    <!-- Eyebrow -->
+                    <div class="inline-flex items-center gap-3 mb-10 anim-1">
+                        <span class="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold-400/40"></span>
+                        <span class="text-gold-400/70 text-[11px] font-semibold tracking-[0.3em] uppercase">New York's Finest Tables</span>
+                        <span class="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold-400/40"></span>
+                    </div>
+
+                    <!-- Headline -->
+                    <h1 class="text-5xl sm:text-6xl lg:text-[4.5rem] font-serif font-medium text-white leading-[1.08] mb-8 anim-2 max-w-4xl">
+                        The reservation you<br>couldn't get?
+                        <span class="italic gold-text">Consider it done.</span>
+                    </h1>
+
+                    <!-- Subhead -->
+                    <p class="text-lg sm:text-xl text-white/35 max-w-xl mb-12 anim-3 leading-relaxed font-light">
+                        We secure the city's most sought-after tables the instant they become available. Precision-timed. Effortless for you.
+                    </p>
+
+                    <!-- CTA -->
+                    <div class="flex flex-col sm:flex-row items-center gap-4 anim-4">
+                        <button @click="openAuth()"
+                            class="group px-10 py-4 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10">
+                            Reserve Your Access
+                            <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                        </button>
+                        <a href="#how-it-works"
+                            class="px-8 py-4 text-white/30 hover:text-white/60 font-medium text-[15px] transition-all">
+                            Learn More
+                        </a>
+                    </div>
+
+                    <!-- Trust row -->
+                    <div class="flex items-center gap-8 mt-16 anim-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-serif text-white/90">500<span class="text-gold-400/60">+</span></p>
+                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Guests Served</p>
+                        </div>
+                        <div class="w-px h-8 bg-white/8"></div>
+                        <div class="text-center">
+                            <p class="text-2xl font-serif text-white/90">99.8<span class="text-gold-400/60">%</span></p>
+                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Success Rate</p>
+                        </div>
+                        <div class="w-px h-8 bg-white/8"></div>
+                        <div class="text-center">
+                            <p class="text-2xl font-serif text-white/90" x-text="restaurantCount"><span class="text-gold-400/60">+</span></p>
+                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Restaurants</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ MARQUEE (Transition) ═══ -->
+        <section class="py-10 border-b border-stone-200/60 bg-cream-50">
+            <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
+                <div class="marquee-track text-stone-300 text-[11px] font-semibold tracking-[0.35em] uppercase whitespace-nowrap">
+                    <span class="mx-6 sm:mx-8">Carbone</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">4 Charles</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Atomix</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Torrisi</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Don Angie</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Le Bernardin</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Lilia</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Peter Luger</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Semma</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Coqodaq</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <!-- Duplicate for seamless loop -->
+                    <span class="mx-6 sm:mx-8">Carbone</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">4 Charles</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Atomix</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Torrisi</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Don Angie</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Le Bernardin</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Lilia</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Peter Luger</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Semma</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                    <span class="mx-6 sm:mx-8">Coqodaq</span><span class="text-gold-300/50 mx-2">&#9671;</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ HOW IT WORKS ═══ -->
+        <section id="how-it-works" class="py-28 sm:py-36 bg-cream-50">
+            <div class="max-w-5xl mx-auto px-6">
+                <div class="text-center mb-20 reveal">
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">The Experience</p>
+                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight">
+                        Effortless from<br><span class="italic">start to table</span>
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative">
+                    <!-- Connector line -->
+                    <div class="hidden md:block absolute top-[36px] left-[calc(16.67%+36px)] right-[calc(16.67%+36px)] h-[1px]"
+                        style="background: linear-gradient(90deg, rgba(197,163,85,0.15), rgba(197,163,85,0.08));"></div>
+
+                    <div class="reveal text-center">
+                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
+                            <span class="text-gold-400 font-serif text-xl italic">01</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-stone-900 mb-3">Connect Your Account</h3>
+                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">Link your Resy account in seconds. Encrypted, secure, entirely yours.</p>
+                    </div>
+                    <div class="reveal text-center" style="transition-delay: 0.12s;">
+                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
+                            <span class="text-gold-400 font-serif text-xl italic">02</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-stone-900 mb-3">Choose Your Table</h3>
+                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">Select the restaurant, date, time, and party size. We handle the rest.</p>
+                    </div>
+                    <div class="reveal text-center" style="transition-delay: 0.24s;">
+                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
+                            <span class="text-gold-400 font-serif text-xl italic">03</span>
+                        </div>
+                        <h3 class="text-xl font-serif text-stone-900 mb-3">Arrive &amp; Enjoy</h3>
+                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">You'll get a text the moment it's confirmed. All you do is show up.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ WHY TABLEPASS ═══ -->
+        <section class="py-28 sm:py-36 bg-white relative grain">
+            <div class="max-w-6xl mx-auto px-6 relative z-10">
+                <div class="flex flex-col lg:flex-row gap-16 lg:gap-24 reveal">
+                    <!-- Left -->
+                    <div class="lg:w-[360px] lg:sticky lg:top-32 flex-shrink-0">
+                        <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Why Tablepass</p>
+                        <h2 class="text-4xl sm:text-[2.75rem] font-serif text-stone-900 leading-[1.15] mb-5">
+                            Precision-built for<br><span class="italic">impossible tables</span>
+                        </h2>
+                        <p class="text-stone-400 text-base leading-relaxed">We don't just refresh a page. We've engineered infrastructure that operates at machine speed — so you don't have to compete.</p>
+                    </div>
+                    <!-- Right: feature grid -->
+                    <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
+                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Sub-Second Booking</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">Our servers sit adjacent to Resy's infrastructure. We submit before anyone can tap refresh.</p>
+                        </div>
+                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
+                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">24/7 Cancellation Watch</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">Someone cancels Carbone at 3 AM? We secure it before they close the app.</p>
+                        </div>
+                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
+                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Encrypted &amp; Private</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">Bank-grade encryption. We never store passwords. Your account is always yours.</p>
+                        </div>
+                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
+                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Pay Only on Success</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">No subscriptions. No setup fees. You're charged only when we confirm your table.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ PRICING ═══ -->
+        <section id="pricing" class="py-28 sm:py-36 bg-cream-100/50">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="text-center mb-18 reveal">
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Investment</p>
+                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight mb-4">
+                        Transparent, <span class="italic">simple</span>
+                    </h2>
+                    <p class="text-stone-400 text-lg">No subscriptions. No hidden fees. Just confirmed tables.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-16">
+                    <!-- Per booking -->
+                    <div class="reveal rounded-2xl border border-stone-200 bg-white p-10 text-center">
+                        <h3 class="text-[11px] font-semibold text-stone-400 tracking-[0.2em] uppercase mb-6">Per Reservation</h3>
+                        <div class="mb-8">
+                            <span class="text-6xl font-serif text-stone-900">$12</span>
+                        </div>
+                        <ul class="text-stone-500 text-[14px] space-y-4 mb-10 text-left">
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                Charged only on confirmed bookings
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                Drop sniping + cancellation monitoring
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                Instant SMS confirmation
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all">
+                            Get Started
+                        </button>
+                    </div>
+                    <!-- 5-pack -->
+                    <div class="reveal rounded-2xl bg-stone-950 p-10 text-center relative overflow-hidden" style="transition-delay: 0.1s;">
+                        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent"></div>
+                        <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-[0.1em] uppercase" style="background: rgba(197,163,85,0.15); color: #D4B978;">Best Value</div>
+                        <h3 class="text-[11px] font-semibold text-white/35 tracking-[0.2em] uppercase mb-6">5 Pack</h3>
+                        <div class="mb-8">
+                            <span class="text-6xl font-serif text-white">$10</span>
+                            <span class="text-white/30 ml-1 text-sm">/ each</span>
+                        </div>
+                        <ul class="text-white/45 text-[14px] space-y-4 mb-10 text-left">
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Save $2 per booking</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Everything in Per Reservation</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Credits never expire</span>
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
+                            style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
+                            Buy 5 Pack &mdash; $50
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ RESTAURANTS ═══ -->
+        <section id="restaurants" class="py-28 sm:py-36 bg-white">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="text-center mb-16 reveal">
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">The Collection</p>
+                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight mb-4">
+                        Tables worth <span class="italic">every effort</span>
+                    </h2>
+                    <p class="text-stone-400 text-base">Michelin stars. James Beard winners. The names everyone's after.</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 reveal">
+                    <template x-for="r in featuredRestaurants" :key="r.venue_id">
+                        <div class="rest-card rounded-xl overflow-hidden bg-cream-50 border border-stone-100 cursor-default">
+                            <div class="relative h-40 sm:h-48 overflow-hidden">
+                                <img :src="r.image_url" :alt="r.name"
+                                    class="w-full h-full object-cover transition-transform duration-700"
+                                    @error="$event.target.style.display='none'">
+                                <div class="absolute inset-0 bg-gradient-to-t from-stone-950/60 via-transparent to-transparent"></div>
+                                <div class="absolute bottom-3 left-3 right-3">
+                                    <h3 class="text-[15px] font-serif font-medium text-white leading-tight drop-shadow-md" x-text="r.name"></h3>
+                                    <p class="text-white/50 text-[12px] mt-0.5" x-text="r.neighborhood"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="text-center mt-14 reveal">
+                    <button @click="openAuth()"
+                        class="px-8 py-3.5 rounded-xl bg-stone-900 text-cream-100 hover:bg-stone-800 font-semibold text-sm transition-all tracking-wide">
+                        View All Restaurants &rarr;
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ FAQ ═══ -->
+        <section id="faq" class="py-28 sm:py-36 bg-cream-100/50">
+            <div class="max-w-3xl mx-auto px-6">
+                <div class="text-center mb-16 reveal">
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Questions</p>
+                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight">Frequently asked</h2>
+                </div>
+                <div class="space-y-3 reveal">
+                    <template x-for="(faq, i) in faqs" :key="i">
+                        <div class="rounded-xl border bg-white overflow-hidden transition-all"
+                             :class="faq.open ? 'border-gold-300/30 shadow-sm' : 'border-stone-200'">
+                            <button @click="faq.open = !faq.open"
+                                class="w-full px-6 py-5 flex items-center justify-between text-left group">
+                                <span class="font-medium text-stone-800 text-[15px] pr-4" x-text="faq.q"></span>
+                                <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-300 ml-4"
+                                    :class="faq.open ? 'rotate-180 text-gold-500' : 'text-stone-300'"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <div x-show="faq.open" x-collapse>
+                                <div class="px-6 pb-5 text-stone-500 text-[14px] leading-relaxed" x-text="faq.a"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ FINAL CTA ═══ -->
+        <section class="hero-bg grain py-28 sm:py-36 relative">
+            <div class="max-w-3xl mx-auto px-6 text-center relative z-10 reveal">
+                <div class="luxury-divider mb-10">
+                    <span class="text-gold-400/30 text-[10px] tracking-[0.4em] uppercase font-semibold">Your Table Awaits</span>
+                </div>
+                <h2 class="text-4xl sm:text-5xl font-serif text-white leading-tight mb-6">
+                    Stop refreshing.<br><span class="italic gold-text">Start dining.</span>
+                </h2>
+                <p class="text-white/30 text-lg mb-12 max-w-md mx-auto">Join New Yorkers who never miss a reservation again.</p>
+                <button @click="openAuth()"
+                    class="px-10 py-4 rounded-lg font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10"
+                    style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
+                    Reserve Your Access &rarr;
+                </button>
+                <p class="text-white/15 text-xs mt-6 tracking-wide">Only $12 per confirmed reservation. No subscription.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="bg-stone-950 py-12 text-center border-t border-white/5">
+        <span class="font-serif text-white/30 text-lg tracking-wide">tablepass</span>
+        <div class="flex items-center justify-center gap-4 mt-3">
+            <a href="/terms" class="text-white/15 text-xs hover:text-white/30 transition-colors">Terms</a>
+            <span class="text-white/10">|</span>
+            <a href="/privacy" class="text-white/15 text-xs hover:text-white/30 transition-colors">Privacy</a>
+        </div>
+        <p class="text-white/10 text-xs mt-4">NYC's finest reservations, automated.</p>
+    </footer>
+
+    <!-- ═══ AUTH MODAL ═══ -->
+    <div x-show="showAuth" x-cloak
+        class="fixed inset-0 z-[80] flex items-center justify-center"
+        @keydown.escape.window="showAuth = false">
+        <div class="absolute inset-0 bg-stone-950/50 backdrop-blur-sm" @click="showAuth = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 bg-white rounded-2xl border border-stone-200 p-8 shadow-2xl"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100">
+
+            <button @click="showAuth = false" class="absolute top-4 right-4 text-stone-300 hover:text-stone-600 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <!-- Step 1: Phone -->
+            <div x-show="authStep === 'phone'" class="slide-enter" x-transition>
+                <h2 class="text-xl font-serif text-stone-900 mb-1">Sign in with your phone</h2>
+                <p class="text-stone-400 text-sm mb-8">We'll text you a verification code.</p>
+                <form @submit.prevent="sendOtp()">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="flex items-center px-4 py-3 rounded-xl bg-cream-100 border border-stone-200">
+                            <span class="text-stone-400 text-lg font-medium select-none">+1</span>
+                        </div>
+                        <div class="flex-1">
+                            <input type="tel" x-ref="phoneInput"
+                                x-model="phoneDisplay"
+                                @input="formatPhoneInput($event)"
+                                @keydown="phoneKeydown($event)"
+                                placeholder="(555) 123-4567"
+                                maxlength="14" inputmode="numeric" autocomplete="tel-national"
+                                class="w-full px-4 py-3 rounded-xl bg-cream-100 border border-stone-200 text-stone-800 text-lg tracking-wide placeholder-stone-300 focus:outline-none focus:border-gold-400 focus:ring-2 focus:ring-gold-400/15"
+                                required>
+                        </div>
+                    </div>
+                    <button type="submit" :disabled="loading || phoneDigits.length !== 10"
+                        class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                        :class="phoneDigits.length === 10
+                            ? 'bg-stone-900 hover:bg-stone-800 text-cream-100'
+                            : 'bg-stone-100 text-stone-300 cursor-not-allowed'">
+                        <span x-show="!loading">Send Code</span>
+                        <span x-show="loading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                            </svg>
+                            Sending...
+                        </span>
+                    </button>
+                </form>
+                <p x-show="error" x-transition class="mt-4 text-red-500 text-sm" x-text="error"></p>
+                <button x-show="devMode" x-cloak
+                    @click="devSkip()"
+                    class="w-full mt-3 py-2.5 text-stone-300 hover:text-stone-500 text-xs transition-colors">
+                    Skip for now (dev mode)
+                </button>
+                <button @click="devSkip()"
+                    class="w-full mt-4 py-2.5 rounded-xl border border-stone-100 text-stone-300 hover:text-stone-500 hover:border-stone-300 text-xs font-medium transition-all">
+                    Skip (Admin) &rarr;
+                </button>
+            </div>
+
+            <!-- Step 2: OTP -->
+            <div x-show="authStep === 'otp'" class="slide-enter" x-transition>
+                <h2 class="text-xl font-serif text-stone-900 mb-1">Enter verification code</h2>
+                <p class="text-stone-400 text-sm mb-8">
+                    Sent to <span class="text-stone-700">+1 <span x-text="phoneDisplay"></span></span>
+                </p>
+                <div class="flex justify-center gap-3 mb-6" data-otp-container @paste.prevent="handleOtpPaste($event)">
+                    <template x-for="(digit, i) in otpDigits" :key="i">
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                            :data-otp-idx="i" :value="digit"
+                            @input="handleOtpInput($event, i)"
+                            @keydown="handleOtpKeydown($event, i)"
+                            @focus="$event.target.select()"
+                            class="otp-digit rounded-xl bg-cream-100 border border-stone-200 text-stone-800 focus:outline-none"
+                            :class="{ 'filled': digit !== '' }">
+                    </template>
+                </div>
+                <button @click="verifyOtp()" :disabled="loading || otpDigits.join('').length !== 6"
+                    class="w-full py-3.5 rounded-xl font-semibold transition-all text-sm"
+                    :class="otpDigits.join('').length === 6
+                        ? 'bg-stone-900 hover:bg-stone-800 text-cream-100'
+                        : 'bg-stone-100 text-stone-300 cursor-not-allowed'">
+                    <span x-show="!loading">Verify</span>
+                    <span x-show="loading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+                        </svg>
+                        Verifying...
+                    </span>
+                </button>
+                <div class="mt-5 flex items-center justify-between">
+                    <button @click="authStep = 'phone'; error = ''" class="text-stone-400 hover:text-stone-700 text-sm transition-colors">
+                        &larr; Change number
+                    </button>
+                    <button @click="resendOtp()" :disabled="resendCooldown > 0" class="text-sm transition-colors"
+                        :class="resendCooldown > 0 ? 'text-stone-200 cursor-not-allowed' : 'text-gold-500 hover:text-gold-600'">
+                        <span x-show="resendCooldown > 0" x-text="'Resend in ' + resendCooldown + 's'"></span>
+                        <span x-show="resendCooldown === 0">Resend code</span>
+                    </button>
+                </div>
+                <p x-show="error" x-transition class="mt-4 text-red-500 text-sm" x-text="error"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function landingApp() {
+        return {
+            showAuth: false,
+            authStep: 'phone',
+            phoneDisplay: '',
+            phoneDigits: '',
+            otpDigits: ['', '', '', '', '', ''],
+            loading: false,
+            error: '',
+            resendCooldown: 0,
+            _resendTimer: null,
+            toastMsg: '',
+            devMode: false,
+            activeSection: '',
+            scrolled: false,
+            restaurants: [],
+            restaurantCount: '104',
+
+            get featuredRestaurants() {
+                const names = ['carbone', '4 charles', 'atomix', 'torrisi', 'don angie', 'le bernardin', 'lilia', 'peter luger', 'semma'];
+                const featured = this.restaurants.filter(r =>
+                    names.some(n => r.name && r.name.toLowerCase().includes(n))
+                );
+                return featured.length > 0 ? featured.slice(0, 8) : this.restaurants.slice(0, 8);
+            },
+
+            faqs: [
+                { q: 'How does tablepass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
+                { q: 'Do I need a Resy account?', a: 'Yes. tablepass books through Resy and OpenTable, so you need an active account on the relevant platform. After signing up, you\'ll link your credentials securely.', open: false },
+                { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
+                { q: 'Which restaurants do you support?', a: 'We support NYC\'s most competitive restaurants on Resy and OpenTable, including Carbone, Torrisi, Don Angie, 4 Charles Prime Rib, Atomix, and over 100 more. We\'re adding new restaurants regularly.', open: false },
+                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The tablepass fee is non-refundable once the booking is confirmed.', open: false },
+                { q: 'Is my account information safe?', a: 'Absolutely. We use encrypted connections and never store your password in plain text. Your credentials are used solely to make bookings on your behalf — nothing more.', open: false },
+            ],
+
+            async init() {
+                if (localStorage.getItem('tablement_token')) {
+                    window.location.href = '/browse';
+                    return;
+                }
+                try {
+                    const resp = await fetch('/api/auth/dev-mode');
+                    if (resp.ok) { const data = await resp.json(); this.devMode = data.dev === true; }
+                } catch (e) {}
+                try {
+                    const resp = await fetch('/api/curated/');
+                    const data = await resp.json();
+                    this.restaurants = data.restaurants || [];
+                    if (this.restaurants.length > 0) this.restaurantCount = String(this.restaurants.length);
+                } catch (e) {}
+
+                const onScroll = () => { this.scrolled = window.scrollY > 10; };
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+                }, { threshold: 0.12 });
+                document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+            },
+
+            openAuth() {
+                this.showAuth = true;
+                this.authStep = 'phone';
+                this.$nextTick(() => this.$refs.phoneInput && this.$refs.phoneInput.focus());
+            },
+
+            _formatPhone(raw) {
+                let f = '';
+                if (raw.length > 0) f += '(' + raw.slice(0, 3);
+                if (raw.length >= 3) f += ') ';
+                if (raw.length > 3) f += raw.slice(3, 6);
+                if (raw.length > 6) f += '-' + raw.slice(6);
+                return f;
+            },
+            formatPhoneInput(e) {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+                this.phoneDigits = raw;
+                const formatted = this._formatPhone(raw);
+                this.phoneDisplay = formatted;
+                this.$nextTick(() => { e.target.value = formatted; e.target.setSelectionRange(formatted.length, formatted.length); });
+            },
+            phoneKeydown(e) {
+                const passthrough = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (passthrough.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    if (this.phoneDigits.length > 0) {
+                        this.phoneDigits = this.phoneDigits.slice(0, -1);
+                        const formatted = this._formatPhone(this.phoneDigits);
+                        this.phoneDisplay = formatted;
+                        this.$nextTick(() => { e.target.value = formatted; e.target.setSelectionRange(formatted.length, formatted.length); });
+                    }
+                    return;
+                }
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+            },
+            getE164Phone() { return '+1' + this.phoneDigits; },
+
+            _otpInputs(e) { return e.target.closest('[data-otp-container]').querySelectorAll('input'); },
+            handleOtpInput(e, idx) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length > 1) {
+                    const chars = val.split('');
+                    for (let i = 0; i < chars.length && (idx + i) < 6; i++) this.otpDigits[idx + i] = chars[i];
+                    this.$nextTick(() => {
+                        const inputs = this._otpInputs(e);
+                        inputs.forEach((inp, i) => inp.value = this.otpDigits[i]);
+                        const next = Math.min(idx + val.length, 5);
+                        inputs[next]?.focus();
+                        if (this.otpDigits.every(d => d !== '')) this.verifyOtp();
+                    });
+                    return;
+                }
+                if (val.length === 0) { this.otpDigits[idx] = ''; return; }
+                this.otpDigits[idx] = val;
+                e.target.value = val;
+                if (idx < 5) setTimeout(() => { const inputs = this._otpInputs(e); inputs[idx + 1]?.focus(); }, 10);
+                if (this.otpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyOtp());
+            },
+            handleOtpKeydown(e, idx) {
+                const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                if (e.key === 'Backspace') {
+                    if (this.otpDigits[idx] === '' && idx > 0) {
+                        this.otpDigits[idx - 1] = '';
+                        inputs[idx - 1].value = '';
+                        setTimeout(() => inputs[idx - 1]?.focus(), 10);
+                    } else { this.otpDigits[idx] = ''; e.target.value = ''; }
+                    e.preventDefault(); return;
+                }
+                if (e.key === 'ArrowLeft' && idx > 0) { inputs[idx - 1]?.focus(); e.preventDefault(); return; }
+                if (e.key === 'ArrowRight' && idx < 5) { inputs[idx + 1]?.focus(); e.preventDefault(); return; }
+                if (!/^\d$/.test(e.key) && !['Tab', 'Escape', 'Enter'].includes(e.key) && !(e.ctrlKey || e.metaKey)) e.preventDefault();
+            },
+            handleOtpPaste(e) {
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                for (let i = 0; i < 6; i++) this.otpDigits[i] = pasted[i] || '';
+                this.$nextTick(() => {
+                    const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                    inputs.forEach((inp, i) => inp.value = this.otpDigits[i]);
+                    inputs[Math.min(pasted.length, 5)]?.focus();
+                    if (pasted.length === 6) this.verifyOtp();
+                });
+            },
+
+            async sendOtp() {
+                this.error = ''; this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/send-otp', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ phone: this.getE164Phone() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to send code');
+                    this.authStep = 'otp';
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.startResendCooldown();
+                    this.toastMsg = `Code sent to +1 ${this.phoneDisplay}`;
+                    setTimeout(() => { this.toastMsg = ''; }, 3000);
+                } catch (e) { this.error = e.message; }
+                finally { this.loading = false; }
+            },
+            async verifyOtp() {
+                const code = this.otpDigits.join('');
+                if (code.length !== 6) return;
+                this.error = ''; this.loading = true;
+                try {
+                    const resp = await fetch('/api/auth/verify-otp', {
+                        method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ phone: this.getE164Phone(), code }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Invalid code');
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_refresh', data.refresh_token);
+                    window.location.href = '/browse';
+                } catch (e) {
+                    this.error = e.message;
+                    this.otpDigits = ['', '', '', '', '', ''];
+                    this.$nextTick(() => {
+                        const inputs = document.querySelectorAll('[data-otp-container] input');
+                        inputs.forEach(inp => inp.value = '');
+                        inputs[0]?.focus();
+                    });
+                } finally { this.loading = false; }
+            },
+            async resendOtp() { if (this.resendCooldown > 0) return; await this.sendOtp(); },
+            startResendCooldown() {
+                this.resendCooldown = 30;
+                if (this._resendTimer) clearInterval(this._resendTimer);
+                this._resendTimer = setInterval(() => {
+                    this.resendCooldown--;
+                    if (this.resendCooldown <= 0) clearInterval(this._resendTimer);
+                }, 1000);
+            },
+            async devSkip() {
+                try {
+                    const resp = await fetch('/api/auth/dev-skip', { method: 'POST' });
+                    if (!resp.ok) throw new Error('Dev skip failed');
+                    const data = await resp.json();
+                    localStorage.setItem('tablement_token', data.access_token);
+                    localStorage.setItem('tablement_dev_user', 'true');
+                    window.location.href = '/browse';
+                } catch (e) { this.error = 'Dev skip failed: ' + e.message; }
+            },
+        }
+    }
+    </script>
+</body>
+</html>
