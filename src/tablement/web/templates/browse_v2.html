@@ -503,17 +503,17 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
 
-            <!-- Search bar -->
+            <!-- Search bar — Airbnb-inspired prominent search -->
             <div class="flex-1 flex justify-center">
-                <div class="w-full max-w-xl relative">
-                    <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
+                <div class="w-full max-w-2xl relative">
+                    <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>
                     <input type="text" x-model="searchQuery" @input.debounce.300ms="searchVenues()"
                         @focus="searchFocused = true" @blur="setTimeout(() => searchFocused = false, 200)"
-                        placeholder="Search restaurants..."
-                        class="w-full pl-11 pr-5 py-3.5 rounded-2xl text-base transition-all focus:outline-none"
-                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
-                        onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
-                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                        placeholder="Search by restaurant, cuisine, or neighborhood..."
+                        class="w-full pl-13 pr-5 py-4 rounded-2xl text-base transition-all focus:outline-none"
+                        style="background: var(--bg-card); border: 1.5px solid var(--border); color: var(--c1); box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding-left: 3.2rem;"
+                        onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 4px 20px rgba(0,0,0,0.1), 0 0 0 2px var(--accent-bg)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)';">
                     <div x-show="searchFocused && searchQuery.length >= 2" x-cloak
                         class="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-50 modal-bg"
                         style="border: 1px solid var(--border);">
@@ -593,7 +593,7 @@
             <div x-show="loading" class="space-y-8">
                 <div>
                     <div class="skeleton h-5 w-32 mb-5"></div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         <template x-for="i in 4">
                             <div class="rounded-2xl overflow-hidden" style="border: 1px solid var(--border);">
                                 <div class="skeleton h-52 w-full"></div>
@@ -614,7 +614,7 @@
                     <h2 class="text-xl font-serif font-bold tracking-tight" style="color: var(--c1);">What's hot right now</h2>
                     <span class="text-base">&#x1F525;</span>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     <template x-for="(r, idx) in hotRestaurants" :key="r.venue_id">
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.06) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
@@ -630,7 +630,7 @@
                                         &#x1F525; Hot
                                     </span>
                                     <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
-                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
+                                        :style="r.platform === 'opentable' ? 'background:#DA3743; color:#fff;' : 'background:#FF462D; color:#fff;'"
                                         x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
                                 <!-- Top-left: City badge only -->
@@ -639,19 +639,19 @@
                                         x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></span>
                                 </div>
                             </div>
-                            <div class="p-4">
-                                <h3 class="text-base font-bold leading-snug mb-0.5" style="color: var(--c1);" x-text="r.name"></h3>
-                                <div class="flex items-center gap-1.5 mb-2">
-                                    <div class="flex items-center gap-1 text-xs" style="color: var(--c3);">
-                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        <span x-text="r.neighborhood"></span>
-                                    </div>
+                            <div class="p-5">
+                                <h3 class="text-lg font-bold leading-snug mb-1" style="color: var(--c1);" x-text="r.name"></h3>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span x-show="r.cuisine" class="text-xs font-medium" style="color: var(--accent);" x-text="r.cuisine"></span>
+                                    <span x-show="r.cuisine" class="text-[8px]" style="color: var(--c4);">•</span>
+                                    <span class="text-xs" style="color: var(--c3);" x-text="r.neighborhood"></span>
+                                    <span x-show="r.price_level" class="text-[8px]" style="color: var(--c4);">•</span>
                                     <span x-show="r.price_level" class="text-xs font-semibold" style="color: var(--c3);" x-text="'$'.repeat(r.price_level || 0)"></span>
                                 </div>
-                                <p x-show="r.tagline" class="text-[11px] leading-snug mb-2.5 line-clamp-2" style="color: var(--c3);" x-text="r.tagline"></p>
+                                <p x-show="r.tagline" class="text-xs leading-snug mb-3 line-clamp-1" style="color: var(--c3);" x-text="r.tagline"></p>
                                 <div class="flex items-center justify-between mb-3">
                                     <p class="text-xs">
-                                        <span style="color: var(--c3);">Next release</span>
+                                        <span style="color: var(--c3);">Opens</span>
                                         <span class="font-bold ml-1" style="color: var(--c1);" x-text="getNextRelease(r)"></span>
                                     </p>
                                 </div>
@@ -695,7 +695,7 @@
                     </template>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     <template x-for="(r, idx) in filteredRestaurants" :key="r.venue_id">
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.04) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
@@ -717,23 +717,23 @@
                                         &#x1F525; Hot
                                     </span>
                                     <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
-                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
+                                        :style="r.platform === 'opentable' ? 'background:#DA3743; color:#fff;' : 'background:#FF462D; color:#fff;'"
                                         x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
                             </div>
-                            <div class="p-4">
-                                <h3 class="text-base font-bold leading-snug mb-0.5" style="color: var(--c1);" x-text="r.name"></h3>
-                                <div class="flex items-center gap-1.5 mb-2">
-                                    <div class="flex items-center gap-1 text-xs" style="color: var(--c3);">
-                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                        <span x-text="r.neighborhood"></span>
-                                    </div>
+                            <div class="p-5">
+                                <h3 class="text-lg font-bold leading-snug mb-1" style="color: var(--c1);" x-text="r.name"></h3>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span x-show="r.cuisine" class="text-xs font-medium" style="color: var(--accent);" x-text="r.cuisine"></span>
+                                    <span x-show="r.cuisine" class="text-[8px]" style="color: var(--c4);">•</span>
+                                    <span class="text-xs" style="color: var(--c3);" x-text="r.neighborhood"></span>
+                                    <span x-show="r.price_level" class="text-[8px]" style="color: var(--c4);">•</span>
                                     <span x-show="r.price_level" class="text-xs font-semibold" style="color: var(--c3);" x-text="'$'.repeat(r.price_level || 0)"></span>
                                 </div>
-                                <p x-show="r.tagline" class="text-[11px] leading-snug mb-2.5 line-clamp-2" style="color: var(--c3);" x-text="r.tagline"></p>
+                                <p x-show="r.tagline" class="text-xs leading-snug mb-3 line-clamp-1" style="color: var(--c3);" x-text="r.tagline"></p>
                                 <div class="flex items-center justify-between mb-3">
                                     <p class="text-xs">
-                                        <span style="color: var(--c3);">Next release</span>
+                                        <span style="color: var(--c3);">Opens</span>
                                         <span class="font-bold ml-1" style="color: var(--c1);" x-text="getNextRelease(r)"></span>
                                     </p>
                                 </div>
@@ -775,7 +775,7 @@
                     <svg class="w-6 h-6" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <h2 class="text-lg font-serif font-medium" style="color: var(--c1);">Outside of New York</h2>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     <template x-for="(r, idx) in outsideNYCRestaurants" :key="r.venue_id">
                         <div class="restaurant-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
                             style="background: var(--card-bg); border: 1px solid var(--card-border);"
@@ -1712,8 +1712,8 @@
             giftsRemaining: 0,
             referralDiscount: false,
 
-            // Theme
-            theme: localStorage.getItem('resr_theme') || 'dark',
+            // Theme — auto by time of day (dark after 7pm, light after 7am)
+            theme: localStorage.getItem('resr_theme') || (new Date().getHours() >= 19 || new Date().getHours() < 7 ? 'dark' : 'light'),
 
             // Reservations
             reservations: [],
@@ -2625,7 +2625,8 @@
     <!-- Theme anti-flash -->
     <script>
     (function() {
-        const theme = localStorage.getItem('resr_theme') || 'dark';
+        var h = new Date().getHours();
+        var theme = localStorage.getItem('resr_theme') || (h >= 19 || h < 7 ? 'dark' : 'light');
         if (theme === 'dark') { document.documentElement.classList.add('dark'); document.body.style.background = '#0D0D0B'; }
         else { document.documentElement.classList.remove('dark'); document.body.style.background = '#FDFCFA'; }
     })();

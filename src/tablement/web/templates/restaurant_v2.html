@@ -50,17 +50,17 @@
             --accent-soft: rgba(197,163,85,0.06);
             --accent-bg: rgba(197,163,85,0.06);
             --accent-border: rgba(197,163,85,0.15);
-            --green: #10b981;
-            --green-bg: rgba(16,185,129,0.08);
-            --green-soft: rgba(16,185,129,0.08);
-            --green-border: rgba(16,185,129,0.2);
+            --green: #7A9E6B;
+            --green-bg: rgba(197,163,85,0.08);
+            --green-soft: rgba(197,163,85,0.08);
+            --green-border: rgba(197,163,85,0.2);
             --amber: #C5A355;
             --amber-soft: rgba(197,163,85,0.06);
             --amber-border: rgba(197,163,85,0.15);
-            --red: #ef4444;
-            --red-bg: rgba(239,68,68,0.08);
-            --red-soft: rgba(239,68,68,0.08);
-            --red-border: rgba(239,68,68,0.12);
+            --red: #C75050;
+            --red-bg: rgba(199,80,80,0.08);
+            --red-soft: rgba(199,80,80,0.08);
+            --red-border: rgba(199,80,80,0.12);
             --btn-bg: #1A1917;
             --btn-text: #FDFCFA;
             --btn-hover: #2A2825;
@@ -69,9 +69,9 @@
             --logo-bg: #1A1917;
             --logo-text: #FDFCFA;
             --cal-today-ring: #1A1917;
-            --cal-available-bg: rgba(16,185,129,0.08);
-            --cal-available-border: rgba(16,185,129,0.2);
-            --cal-available-text: #166534;
+            --cal-available-bg: rgba(197,163,85,0.08);
+            --cal-available-border: rgba(197,163,85,0.25);
+            --cal-available-text: #8B7434;
             --cal-upcoming-bg: rgba(197,163,85,0.06);
             --cal-upcoming-border: rgba(197,163,85,0.15);
             --cal-upcoming-text: #B08D3E;
@@ -102,17 +102,17 @@
             --accent-soft: rgba(197,163,85,0.08);
             --accent-bg: rgba(197,163,85,0.08);
             --accent-border: rgba(197,163,85,0.18);
-            --green: #34d399;
-            --green-bg: rgba(16,185,129,0.12);
-            --green-soft: rgba(16,185,129,0.12);
-            --green-border: rgba(52,211,153,0.2);
+            --green: #A8C28A;
+            --green-bg: rgba(197,163,85,0.12);
+            --green-soft: rgba(197,163,85,0.12);
+            --green-border: rgba(212,185,120,0.2);
             --amber: #D4B978;
             --amber-soft: rgba(197,163,85,0.08);
             --amber-border: rgba(197,163,85,0.18);
-            --red: #f87171;
-            --red-bg: rgba(239,68,68,0.12);
-            --red-soft: rgba(239,68,68,0.12);
-            --red-border: rgba(239,68,68,0.2);
+            --red: #E87070;
+            --red-bg: rgba(232,112,112,0.12);
+            --red-soft: rgba(232,112,112,0.12);
+            --red-border: rgba(232,112,112,0.2);
             --btn-bg: #C5A355;
             --btn-text: #0D0D0B;
             --btn-hover: #D4B978;
@@ -121,9 +121,9 @@
             --logo-bg: #D4B978;
             --logo-text: #0D0D0B;
             --cal-today-ring: #D4B978;
-            --cal-available-bg: rgba(52,211,153,0.08);
-            --cal-available-border: rgba(52,211,153,0.2);
-            --cal-available-text: #34d399;
+            --cal-available-bg: rgba(197,163,85,0.1);
+            --cal-available-border: rgba(212,185,120,0.25);
+            --cal-available-text: #D4B978;
             --cal-upcoming-bg: rgba(197,163,85,0.08);
             --cal-upcoming-border: rgba(197,163,85,0.18);
             --cal-upcoming-text: #D4B978;
@@ -570,7 +570,7 @@
             slotClaims: {},      // { "19:00": 2, "19:15": 1 } — claim counts per time
             claimWarning: null,  // { time, alternatives: [...], count } — active warning
             venueId: {{ venue_id }},
-            theme: localStorage.getItem('resr_theme') || 'dark',
+            theme: localStorage.getItem('resr_theme') || (new Date().getHours() >= 19 || new Date().getHours() < 7 ? 'dark' : 'light'),
             showEmailPrompt: false,
             notifyEmail: localStorage.getItem('resr_notify_email') || '',
 
@@ -1430,6 +1430,6 @@
         </div>
     </div>
 
-    <script>(function(){ const t = localStorage.getItem('resr_theme') || 'dark'; if (t === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); })();</script>
+    <script>(function(){ var h = new Date().getHours(); var t = localStorage.getItem('resr_theme') || (h >= 19 || h < 7 ? 'dark' : 'light'); if (t === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); })();</script>
 </body>
 </html>

@@ -292,14 +292,16 @@
                         </p>
 
                         <!-- CTA -->
-                        <div class="flex flex-col sm:flex-row items-start gap-4 anim-4">
+                        <div class="flex flex-col sm:flex-row items-start gap-5 anim-4">
                             <button @click="openAuth()"
-                                class="group px-12 py-4.5 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[16px] transition-all shadow-lg shadow-gold-500/10">
+                                class="group rounded-xl bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-bold transition-all shadow-xl shadow-gold-500/15 hover:shadow-gold-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                                style="padding: 18px 48px; font-size: 18px; letter-spacing: 0.01em;">
                                 Get Started
-                                <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                                <span class="inline-block ml-1.5 transition-transform group-hover:translate-x-1">&rarr;</span>
                             </button>
                             <a href="#how-it-works"
-                                class="px-10 py-4.5 rounded-lg border border-white/10 hover:border-gold-400/30 text-white/40 hover:text-white/70 font-medium text-[16px] transition-all">
+                                class="rounded-xl border border-white/15 hover:border-gold-400/40 text-white/50 hover:text-white/80 font-medium transition-all hover:bg-white/[0.03]"
+                                style="padding: 18px 40px; font-size: 18px;">
                                 See How It Works
                             </a>
                         </div>
@@ -638,8 +640,8 @@
                 </h2>
                 <p class="text-white/30 text-lg mb-12 max-w-md mx-auto">The next time your friends ask how you got in, you can just smile.</p>
                 <button @click="openAuth()"
-                    class="px-10 py-4 rounded-lg font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10"
-                    style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
+                    class="rounded-xl font-bold transition-all shadow-xl shadow-gold-500/15 hover:shadow-gold-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                    style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B; padding: 18px 48px; font-size: 18px;">
                     Get Started &rarr;
                 </button>
                 <p class="text-white/15 text-xs mt-6 tracking-wide">$12 per confirmed reservation. Only charged when we get the table.</p>
