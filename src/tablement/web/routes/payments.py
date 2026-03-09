@@ -21,10 +21,11 @@ import logging
 import os
 
 import stripe
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from tablement.web import db
 from tablement.web.deps import get_user_id
+from tablement.web.ratelimit import limiter
 from tablement.web.schemas import (
     BuyCreditsRequest,
     CreditBalanceResponse,
@@ -54,7 +55,8 @@ FIVE_PACK_CREDITS = 5
 
 
 @router.post("/setup-intent", response_model=SetupIntentResponse)
-async def create_setup_intent(user_id: str = Depends(get_user_id)):
+@limiter.limit("10/minute")
+async def create_setup_intent(request: Request, user_id: str = Depends(get_user_id)):
     """Create a Stripe SetupIntent for the frontend to collect card details.
 
     If the user doesn't have a Stripe customer yet, creates one.
@@ -106,7 +108,8 @@ async def save_payment_method(
     try:
         pm = stripe.PaymentMethod.retrieve(body.stripe_payment_method_id)
     except Exception as e:
-        raise HTTPException(400, f"Invalid payment method: {e}")
+        logger.error("Stripe PaymentMethod retrieve failed: %s", e)
+        raise HTTPException(400, "Invalid payment method. Please try again.")
 
     card = pm.get("card", {})
     brand = card.get("brand", "unknown")
@@ -168,7 +171,9 @@ async def get_credits(user_id: str = Depends(get_user_id)):
 
 
 @router.post("/buy-credits")
+@limiter.limit("5/minute")
 async def buy_credits(
+    request: Request,
     body: BuyCreditsRequest,
     user_id: str = Depends(get_user_id),
 ):

@@ -232,14 +232,14 @@ def create_app() -> FastAPI:
 
     @app.get("/browse")
     async def browse_page(request: Request):
-        return templates.TemplateResponse("browse.html", {
+        return templates.TemplateResponse("browse_v2.html", {
             "request": request,
             "stripe_pk": os.environ.get("STRIPE_PUBLISHABLE_KEY", ""),
         })
 
     @app.get("/restaurant/{venue_id}")
     async def restaurant_page(request: Request, venue_id: int):
-        return templates.TemplateResponse("restaurant.html", {
+        return templates.TemplateResponse("restaurant_v2.html", {
             "request": request,
             "venue_id": venue_id,
             "stripe_pk": os.environ.get("STRIPE_PUBLISHABLE_KEY", ""),

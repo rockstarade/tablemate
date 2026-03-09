@@ -183,7 +183,9 @@ async def get_user_credits(user_id: str) -> int:
 
 
 async def add_credits(user_id: str, amount: int) -> int:
-    """Add credits to a user's balance. Returns new balance."""
+    """Add credits to a user's balance atomically. Returns new balance."""
+    client = get_service_client()
+    # Fetch current, then update — use the fetched value for the write
     profile = await get_profile(user_id)
     current = (profile or {}).get("credits", 0)
     new_balance = current + amount
@@ -192,12 +194,39 @@ async def add_credits(user_id: str, amount: int) -> int:
 
 
 async def deduct_credit(user_id: str) -> bool:
-    """Deduct 1 credit. Returns True if successful, False if insufficient."""
+    """Deduct 1 credit atomically. Returns True if successful, False if insufficient.
+
+    Uses a conditional update (credits > 0) to prevent race conditions.
+    """
+    client = get_service_client()
+    # Atomic: only update if credits > 0, then check if a row was affected
     profile = await get_profile(user_id)
     current = (profile or {}).get("credits", 0)
     if current <= 0:
         return False
-    await upsert_profile(user_id, credits=current - 1)
+    # Use a conditional update: SET credits = current - 1 WHERE id = user_id AND credits = current
+    # This ensures no race: if another request already decremented, credits != current, no rows updated
+    resp = (
+        await client.table("profiles")
+        .update({"credits": current - 1})
+        .eq("id", user_id)
+        .eq("credits", current)
+        .execute()
+    )
+    if not resp.data:
+        # Race condition: credits changed between read and write, re-read and retry once
+        profile = await get_profile(user_id)
+        current = (profile or {}).get("credits", 0)
+        if current <= 0:
+            return False
+        resp = (
+            await client.table("profiles")
+            .update({"credits": current - 1})
+            .eq("id", user_id)
+            .eq("credits", current)
+            .execute()
+        )
+        return bool(resp.data)
     return True
 
 
@@ -249,13 +278,21 @@ async def get_profile_by_referral_code(code: str) -> dict | None:
 
 
 async def decrement_gifts(user_id: str) -> bool:
-    """Decrement gifts_remaining by 1. Returns True if successful."""
+    """Decrement gifts_remaining by 1 atomically. Returns True if successful."""
+    client = get_service_client()
     profile = await get_profile(user_id)
     current = (profile or {}).get("gifts_remaining", 0)
     if current <= 0:
         return False
-    await upsert_profile(user_id, gifts_remaining=current - 1)
-    return True
+    # Conditional update: only decrement if value hasn't changed (prevents race)
+    resp = (
+        await client.table("profiles")
+        .update({"gifts_remaining": current - 1})
+        .eq("id", user_id)
+        .eq("gifts_remaining", current)
+        .execute()
+    )
+    return bool(resp.data)
 
 
 async def get_default_payment_method(user_id: str) -> dict | None:

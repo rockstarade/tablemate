@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tablepass — Book</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                    },
+                    colors: {
+                        cream: { 50: '#FDFCFA', 100: '#FAF8F5', 200: '#F5F0EA', 300: '#E8E0D4', 400: '#D4C8B8' },
+                        stone: { 50: '#F9F8F6', 100: '#F0EFEC', 200: '#E0DDD8', 300: '#C8C3BB', 400: '#9E9789', 500: '#7A7468', 600: '#5C5850', 700: '#3D3A35', 800: '#2A2825', 900: '#1A1917', 950: '#0D0D0B' },
+                        gold:  { 50: '#FBF8F0', 100: '#F5EDD8', 200: '#EBD9AF', 300: '#D4B978', 400: '#C5A355', 500: '#B08D3E', 600: '#917030', 700: '#6B5224', 800: '#4A3A1A', 900: '#2E2410' },
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>window.__STRIPE_PK__ = "{{ stripe_pk }}";</script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+
+        :root {
+            --bg: #FDFCFA;
+            --bg2: #FAF8F5;
+            --bg-raised: #FAF8F5;
+            --bg-card: #FDFCFA;
+            --bg-input: #F5F0EA;
+            --bg-hover: rgba(0,0,0,0.03);
+            --c1: #1A1917;
+            --c2: #3D3A35;
+            --c3: #7A7468;
+            --c4: #9E9789;
+            --c5: #C8C3BB;
+            --border: rgba(212,185,120,0.12);
+            --border-light: rgba(212,185,120,0.12);
+            --accent: #C5A355;
+            --accent-soft: rgba(197,163,85,0.06);
+            --accent-bg: rgba(197,163,85,0.06);
+            --accent-border: rgba(197,163,85,0.15);
+            --green: #10b981;
+            --green-bg: rgba(16,185,129,0.08);
+            --green-soft: rgba(16,185,129,0.08);
+            --green-border: rgba(16,185,129,0.2);
+            --amber: #C5A355;
+            --amber-soft: rgba(197,163,85,0.06);
+            --amber-border: rgba(197,163,85,0.15);
+            --red: #ef4444;
+            --red-bg: rgba(239,68,68,0.08);
+            --red-soft: rgba(239,68,68,0.08);
+            --red-border: rgba(239,68,68,0.12);
+            --btn-bg: #1A1917;
+            --btn-text: #FDFCFA;
+            --btn-hover: #2A2825;
+            --skeleton-a: #F5F0EA;
+            --skeleton-b: #E8E0D4;
+            --logo-bg: #1A1917;
+            --logo-text: #FDFCFA;
+            --cal-today-ring: #1A1917;
+            --cal-available-bg: rgba(16,185,129,0.08);
+            --cal-available-border: rgba(16,185,129,0.2);
+            --cal-available-text: #166534;
+            --cal-upcoming-bg: rgba(197,163,85,0.06);
+            --cal-upcoming-border: rgba(197,163,85,0.15);
+            --cal-upcoming-text: #B08D3E;
+            --cal-selected-bg: #1A1917;
+            --cal-selected-text: #FDFCFA;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.06);
+            --bg-overlay: rgba(0,0,0,0.4);
+            --btn-hot-bg: #C5A355;
+            --btn-hot-text: #FDFCFA;
+            --search-focus: rgba(197,163,85,0.3);
+        }
+        .dark {
+            --bg: #0D0D0B;
+            --bg2: rgba(26,25,23,0.5);
+            --bg-raised: #1A1917;
+            --bg-card: #1A1917;
+            --bg-input: #2A2825;
+            --bg-hover: rgba(255,255,255,0.04);
+            --c1: #FAF8F5;
+            --c2: #C8C3BB;
+            --c3: #7A7468;
+            --c4: #5C5850;
+            --c5: #3D3A35;
+            --border: rgba(212,185,120,0.08);
+            --border-light: rgba(212,185,120,0.08);
+            --accent: #D4B978;
+            --accent-soft: rgba(197,163,85,0.08);
+            --accent-bg: rgba(197,163,85,0.08);
+            --accent-border: rgba(197,163,85,0.18);
+            --green: #34d399;
+            --green-bg: rgba(16,185,129,0.12);
+            --green-soft: rgba(16,185,129,0.12);
+            --green-border: rgba(52,211,153,0.2);
+            --amber: #D4B978;
+            --amber-soft: rgba(197,163,85,0.08);
+            --amber-border: rgba(197,163,85,0.18);
+            --red: #f87171;
+            --red-bg: rgba(239,68,68,0.12);
+            --red-soft: rgba(239,68,68,0.12);
+            --red-border: rgba(239,68,68,0.2);
+            --btn-bg: #C5A355;
+            --btn-text: #0D0D0B;
+            --btn-hover: #D4B978;
+            --skeleton-a: #2A2825;
+            --skeleton-b: #3D3A35;
+            --logo-bg: #D4B978;
+            --logo-text: #0D0D0B;
+            --cal-today-ring: #D4B978;
+            --cal-available-bg: rgba(52,211,153,0.08);
+            --cal-available-border: rgba(52,211,153,0.2);
+            --cal-available-text: #34d399;
+            --cal-upcoming-bg: rgba(197,163,85,0.08);
+            --cal-upcoming-border: rgba(197,163,85,0.18);
+            --cal-upcoming-text: #D4B978;
+            --cal-selected-bg: #C5A355;
+            --cal-selected-text: #0D0D0B;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.3);
+            --bg-overlay: rgba(0,0,0,0.65);
+            --btn-hot-bg: rgba(197,163,85,0.1);
+            --btn-hot-text: #D4B978;
+            --search-focus: rgba(197,163,85,0.35);
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); min-height: 100vh; }
+        .modal-bg { background: #FDFCFA; }
+        .dark .modal-bg { background: rgba(13,13,11,0.97); backdrop-filter: blur(20px); }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1rem; box-shadow: var(--shadow-card); }
+
+        .cal-cell {
+            transition: all 0.12s ease;
+            cursor: pointer;
+            border-radius: 0.625rem;
+            font-weight: 500;
+        }
+        .cal-cell:hover:not(.cal-past):not(.cal-empty) { transform: scale(1.1); }
+        .cal-cell.cal-selected { font-weight: 700; transform: scale(1.08); box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+
+        .time-chip { transition: all 0.12s ease; cursor: pointer; }
+        .time-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim-in { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+        .anim-in-d1 { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) 0.08s both; }
+        .anim-in-d2 { animation: fadeInUp 0.45s cubic-bezier(0.22,1,0.36,1) 0.16s both; }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-a) 25%, var(--skeleton-b) 50%, var(--skeleton-a) 75%);
+            background-size: 200% 100%; animation: shimmer 1.8s ease-in-out infinite; border-radius: 0.75rem;
+        }
+
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+        .toast-anim { animation: toastIn 0.3s ease-out; }
+
+        .img-placeholder { background: linear-gradient(135deg, #1A1917 0%, #2A2825 100%); }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(197,163,85,0.3); border-radius: 3px; }
+
+        /* Step indicator */
+        .step-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; transition: all 0.2s ease; }
+        .step-dot.active { background: var(--btn-bg); color: var(--btn-text); }
+        .step-dot.done { background: var(--green); color: white; }
+        .step-dot.pending { background: var(--bg-input); color: var(--c3); border: 1px solid var(--border); }
+        .step-line { height: 2px; flex: 1; background: var(--border); transition: background 0.3s; }
+        .step-line.done { background: var(--green); }
+    </style>
+</head>
+<body class="antialiased" style="color: var(--c1);" x-data="restaurantApp()" x-init="init()" x-cloak>
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl" style="background: color-mix(in srgb, var(--bg) 85%, transparent); border-bottom: 1px solid var(--border);">
+        <div class="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
+            <a href="/browse" class="flex items-center gap-2 transition-colors hover:opacity-70" style="color: var(--c2);">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                <span class="text-sm font-semibold">Back</span>
+            </a>
+            <a href="/browse" class="flex items-center gap-2">
+                <span class="text-sm font-medium" style="color: var(--c1); font-family: 'Manrope', sans-serif; letter-spacing: 0.1em;">tablepass</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="max-w-2xl mx-auto px-5 pt-6 pb-36">
+
+        <!-- Loading -->
+        <template x-if="loading">
+            <div>
+                <div class="skeleton h-56 w-full rounded-2xl mb-5"></div>
+                <div class="skeleton h-7 w-48 mb-3"></div>
+                <div class="skeleton h-4 w-32 mb-8"></div>
+                <div class="skeleton h-80 w-full rounded-2xl"></div>
+            </div>
+        </template>
+
+        <!-- Content -->
+        <template x-if="!loading && restaurant">
+            <div>
+
+                <!-- ═══ RESTAURANT HERO ═══ -->
+                <div class="relative rounded-2xl overflow-hidden mb-6 anim-in" style="aspect-ratio: 16/8;">
+                    <div class="absolute inset-0 img-placeholder">
+                        <img :src="restaurant.image_url" :alt="restaurant.name"
+                            class="w-full h-full object-cover" @error="$event.target.style.display='none'">
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight" x-text="restaurant.name"></h1>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="text-sm text-white/80 font-medium" x-text="restaurant.cuisine"></span>
+                            <span class="w-1 h-1 rounded-full bg-white/30"></span>
+                            <span class="text-sm text-white/60" x-text="restaurant.neighborhood"></span>
+                        </div>
+                        <p x-show="restaurant.tagline" class="text-xs text-white/50 mt-1.5" x-text="restaurant.tagline"></p>
+                    </div>
+                </div>
+
+                <!-- ═══ PROGRESS STEPS ═══ -->
+                <div class="flex items-center gap-0 mb-6 px-2 anim-in-d1">
+                    <div class="step-dot" :class="currentStep >= 1 ? (currentStep > 1 ? 'done' : 'active') : 'pending'">
+                        <template x-if="currentStep > 1"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
+                        <template x-if="currentStep <= 1"><span>1</span></template>
+                    </div>
+                    <div class="step-line" :class="currentStep > 1 ? 'done' : ''"></div>
+                    <div class="step-dot" :class="currentStep >= 2 ? (currentStep > 2 ? 'done' : 'active') : 'pending'">
+                        <template x-if="currentStep > 2"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
+                        <template x-if="currentStep <= 2"><span>2</span></template>
+                    </div>
+                    <div class="step-line" :class="currentStep > 2 ? 'done' : ''"></div>
+                    <div class="step-dot" :class="currentStep >= 3 ? 'active' : 'pending'">
+                        <span>3</span>
+                    </div>
+                </div>
+
+                <!-- ═══ STEP 1: PICK YOUR DATES ═══ -->
+                <div class="card p-5 sm:p-6 mb-4 anim-in-d1">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-base md:text-xl font-bold" style="color: var(--c1);">When do you want to go?</h2>
+                            <p class="text-xs md:text-base mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 md:gap-2.5">
+                            <template x-for="i in 5" :key="'dot-'+i">
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors"
+                                    :style="i <= selectedDates.length
+                                        ? 'background: var(--accent);'
+                                        : 'background: var(--border);'">
+                                </div>
+                            </template>
+                            <span class="text-xs md:text-sm font-bold ml-1 md:ml-2 tabular-nums"
+                                :style="selectedDates.length > 0 ? 'color: var(--accent);' : 'color: var(--c4);'"
+                                x-text="selectedDates.length + '/5'"></span>
+                        </div>
+                    </div>
+
+                    <!-- Month nav -->
+                    <div class="flex items-center justify-between mb-3">
+                        <button @click="prevMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <h3 class="text-sm md:text-lg font-bold" style="color: var(--c1);" x-text="monthLabel"></h3>
+                        <button @click="nextMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
+                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Weekday headers -->
+                    <div class="grid grid-cols-7 mb-1">
+                        <template x-for="d in ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">
+                            <div class="text-center text-[10px] font-semibold py-1.5 uppercase tracking-wider" style="color: var(--c4);" x-text="d"></div>
+                        </template>
+                    </div>
+
+                    <!-- Calendar grid -->
+                    <div class="grid grid-cols-7 gap-[3px]">
+                        <template x-for="cell in calendarCells" :key="cell.key">
+                            <button class="cal-cell aspect-square flex items-center justify-center text-[13px] relative"
+                                :class="cellClasses(cell)"
+                                :style="cellStyles(cell)"
+                                :disabled="!cell.day || cell.isPast"
+                                @click="cell.day && !cell.isPast && toggleDate(cell.dateStr)">
+                                <span x-text="cell.day || ''"></span>
+                                <!-- Today ring -->
+                                <div x-show="cell.isToday && !selectedDates.includes(cell.dateStr)" class="absolute inset-[2px] rounded-[9px] pointer-events-none" style="box-shadow: inset 0 0 0 1.5px var(--cal-today-ring);"></div>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex items-center gap-4 mt-4 pt-3" style="border-top: 1px solid var(--border-light);">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Available now</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Unreleased</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-selected-bg);"></div>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Your pick</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info messages -->
+                <template x-if="hasReleasedSelected">
+                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--green-soft); border: 1px solid var(--green-border);">
+                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--green);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <p class="text-xs font-medium" style="color: var(--c2);">These dates are released but booked up. We'll watch for cancellations and grab one instantly.</p>
+                    </div>
+                </template>
+                <template x-if="hasUnreleasedSelected">
+                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--amber-soft); border: 1px solid var(--amber-border);">
+                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--amber);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-xs font-medium" style="color: var(--c2);">These dates haven't opened yet. We'll book the second they drop.</p>
+                    </div>
+                </template>
+
+                <!-- ═══ STEP 2: PICK YOUR TIMES ═══ -->
+                <template x-if="selectedDates.length > 0">
+                    <div class="card p-5 sm:p-6 mb-4 anim-in">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick as many as you'd like &mdash; more options = better odds</p>
+                            </div>
+                            <div x-show="selectedTimes.length > 0" class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: var(--accent-soft); color: var(--accent);">
+                                <span x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="tp in timePills" :key="tp.time">
+                                <button class="time-chip px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 relative"
+                                    :style="timeStyles(tp)"
+                                    @click="toggleTime(tp.time)">
+                                    <span x-text="tp.label"></span>
+                                    <template x-if="tp.isHot && !selectedTimes.includes(tp.time)">
+                                        <span class="text-xs opacity-70">&#x1F525;</span>
+                                    </template>
+                                    <span x-show="slotClaims[tp.time] > 0"
+                                        class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-white px-1"
+                                        style="background: #ef4444;"
+                                        x-text="slotClaims[tp.time]"></span>
+                                </button>
+                            </template>
+                        </div>
+                        <!-- Claim conflict warning -->
+                        <div x-show="claimWarning" x-transition x-cloak
+                            class="mt-3 p-3 rounded-xl text-sm"
+                            style="background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);">
+                            <p class="font-medium" style="color: var(--c1);">
+                                &#x26A0;&#xFE0F; <span x-text="claimWarning?.count"></span> user<span x-show="claimWarning?.count > 1">s</span> already targeting
+                                <span x-text="claimWarning?.time" class="font-bold"></span>
+                            </p>
+                            <p class="mt-1 text-xs" style="color: var(--c3);">You'll be waitlisted if you proceed. Try one of these instead:</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <template x-for="alt in (claimWarning?.alternatives || [])" :key="alt">
+                                    <button @click="selectAlternative(alt)"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                                        style="background: rgba(245,158,11,0.12); color: var(--accent); border: 1px solid rgba(245,158,11,0.3);">
+                                        <span x-text="alt"></span>
+                                    </button>
+                                </template>
+                                <button @click="forceSelectClaimed()"
+                                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                    style="background: var(--bg-input); color: var(--c3); border: 1px solid var(--border);">
+                                    Keep anyway
+                                </button>
+                            </div>
+                        </div>
+                        <div x-show="selectedTimes.length === 1" x-transition
+                            class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
+                            style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
+                            <span class="text-xs mt-0.5">&#x1F4A1;</span>
+                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting multiple times increases your chances of securing a table.</p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- ═══ STEP 3: FINALIZE ═══ -->
+                <template x-if="selectedDates.length > 0 && selectedTimes.length > 0">
+                    <div class="card p-5 sm:p-6 mb-4 anim-in">
+                        <h2 class="text-base font-bold mb-4" style="color: var(--c1);">Final details</h2>
+
+                        <!-- Party size -->
+                        <div class="flex items-center justify-between py-3" style="border-bottom: 1px solid var(--border-light);">
+                            <div class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span class="text-sm font-semibold" style="color: var(--c1);">Party size</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button @click="partySize = Math.max(1, partySize - 1)"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                                    style="border: 1px solid var(--border); color: var(--c3);"
+                                    :style="partySize <= 1 ? 'opacity:0.3;pointer-events:none;' : ''">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 12H4"/></svg>
+                                </button>
+                                <span class="text-base font-bold w-5 text-center tabular-nums" style="color: var(--c1);" x-text="partySize"></span>
+                                <button @click="partySize = Math.min(20, partySize + 1)"
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                                    style="border: 1px solid var(--border); color: var(--c3);">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Book earliest toggle -->
+                        <template x-if="releasedCount >= 2">
+                            <div class="flex items-center justify-between py-3" style="border-bottom: 1px solid var(--border-light);">
+                                <div class="flex items-center gap-2.5">
+                                    <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    <div>
+                                        <span class="text-sm font-semibold" style="color: var(--c1);">Grab first available</span>
+                                        <p class="text-[11px]" style="color: var(--c3);">Book the first cancellation across all your dates</p>
+                                    </div>
+                                </div>
+                                <button @click="bookEarliest = !bookEarliest"
+                                    class="relative w-11 h-6 rounded-full transition-all flex-shrink-0"
+                                    :style="bookEarliest ? 'background: var(--green);' : 'background: var(--c5);'">
+                                    <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform" :class="bookEarliest ? 'translate-x-5' : ''"></span>
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Cutoff -->
+                        <template x-if="releasedCount >= 1">
+                            <div class="flex items-center justify-between py-3">
+                                <div class="flex items-center gap-2.5">
+                                    <svg class="w-4 h-4" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <div>
+                                        <span class="text-sm font-semibold" style="color: var(--c1);">Stop trying</span>
+                                        <p class="text-[11px]" style="color: var(--c3);">If we haven't booked by this time, we'll stop</p>
+                                    </div>
+                                </div>
+                                <select x-model="latestNotify"
+                                    class="rounded-lg px-3 py-1.5 text-xs font-semibold focus:outline-none"
+                                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);">
+                                    <option value="2">2h before</option>
+                                    <option value="4">4h before</option>
+                                    <option value="6">6h before</option>
+                                    <option value="12">Morning of</option>
+                                    <option value="24">Day before</option>
+                                </select>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- ═══ SUMMARY ═══ -->
+                <template x-if="canSubmit">
+                    <div class="px-4 py-3 rounded-xl mb-4 anim-in text-center" style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
+                        <p class="text-xs font-semibold" style="color: var(--c2);">
+                            Watching <span class="font-bold" style="color: var(--accent);" x-text="selectedDates.length"></span> date<span x-show="selectedDates.length > 1">s</span>
+                            &times; <span class="font-bold" style="color: var(--accent);" x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                            for <span class="font-bold" style="color: var(--accent);" x-text="partySize"></span>
+                        </p>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <!-- Error state -->
+        <template x-if="!loading && error">
+            <div class="card p-8 text-center anim-in">
+                <p class="text-sm font-medium" style="color: #ef4444;" x-text="error"></p>
+                <a href="/browse" class="text-sm mt-4 inline-block font-semibold" style="color: var(--accent);">Back to restaurants</a>
+            </div>
+        </template>
+    </main>
+
+    <!-- ═══ FIXED BOTTOM CTA ═══ -->
+    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
+        <div class="max-w-2xl mx-auto">
+
+            <!-- Email prompt (shows when user clicks "Get This Table" without saved email) -->
+            <template x-if="showEmailPrompt && !submitting">
+                <div class="anim-in">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <svg class="w-4 h-4 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <p class="text-xs font-semibold" style="color: var(--c2);">Get notified when your table is booked</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="email" x-model="notifyEmail" x-ref="emailInput"
+                            placeholder="your@email.com"
+                            @keydown.enter="submitBooking()"
+                            class="flex-1 px-4 py-3 rounded-xl text-sm font-medium focus:outline-none transition-all"
+                            style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                            @focus="$el.style.borderColor = 'var(--accent)'"
+                            @blur="$el.style.borderColor = 'var(--border)'">
+                        <button @click="submitBooking()"
+                            class="px-5 py-3 rounded-xl font-bold text-sm transition-all shrink-0"
+                            style="background: var(--btn-bg); color: var(--btn-text);">
+                            Book
+                        </button>
+                    </div>
+                    <button @click="skipEmail()" class="w-full text-center mt-2">
+                        <span class="text-[11px] font-medium" style="color: var(--c4);">Skip &mdash; don't notify me</span>
+                    </button>
+                </div>
+            </template>
+
+            <!-- Normal CTA button -->
+            <template x-if="!showEmailPrompt || submitting">
+                <button @click="handleBookClick()" :disabled="submitting"
+                    class="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all flex items-center justify-center gap-2"
+                    :style="submitting
+                        ? 'background: var(--btn-bg); opacity: 0.6; color: var(--btn-text); cursor: wait;'
+                        : 'background: var(--btn-bg); color: var(--btn-text); box-shadow: var(--shadow-lg);'">
+                    <template x-if="!submitting">
+                        <span>Get This Table</span>
+                    </template>
+                    <template x-if="submitting">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Setting up your watch...
+                        </span>
+                    </template>
+                </button>
+            </template>
+
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div x-show="toast" x-transition class="fixed top-16 left-1/2 -translate-x-1/2 z-50 rounded-xl px-5 py-3 toast-anim"
+        style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow-lg);">
+        <p class="text-sm font-medium" style="color: var(--c1);" x-text="toast"></p>
+    </div>
+
+    <script>
+    function restaurantApp() {
+        return {
+            loading: true, error: null, restaurant: null,
+            currentMonth: new Date(),
+            selectedDates: [], selectedTimes: [],
+            partySize: 2, bookEarliest: false, latestNotify: 2,
+            submitting: false, toast: null,
+            slotClaims: {},      // { "19:00": 2, "19:15": 1 } — claim counts per time
+            claimWarning: null,  // { time, alternatives: [...], count } — active warning
+            venueId: {{ venue_id }},
+            theme: localStorage.getItem('resr_theme') || 'dark',
+            showEmailPrompt: false,
+            notifyEmail: localStorage.getItem('resr_notify_email') || '',
+
+            // Platform-aware auth
+            otLinked: false,
+            showOTLink: false,
+            otBearerToken: '',
+            otLoading: false,
+            otError: '',
+
+            // Resy link
+            resyLinked: false,
+            showResyLink: false,
+            resyLinkTab: 'phone',
+            resyPhoneStep: 'phone',
+            resyPhoneDisplay: '',
+            resyPhoneDigits: '',
+            resyOtpDigits: ['', '', '', '', '', ''],
+            resyClaimToken: '',
+            resyChallengeId: '',
+            resyChallengeEmail: '',
+            resyEmail: '',
+            resyPassword: '',
+            resyLoading: false,
+            resyError: '',
+
+            // Payment method
+            hasPaymentMethod: false,
+            showPaymentLink: false,
+            paymentCardLoading: false,
+            paymentCardError: '',
+            _stripe: null,
+            _stripeElements: null,
+            _cardElement: null,
+            _setupClientSecret: null,
+
+            get currentStep() {
+                if (this.selectedDates.length > 0 && this.selectedTimes.length > 0) return 3;
+                if (this.selectedDates.length > 0) return 2;
+                return 1;
+            },
+
+            async init() {
+                if (this.theme === 'dark') document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+
+                const token = localStorage.getItem('tablement_token');
+                if (!token) { window.location.href = '/'; return; }
+
+                // Check Resy + OpenTable link status
+                try {
+                    const meResp = await this.authFetch('/api/auth/me');
+                    if (meResp.status === 401) {
+                        localStorage.removeItem('tablement_token');
+                        localStorage.removeItem('tablement_refresh');
+                        window.location.href = '/';
+                        return;
+                    }
+                    if (meResp.ok) {
+                        const meData = await meResp.json();
+                        this.resyLinked = meData.resy_linked || false;
+                        this.otLinked = meData.opentable_linked || false;
+                    }
+                } catch (e) {}
+
+                // Check if user has a payment method
+                try {
+                    const pmResp = await this.authFetch('/api/payments/methods');
+                    if (pmResp.ok) {
+                        const pmData = await pmResp.json();
+                        this.hasPaymentMethod = pmData.methods && pmData.methods.length > 0;
+                    }
+                } catch (e) {}
+
+                try {
+                    const resp = await fetch(`/api/curated/${this.venueId}`);
+                    const data = await resp.json();
+                    if (data.restaurant) {
+                        this.restaurant = data.restaurant;
+                        document.title = `tablepass — ${this.restaurant.name}`;
+                    } else { this.error = 'Restaurant not found'; }
+                } catch (e) { this.error = 'Failed to load restaurant data'; }
+                this.loading = false;
+
+                // Proactive token refresh — keep session alive
+                this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
+            },
+
+            // ── Session Token Refresh ──
+            async _tryRefreshToken() {
+                const rt = localStorage.getItem('tablement_refresh');
+                if (!rt) return false;
+                try {
+                    const resp = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: rt }),
+                    });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        localStorage.setItem('tablement_token', data.access_token);
+                        localStorage.setItem('tablement_refresh', data.refresh_token);
+                        return true;
+                    }
+                } catch (e) { console.warn('Token refresh failed:', e); }
+                return false;
+            },
+
+            async authFetch(url, opts = {}) {
+                const token = this.token;
+                opts.headers = { ...opts.headers, 'Authorization': 'Bearer ' + token };
+                let resp = await fetch(url, opts);
+                if (resp.status === 401) {
+                    const refreshed = await this._tryRefreshToken();
+                    if (refreshed) {
+                        opts.headers['Authorization'] = 'Bearer ' + this.token;
+                        resp = await fetch(url, opts);
+                    }
+                }
+                return resp;
+            },
+
+            // ═══ Calendar ═══
+            get monthLabel() {
+                return this.currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            },
+            prevMonth() {
+                const d = new Date(this.currentMonth); d.setMonth(d.getMonth() - 1);
+                const now = new Date();
+                if (d.getFullYear() > now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth())) this.currentMonth = d;
+            },
+            nextMonth() {
+                const d = new Date(this.currentMonth); d.setMonth(d.getMonth() + 1);
+                const limit = new Date(); limit.setMonth(limit.getMonth() + 3);
+                if (d <= limit) this.currentMonth = d;
+            },
+            get lastReleasedDate() {
+                if (!this.restaurant || !this.restaurant.drop_days_ahead) return null;
+                const now = new Date();
+                const dropH = this.restaurant.drop_hour ?? 10;
+                const dropM = this.restaurant.drop_minute ?? 0;
+                const droppedToday = now.getHours() > dropH || (now.getHours() === dropH && now.getMinutes() >= dropM);
+                const ahead = droppedToday ? this.restaurant.drop_days_ahead : this.restaurant.drop_days_ahead - 1;
+                const d = new Date(); d.setDate(d.getDate() + ahead); d.setHours(0,0,0,0);
+                return d;
+            },
+            isReleasedDate(dateStr) {
+                if (!this.lastReleasedDate) return true;
+                return new Date(dateStr + 'T00:00:00') <= this.lastReleasedDate;
+            },
+            isUnreleasedDate(dateStr) { return !this.isReleasedDate(dateStr); },
+
+            get calendarCells() {
+                const year = this.currentMonth.getFullYear(), month = this.currentMonth.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const today = new Date(); today.setHours(0,0,0,0);
+                const cells = [];
+                for (let i = 0; i < firstDay; i++) cells.push({ key: `e${i}`, day: null, dateStr: null, isPast: true, isToday: false, isReleased: false, isUnreleased: false });
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const isPast = cellDate < today;
+                    cells.push({ key: dateStr, day: d, dateStr, isPast, isToday: cellDate.getTime() === today.getTime(),
+                        isReleased: !isPast && this.isReleasedDate(dateStr), isUnreleased: !isPast && this.isUnreleasedDate(dateStr) });
+                }
+                return cells;
+            },
+
+            cellClasses(cell) {
+                if (!cell.day) return 'cal-empty pointer-events-none';
+                if (cell.isPast) return 'cal-past opacity-20 pointer-events-none';
+                if (this.selectedDates.includes(cell.dateStr)) return 'cal-selected';
+                return '';
+            },
+            cellStyles(cell) {
+                if (!cell.day || cell.isPast) return 'color: var(--c4);';
+                const sel = this.selectedDates.includes(cell.dateStr);
+                if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700;`;
+                if (cell.isReleased) return `background: var(--cal-available-bg); color: var(--cal-available-text);`;
+                if (cell.isUnreleased) return `background: var(--cal-upcoming-bg); color: var(--cal-upcoming-text);`;
+                return `color: var(--c3);`;
+            },
+
+            toggleDate(dateStr) {
+                if (!dateStr) return;
+                const idx = this.selectedDates.indexOf(dateStr);
+                if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
+                if (this.isReleasedDate(dateStr)) {
+                    if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates for released slots'); return; }
+                }
+                this.selectedDates.push(dateStr); this.selectedDates.sort();
+                this.fetchSlotClaims();
+            },
+
+            // ═══ Times ═══
+            get timePills() {
+                if (!this.restaurant) return [];
+                const hotStart = this.parseTime(this.restaurant.hot_start || '19:00');
+                const hotEnd = this.parseTime(this.restaurant.hot_end || '20:30');
+                const formatPill = (timeStr) => {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    const mins = h * 60 + (m || 0);
+                    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                    const ampm = h >= 12 ? 'pm' : 'am';
+                    return { time: timeStr, label: `${h12}:${String(m || 0).padStart(2,'0')} ${ampm}`, isHot: mins >= hotStart && mins <= hotEnd };
+                };
+                // Use real scout-observed slots when available
+                if (this.restaurant.known_slots && Array.isArray(this.restaurant.known_slots) && this.restaurant.known_slots.length > 0) {
+                    return this.restaurant.known_slots.map(t => formatPill(t));
+                }
+                // Fallback: generate range from service_start to service_end
+                const start = this.parseTime(this.restaurant.service_start || '17:00');
+                const end = this.parseTime(this.restaurant.service_end || '22:00');
+                const interval = this.restaurant.slot_interval || 30;
+                const pills = []; let t = start;
+                while (t <= end) {
+                    const h = Math.floor(t/60), m = t%60;
+                    const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+                    pills.push(formatPill(timeStr));
+                    t += interval;
+                }
+                return pills;
+            },
+            parseTime(str) { const [h,m] = str.split(':').map(Number); return h*60 + (m||0); },
+
+            timeStyles(tp) {
+                const sel = this.selectedTimes.includes(tp.time);
+                if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
+                if (tp.isHot) return `background: var(--amber-soft); color: var(--c1); border: 1px solid var(--amber-border);`;
+                return `background: var(--bg-input); color: var(--c2); border: 1px solid var(--border);`;
+            },
+            toggleTime(timeStr) {
+                const idx = this.selectedTimes.indexOf(timeStr);
+                if (idx >= 0) {
+                    this.selectedTimes.splice(idx, 1);
+                    this.claimWarning = null;
+                    return;
+                }
+                // Check if slot is claimed by other users
+                if (this.slotClaims[timeStr] > 0) {
+                    this.showClaimWarning(timeStr);
+                    return;
+                }
+                this.selectedTimes.push(timeStr);
+                this.selectedTimes.sort();
+            },
+
+            // ═══ Slot Claims ═══
+            async fetchSlotClaims() {
+                if (!this.venueId || this.selectedDates.length === 0) return;
+                const date = this.selectedDates[0];
+                try {
+                    const resp = await fetch(`/api/slots/claims?venue_id=${this.venueId}&date=${date}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.slotClaims = data.claims || {};
+                    }
+                } catch (e) { console.warn('Failed to fetch slot claims:', e); }
+            },
+            showClaimWarning(timeStr) {
+                const pills = this.timePills.map(p => p.time);
+                const idx = pills.indexOf(timeStr);
+                const alternatives = [];
+                let left = idx - 1, right = idx + 1;
+                while (alternatives.length < 2 && (left >= 0 || right < pills.length)) {
+                    if (right < pills.length && !this.slotClaims[pills[right]] && !this.selectedTimes.includes(pills[right])) {
+                        alternatives.push(pills[right]);
+                    }
+                    if (left >= 0 && !this.slotClaims[pills[left]] && !this.selectedTimes.includes(pills[left]) && alternatives.length < 2) {
+                        alternatives.push(pills[left]);
+                    }
+                    left--; right++;
+                }
+                alternatives.sort();
+                this.claimWarning = { time: timeStr, alternatives, count: this.slotClaims[timeStr] };
+            },
+            selectAlternative(timeStr) {
+                this.selectedTimes.push(timeStr);
+                this.selectedTimes.sort();
+                this.claimWarning = null;
+            },
+            forceSelectClaimed() {
+                if (this.claimWarning) {
+                    this.selectedTimes.push(this.claimWarning.time);
+                    this.selectedTimes.sort();
+                    this.claimWarning = null;
+                }
+            },
+
+            // ═══ Computed ═══
+            get releasedCount() { return this.selectedDates.filter(d => this.isReleasedDate(d)).length; },
+            get hasReleasedSelected() { return this.releasedCount > 0; },
+            get hasUnreleasedSelected() { return this.selectedDates.some(d => this.isUnreleasedDate(d)); },
+            get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading; },
+
+            // ═══ Submit ═══
+            handleBookClick() {
+                if (this.submitting || !this.canSubmit) return;
+                // Check platform-specific auth
+                const isOT = this.restaurant && this.restaurant.platform === 'opentable';
+                if (isOT) {
+                    if (!this.otLinked) { this.showOTLink = true; return; }
+                } else {
+                    if (!this.resyLinked) { this.showResyLink = true; return; }
+                }
+                // Check payment method
+                if (!this.hasPaymentMethod) { this.showPaymentLink = true; this.initPaymentSetup(); return; }
+                // If no email saved and prompt not showing yet, show the email prompt
+                const savedEmail = localStorage.getItem('resr_notify_email');
+                if (!savedEmail && !this.showEmailPrompt) {
+                    this.showEmailPrompt = true;
+                    this.$nextTick(() => { if (this.$refs.emailInput) this.$refs.emailInput.focus(); });
+                    return;
+                }
+                // If email already saved, go straight to submit
+                this.submitBooking();
+            },
+
+            skipEmail() {
+                // User doesn't want notifications — submit without email
+                this.notifyEmail = '';
+                this.showEmailPrompt = false;
+                this.submitBooking();
+            },
+
+            async submitBooking() {
+                if (this.submitting || !this.canSubmit) return;
+                this.submitting = true;
+                this.showEmailPrompt = false;
+                const token = localStorage.getItem('tablement_token');
+                if (!token) { window.location.href = '/'; return; }
+
+                // Save notification email for future bookings
+                const email = this.notifyEmail ? this.notifyEmail.trim() : '';
+                if (email) localStorage.setItem('resr_notify_email', email);
+
+                let dropTime = null;
+                if (this.restaurant.drop_days_ahead) {
+                    dropTime = { hour: this.restaurant.drop_hour || 10, minute: this.restaurant.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: this.restaurant.drop_days_ahead };
+                }
+                const platform = (this.restaurant && this.restaurant.platform === 'opentable') ? 'opentable' : 'resy';
+                const payload = {
+                    venue_id: this.venueId, venue_name: this.restaurant.name, party_size: this.partySize,
+                    dates: this.selectedDates, time_preferences: this.selectedTimes.map(t => ({ time: t, seating_type: null })),
+                    drop_time: dropTime, book_earliest: this.bookEarliest, latest_notify_hours: parseFloat(this.latestNotify),
+                    notification_email: email || null,
+                    platform: platform,
+                };
+
+                try {
+                    const resp = await fetch('/api/reservations/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        throw new Error(err.detail || 'Failed to create reservations');
+                    }
+                    window.location.href = '/browse?toast=' + encodeURIComponent("We're on it! Watching " + this.selectedDates.length + " date" + (this.selectedDates.length > 1 ? 's' : ''));
+                } catch (e) {
+                    this.showToast(e.message || 'Something went wrong');
+                    this.submitting = false;
+                }
+            },
+
+            showToast(msg) { this.toast = msg; setTimeout(() => { this.toast = null; }, 3000); },
+
+            // ═══ Resy Link ═══
+            get token() { return localStorage.getItem('tablement_token'); },
+
+            _fmtPhone(raw) {
+                let f = '';
+                if (raw.length > 0) f += '(' + raw.slice(0, 3);
+                if (raw.length >= 3) f += ') ';
+                if (raw.length > 3) f += raw.slice(3, 6);
+                if (raw.length > 6) f += '-' + raw.slice(6);
+                return f;
+            },
+            formatResyPhone(e) {
+                let raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+                this.resyPhoneDigits = raw;
+                const f = this._fmtPhone(raw);
+                this.resyPhoneDisplay = f;
+                this.$nextTick(() => { e.target.value = f; e.target.setSelectionRange(f.length, f.length); });
+            },
+            resyPhoneKeydown(e) {
+                const pass = ['Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+                if (pass.includes(e.key)) return;
+                if ((e.ctrlKey || e.metaKey) && ['a','c','v','x'].includes(e.key.toLowerCase())) return;
+                if (e.key === 'Backspace' || e.key === 'Delete') {
+                    e.preventDefault();
+                    if (this.resyPhoneDigits.length > 0) {
+                        this.resyPhoneDigits = this.resyPhoneDigits.slice(0, -1);
+                        const f = this._fmtPhone(this.resyPhoneDigits);
+                        this.resyPhoneDisplay = f;
+                        this.$nextTick(() => { e.target.value = f; e.target.setSelectionRange(f.length, f.length); });
+                    }
+                    return;
+                }
+                if (!/^\d$/.test(e.key)) e.preventDefault();
+            },
+            async sendResyOtp() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const phone = '+1' + this.resyPhoneDigits;
+                    const resp = await fetch('/api/auth/resy-send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ phone }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to send code');
+                    this.resyPhoneStep = 'otp';
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
+            _resyOtpInputs(e) { return e.target.closest('[data-otp-container]').querySelectorAll('input'); },
+            handleResyOtpInput(e, idx) {
+                const val = e.target.value.replace(/\D/g, '');
+                if (val.length > 1) {
+                    const chars = val.split('');
+                    for (let i = 0; i < chars.length && (idx + i) < 6; i++) this.resyOtpDigits[idx + i] = chars[i];
+                    this.$nextTick(() => {
+                        const inputs = this._resyOtpInputs(e);
+                        inputs.forEach((inp, i) => inp.value = this.resyOtpDigits[i]);
+                        inputs[Math.min(idx + val.length, 5)]?.focus();
+                        if (this.resyOtpDigits.every(d => d !== '')) this.verifyResyOtp();
+                    });
+                    return;
+                }
+                this.resyOtpDigits[idx] = val.slice(-1) || '';
+                e.target.value = this.resyOtpDigits[idx];
+                if (val && idx < 5) setTimeout(() => { const inputs = this._resyOtpInputs(e); inputs[idx + 1]?.focus(); }, 10);
+                if (this.resyOtpDigits.every(d => d !== '')) this.$nextTick(() => this.verifyResyOtp());
+            },
+            handleResyOtpKeydown(e, idx) {
+                const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                if (e.key === 'Backspace') {
+                    if (this.resyOtpDigits[idx] === '' && idx > 0) {
+                        this.resyOtpDigits[idx - 1] = '';
+                        inputs[idx - 1].value = '';
+                        setTimeout(() => inputs[idx - 1]?.focus(), 10);
+                    } else { this.resyOtpDigits[idx] = ''; e.target.value = ''; }
+                    e.preventDefault();
+                }
+                if (e.key === 'ArrowLeft' && idx > 0) { inputs[idx - 1]?.focus(); e.preventDefault(); }
+                if (e.key === 'ArrowRight' && idx < 5) { inputs[idx + 1]?.focus(); e.preventDefault(); }
+            },
+            handleResyOtpPaste(e) {
+                const pasted = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+                for (let i = 0; i < 6; i++) this.resyOtpDigits[i] = pasted[i] || '';
+                this.$nextTick(() => {
+                    const inputs = e.target.closest('[data-otp-container]').querySelectorAll('input');
+                    inputs.forEach((inp, i) => inp.value = this.resyOtpDigits[i]);
+                    if (pasted.length === 6) this.verifyResyOtp();
+                });
+            },
+            async verifyResyOtp() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const phone = '+1' + this.resyPhoneDigits;
+                    const code = this.resyOtpDigits.join('');
+                    const resp = await fetch('/api/auth/resy-verify-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ phone, code }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Verification failed');
+                    if (data.challenge) {
+                        this.resyClaimToken = data.claim_token;
+                        this.resyChallengeId = data.challenge_id;
+                        this.resyPhoneStep = 'challenge';
+                        this.resyError = '';
+                    } else {
+                        this.resyLinked = true;
+                        this.showResyLink = false;
+                        this.showToast('Resy account linked!');
+                    }
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
+            async completeResyChallenge() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const resp = await fetch('/api/auth/resy-complete-challenge', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({
+                            claim_token: this.resyClaimToken,
+                            challenge_id: this.resyChallengeId,
+                            email: this.resyChallengeEmail,
+                            phone: '+1' + this.resyPhoneDigits,
+                        }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Email verification failed');
+                    this.resyLinked = true;
+                    this.showResyLink = false;
+                    this.showToast('Resy account linked!');
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
+            async linkResyEmail() {
+                this.resyLoading = true; this.resyError = '';
+                try {
+                    const resp = await fetch('/api/auth/link-resy', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ email: this.resyEmail, password: this.resyPassword }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link Resy');
+                    this.resyLinked = true;
+                    this.showResyLink = false;
+                    this.showToast('Resy account linked!');
+                } catch (e) { this.resyError = e.message; }
+                finally { this.resyLoading = false; }
+            },
+
+            // ═══ OpenTable Link ═══
+            async linkOpenTable() {
+                if (!this.otBearerToken.trim()) { this.otError = 'Please paste your OpenTable Bearer token'; return; }
+                this.otLoading = true; this.otError = '';
+                try {
+                    const resp = await fetch('/api/auth/link-opentable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify({ bearer_token: this.otBearerToken.trim() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link OpenTable');
+                    this.otLinked = true;
+                    this.showOTLink = false;
+                    this.otBearerToken = '';
+                    this.showToast('OpenTable account linked!' + (data.diner_name ? ' (' + data.diner_name + ')' : ''));
+                } catch (e) { this.otError = e.message; }
+                finally { this.otLoading = false; }
+            },
+
+            // ═══ Payment Method Link ═══
+            async initPaymentSetup() {
+                this.paymentCardError = '';
+                try {
+                    const resp = await this.authFetch('/api/payments/setup-intent', { method: 'POST' });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to start card setup');
+                    this._setupClientSecret = data.client_secret;
+
+                    const pk = window.__STRIPE_PK__;
+                    if (!pk) { this.paymentCardError = 'Stripe not configured'; return; }
+                    this._stripe = Stripe(pk);
+                    this._stripeElements = this._stripe.elements();
+                    const isDark = this.theme === 'dark';
+                    this._cardElement = this._stripeElements.create('card', {
+                        style: {
+                            base: {
+                                color: isDark ? '#e2e8f0' : '#1e293b',
+                                fontFamily: 'Inter, system-ui, sans-serif',
+                                fontSize: '15px',
+                                '::placeholder': { color: isDark ? '#64748b' : '#94a3b8' },
+                            },
+                            invalid: { color: '#ef4444' },
+                        },
+                    });
+                    this.$nextTick(() => {
+                        const el = document.getElementById('card-element-restaurant');
+                        if (el) this._cardElement.mount(el);
+                    });
+                } catch (e) { this.paymentCardError = e.message; }
+            },
+
+            async confirmPaymentCard() {
+                if (!this._stripe || !this._setupClientSecret || !this._cardElement) return;
+                this.paymentCardLoading = true;
+                this.paymentCardError = '';
+                try {
+                    const { setupIntent, error } = await this._stripe.confirmCardSetup(this._setupClientSecret, {
+                        payment_method: { card: this._cardElement },
+                    });
+                    if (error) throw new Error(error.message);
+
+                    // Save payment method to our backend
+                    const pmId = setupIntent.payment_method;
+                    const saveResp = await this.authFetch('/api/payments/methods', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stripe_payment_method_id: pmId }),
+                    });
+                    if (!saveResp.ok) {
+                        const saveData = await saveResp.json();
+                        throw new Error(saveData.detail || 'Failed to save card');
+                    }
+
+                    this.hasPaymentMethod = true;
+                    this.showPaymentLink = false;
+                    this.showToast('Card saved!');
+                    // Continue the booking flow
+                    this.handleBookClick();
+                } catch (e) { this.paymentCardError = e.message; }
+                finally { this.paymentCardLoading = false; }
+            },
+
+            skipPaymentLink() {
+                this.showPaymentLink = false;
+                // Continue without card — they'll be prompted again next time
+                const savedEmail = localStorage.getItem('resr_notify_email');
+                if (!savedEmail && !this.showEmailPrompt) {
+                    this.showEmailPrompt = true;
+                    this.$nextTick(() => { if (this.$refs.emailInput) this.$refs.emailInput.focus(); });
+                    return;
+                }
+                this.submitBooking();
+            },
+        };
+    }
+    </script>
+    <!-- ═══ RESY LINK MODAL ═══ -->
+    <div x-show="showResyLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showResyLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showResyLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showResyLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <h2 class="text-lg font-bold mb-1" style="color: var(--c1);">Link your Resy account</h2>
+            <p class="text-sm mb-6" style="color: var(--c3);">We need your Resy credentials to book on your behalf.</p>
+            <div class="flex gap-1 mb-6 rounded-xl p-1" style="background: var(--bg-input);">
+                <button @click="resyLinkTab = 'phone'" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                    :style="resyLinkTab === 'phone' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
+                    Phone + OTP
+                </button>
+                <button @click="resyLinkTab = 'email'" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+                    :style="resyLinkTab === 'email' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
+                    Email + Password
+                </button>
+            </div>
+            <!-- Phone OTP -->
+            <div x-show="resyLinkTab === 'phone'">
+                <div class="flex items-center gap-2 mb-5">
+                    <template x-for="(step, idx) in [{icon: '📱', label: 'Phone'}, {icon: '🔢', label: 'Code'}, {icon: '✉️', label: 'Verify'}]" :key="idx">
+                        <div class="flex items-center gap-2" :class="idx < 2 ? 'flex-1' : ''">
+                            <div class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all"
+                                :style="(resyPhoneStep === 'phone' && idx === 0) || (resyPhoneStep === 'otp' && idx <= 1) || (resyPhoneStep === 'challenge' && idx <= 2)
+                                    ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);'
+                                    : 'background: var(--bg-input); color: var(--c4);'"
+                                x-text="step.icon"></div>
+                            <span class="text-[10px] font-medium hidden sm:inline"
+                                :style="(resyPhoneStep === 'phone' && idx === 0) || (resyPhoneStep === 'otp' && idx === 1) || (resyPhoneStep === 'challenge' && idx === 2) ? 'color: var(--c1);' : 'color: var(--c4);'"
+                                x-text="step.label"></span>
+                            <div x-show="idx < 2" class="flex-1 h-px mx-1" :style="(resyPhoneStep === 'otp' && idx === 0) || (resyPhoneStep === 'challenge' && idx <= 1) ? 'background: var(--accent);' : 'background: var(--border);'"></div>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="resyPhoneStep === 'phone'">
+                    <p class="text-xs mb-4" style="color: var(--c3);">Enter the phone number linked to your Resy account.</p>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex items-center px-4 py-3 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border);">
+                            <span class="text-lg font-medium" style="color: var(--c3);">+1</span>
+                        </div>
+                        <input type="tel" x-model="resyPhoneDisplay" @input="formatResyPhone($event)" @keydown="resyPhoneKeydown($event)"
+                            placeholder="(555) 123-4567" maxlength="14" inputmode="numeric" autocomplete="tel-national" name="phone"
+                            class="flex-1 px-4 py-3 rounded-xl text-lg tracking-wide focus:outline-none"
+                            style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                            onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                            onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    </div>
+                    <button @click="sendResyOtp()" :disabled="resyLoading || resyPhoneDigits.length !== 10"
+                        class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                        :style="resyPhoneDigits.length === 10 ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        <span x-show="!resyLoading">Receive Code from Resy</span>
+                        <span x-show="resyLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Sending...
+                        </span>
+                    </button>
+                </div>
+                <div x-show="resyPhoneStep === 'otp'">
+                    <p class="text-xs mb-4" style="color: var(--c3);">Enter the 6-digit code sent to your Resy phone number.</p>
+                    <div class="flex justify-center gap-2 mb-4" data-otp-container @paste.prevent="handleResyOtpPaste($event)">
+                        <template x-for="(digit, i) in resyOtpDigits" :key="i">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1"
+                                autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false"
+                                :data-otp-idx="i" :value="digit"
+                                @input="handleResyOtpInput($event, i)" @keydown="handleResyOtpKeydown($event, i)" @focus="$event.target.select()"
+                                class="w-11 h-12 text-center text-lg font-semibold rounded-xl focus:outline-none"
+                                style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                                onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                                onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                        </template>
+                    </div>
+                    <button @click="verifyResyOtp()" :disabled="resyLoading || resyOtpDigits.join('').length !== 6"
+                        class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                        :style="resyOtpDigits.join('').length === 6 ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        <span x-show="!resyLoading">Verify & Link</span>
+                        <span x-show="resyLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Linking...
+                        </span>
+                    </button>
+                    <button @click="resyPhoneStep = 'phone'" class="mt-3 text-xs w-full text-center" style="color: var(--c3);">&larr; Change number</button>
+                </div>
+                <div x-show="resyPhoneStep === 'challenge'">
+                    <p class="text-xs mb-2" style="color: var(--c1); font-weight: 600;">Almost there — one last step</p>
+                    <p class="text-xs mb-4" style="color: var(--c3);">Your phone number is already linked to a Resy account. To confirm it's you, enter the email address associated with that account.</p>
+                    <input type="email" x-model="resyChallengeEmail" placeholder="Your Resy email address"
+                        autocomplete="email"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <button @click="completeResyChallenge()" :disabled="resyLoading || !resyChallengeEmail"
+                        class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                        :style="resyChallengeEmail ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        <span x-show="!resyLoading">Verify & Link</span>
+                        <span x-show="resyLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Verifying...
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <!-- Email + Password -->
+            <div x-show="resyLinkTab === 'email'">
+                <p class="text-xs mb-4" style="color: var(--c3);">Enter your Resy login credentials. They're encrypted and stored securely.</p>
+                <form @submit.prevent="linkResyEmail()">
+                    <input type="email" x-model="resyEmail" placeholder="Resy email"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-3 focus:outline-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <input type="password" x-model="resyPassword" placeholder="Resy password"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                        onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <button type="submit" :disabled="resyLoading || !resyEmail || !resyPassword"
+                        class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                        :style="resyEmail && resyPassword ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                        <span x-show="!resyLoading">Link Resy Account</span>
+                        <span x-show="resyLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Linking...
+                        </span>
+                    </button>
+                </form>
+            </div>
+            <p x-show="resyError" x-cloak class="mt-4 text-red-400 text-sm" x-text="resyError"></p>
+        </div>
+    </div>
+
+    <!-- ═══ OPENTABLE LINK MODAL ═══ -->
+    <div x-show="showOTLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showOTLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showOTLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showOTLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #da3743;">
+                    <span class="text-white text-xs font-bold">OT</span>
+                </div>
+                <h2 class="text-lg font-bold" style="color: var(--c1);">Link your OpenTable account</h2>
+            </div>
+            <p class="text-sm mb-5" style="color: var(--c3);">This restaurant uses OpenTable for reservations. We need your Bearer token to book on your behalf.</p>
+
+            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border);">
+                <p class="text-xs font-semibold mb-2" style="color: var(--c2);">How to get your token:</p>
+                <ol class="text-xs space-y-1.5" style="color: var(--c3); list-style-type: decimal; padding-left: 1.2em;">
+                    <li>Install a network proxy (Charles Proxy or mitmproxy)</li>
+                    <li>Open the OpenTable mobile app on your phone</li>
+                    <li>Look for requests to <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">mobile-api.opentable.com</code></li>
+                    <li>Copy the <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">Authorization: Bearer ...</code> header value</li>
+                </ol>
+            </div>
+
+            <form @submit.prevent="linkOpenTable()">
+                <textarea x-model="otBearerToken" placeholder="Paste your OpenTable Bearer token here..."
+                    rows="3"
+                    class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none resize-none font-mono"
+                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1); font-size: 11px;"
+                    onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                    onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"></textarea>
+                <button type="submit" :disabled="otLoading || !otBearerToken.trim()"
+                    class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                    :style="otBearerToken.trim() ? 'background: #da3743; color: white;' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                    <span x-show="!otLoading">Link OpenTable Account</span>
+                    <span x-show="otLoading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                        Validating...
+                    </span>
+                </button>
+            </form>
+            <p x-show="otError" x-cloak class="mt-4 text-red-400 text-sm" x-text="otError"></p>
+        </div>
+    </div>
+
+    <!-- ═══ PAYMENT LINK MODAL ═══ -->
+    <div x-show="showPaymentLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showPaymentLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showPaymentLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showPaymentLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <!-- Card icon -->
+            <div class="flex justify-center mb-5">
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                    <svg class="w-8 h-8" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold text-center mb-2" style="color: var(--c1);">Link your payment method</h2>
+            <p class="text-sm text-center mb-6" style="color: var(--c3);">You will only be charged if your reservation is successful.</p>
+
+            <!-- Pricing info -->
+            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <div>
+                        <p class="text-sm font-medium" style="color: var(--c1);">$12 per successful reservation</p>
+                        <p class="text-xs" style="color: var(--c3);">No charge if we don't find a table</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stripe card element -->
+            <div id="card-element-restaurant" class="px-4 py-3.5 rounded-xl mb-3" style="background: var(--bg-input); border: 1px solid var(--border);"></div>
+            <p x-show="paymentCardError" x-cloak class="text-xs mb-3" style="color: var(--status-failed);" x-text="paymentCardError"></p>
+
+            <button @click="confirmPaymentCard()" :disabled="paymentCardLoading"
+                class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 mb-3"
+                style="background: var(--accent); color: #fff;">
+                <span x-show="!paymentCardLoading">Confirm</span>
+                <span x-show="paymentCardLoading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                    Saving...
+                </span>
+            </button>
+
+            <button @click="skipPaymentLink()" class="w-full py-2 text-sm transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                Skip for now
+            </button>
+        </div>
+    </div>
+
+    <script>(function(){ const t = localStorage.getItem('resr_theme') || 'dark'; if (t === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); })();</script>
+</body>
+</html>

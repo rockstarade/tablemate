@@ -242,7 +242,7 @@ async def link_resy(
 
 @router.post("/resy-send-otp")
 @limiter.limit("5/minute")
-async def resy_send_otp(request: Request, body: dict):
+async def resy_send_otp(request: Request, body: dict, user_id: str = Depends(get_user_id)):
     """Send an OTP code to the user's phone via Resy's auth API."""
     phone = body.get("phone", "").strip()
     if not phone:
@@ -271,7 +271,7 @@ async def resy_send_otp(request: Request, body: dict):
             except Exception:
                 pass
         logger.warning("Resy OTP send failed for %s: %s", redacted, msg)
-        raise HTTPException(400, f"Failed to send code: {msg}")
+        raise HTTPException(400, "Failed to send verification code. Please try again.")
 
     return {"sent": True, "message": "Code sent to your phone via Resy"}
 
@@ -309,7 +309,7 @@ async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(g
             except Exception:
                 pass
         logger.warning("Resy OTP verify failed: %s", msg)
-        raise HTTPException(401, f"Verification failed: {msg}")
+        raise HTTPException(401, "Verification failed. Please check the code and try again.")
 
     # If challenge returned, send it to frontend for email verification step
     if isinstance(result, dict) and "challenge" in result:
@@ -385,7 +385,7 @@ async def resy_complete_challenge(request: Request, body: dict, user_id: str = D
         if not msg:
             msg = "Unknown error — check server logs"
         logger.warning("Resy challenge failed: %s", msg)
-        raise HTTPException(401, f"Email verification failed: {msg}")
+        raise HTTPException(401, "Email verification failed. Please check your email and try again.")
 
     # Store credentials
     await db.upsert_profile(
@@ -499,15 +499,19 @@ async def dev_mode_check():
 async def dev_skip():
     """Create a quick-access session token without phone verification.
 
-    Temporary admin convenience — skip phone auth and go straight to browse.
+    Only available when DEV_MODE is enabled.
     """
+    if os.environ.get("DEV_MODE", "").lower() not in ("true", "1", "yes"):
+        raise HTTPException(status_code=403, detail="Dev mode is not enabled")
 
     # Generate a deterministic dev user ID (same across restarts for convenience)
     # Must be a valid UUID since profiles.id is a uuid column
     dev_user_id = "00000000-0000-0000-0000-000000000001"
     dev_token = f"dev-token-{uuid.uuid4().hex[:16]}"
 
-    # Store in memory
+    # Store in memory (bounded to prevent memory exhaustion)
+    if len(_dev_tokens) > 100:
+        _dev_tokens.clear()
     _dev_tokens[dev_token] = dev_user_id
 
     # Note: dev user doesn't exist in Supabase auth.users, so we skip
