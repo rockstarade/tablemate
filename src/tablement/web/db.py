@@ -222,6 +222,29 @@ async def list_transactions(user_id: str, limit: int = 50) -> list[dict]:
     return resp.data
 
 
+async def get_profile_by_referral_code(code: str) -> dict | None:
+    """Fetch a user profile by referral code."""
+    resp = (
+        await get_service_client()
+        .table("profiles")
+        .select("*")
+        .eq("referral_code", code)
+        .limit(1)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def decrement_gifts(user_id: str) -> bool:
+    """Decrement gifts_remaining by 1. Returns True if successful."""
+    profile = await get_profile(user_id)
+    current = (profile or {}).get("gifts_remaining", 0)
+    if current <= 0:
+        return False
+    await upsert_profile(user_id, gifts_remaining=current - 1)
+    return True
+
+
 async def get_default_payment_method(user_id: str) -> dict | None:
     """Get the user's default payment method."""
     resp = (

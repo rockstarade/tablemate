@@ -1293,11 +1293,30 @@
                                 <div class="flex items-center gap-2">
                                     <span x-show="user.resy_linked" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs">Linked</span>
                                     <span x-show="!user.resy_linked" class="px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-500 text-xs">Not linked</span>
+                                    <span class="px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 text-xs font-mono" x-text="(user.credits || 0) + ' cr'"></span>
+                                    <span x-show="user.referral_code" class="text-xs text-slate-600 font-mono" x-text="user.referral_code"></span>
                                     <span class="text-xs text-slate-500" x-text="formatDate(user.created_at)"></span>
                                 </div>
                             </div>
                             <!-- Expanded content -->
                             <div x-show="expandedUsers[user.id]" class="px-4 pb-4 pt-0 border-t border-slate-700/30 space-y-3">
+                                <!-- Credits + Gifts management -->
+                                <div class="flex items-center gap-4 pt-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-slate-400">Credits:</span>
+                                        <span class="text-sm font-bold text-brand-400" x-text="user.credits || 0"></span>
+                                        <button @click="promptAddCredits(user)"
+                                            class="px-2 py-0.5 rounded bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 text-xs font-bold transition-colors">+ Add</button>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-slate-400">Gifts:</span>
+                                        <span class="text-sm text-slate-300" x-text="user.gifts_remaining || 0"></span>
+                                    </div>
+                                    <div x-show="user.referral_code" class="flex items-center gap-2">
+                                        <span class="text-xs text-slate-400">Code:</span>
+                                        <span class="text-xs font-mono text-slate-300" x-text="user.referral_code"></span>
+                                    </div>
+                                </div>
                                 <!-- Test Auth button for linked users -->
                                 <div x-show="user.resy_linked" class="flex items-center gap-3 pt-3">
                                     <button @click="testAuth(user.id)" :disabled="authTesting === user.id"
@@ -2891,6 +2910,26 @@
                     const resp = await fetch('/api/admin/reservations/' + id + '/cancel', { method: 'POST', headers: this.headers() });
                     if (resp.ok) { await this.loadAdminReservations(); await this.loadAdminStats(); }
                 } catch (e) { console.error('Cancel failed:', e); }
+            },
+            async promptAddCredits(user) {
+                const amount = prompt(`Add credits to ${user.resy_email || user.id.substring(0, 8)}.\n\nHow many credits?`, '1');
+                if (!amount) return;
+                const n = parseInt(amount);
+                if (isNaN(n) || n < 1 || n > 100) { alert('Enter a number between 1 and 100'); return; }
+                const reason = prompt('Reason (optional):', 'Admin credit') || 'Admin credit';
+                try {
+                    const resp = await fetch(`/api/admin/users/${user.id}/credits`, {
+                        method: 'POST', headers: this.headers(),
+                        body: JSON.stringify({ amount: n, reason }),
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        user.credits = data.new_balance;
+                        alert(`Added ${n} credit(s). New balance: ${data.new_balance}`);
+                    } else {
+                        alert('Failed: ' + (data.detail || 'Unknown error'));
+                    }
+                } catch (e) { alert('Error: ' + e.message); }
             },
             formatDate(dateStr) {
                 if (!dateStr) return '';

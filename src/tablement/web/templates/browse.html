@@ -1184,7 +1184,7 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-semibold" style="color: var(--c1);">Gift a Reservation</p>
-                                <p class="text-xs" style="color: var(--c3);">You have <span class="font-semibold" style="color: var(--accent);">3 gifts</span> to give</p>
+                                <p class="text-xs" style="color: var(--c3);">You have <span class="font-semibold" style="color: var(--accent);" x-text="giftsRemaining + ' gift' + (giftsRemaining !== 1 ? 's' : '')"></span> to give</p>
                             </div>
                             <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
@@ -1342,7 +1342,14 @@
                     <p class="text-sm" style="color: var(--c3);">Share with friends</p>
                 </div>
             </div>
-            <p class="text-sm mb-6" style="color: var(--c2);">You have <span class="font-bold" style="color: var(--accent);">3 free reservations</span> to give to friends. They get a free booking when they sign up with your code.</p>
+            <p class="text-sm mb-6" style="color: var(--c2);">
+                <template x-if="giftsRemaining > 0">
+                    <span>You have <span class="font-bold" style="color: var(--accent);" x-text="giftsRemaining + ' free reservation' + (giftsRemaining !== 1 ? 's' : '')"></span> to give to friends. They get a free booking when they sign up with your code.</span>
+                </template>
+                <template x-if="giftsRemaining === 0">
+                    <span style="color: var(--c3);">You've used all your gifts. Thanks for spreading the word!</span>
+                </template>
+            </p>
             <div class="flex items-center gap-3 rounded-xl p-4 mb-3" style="background: var(--bg-input); border: 1px solid var(--border);">
                 <code class="font-mono text-base font-bold flex-1 tracking-wider" style="color: var(--c1);" x-text="referralCode"></code>
                 <button @click="copyReferralCode()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
@@ -1549,8 +1556,9 @@
             userEmail: '',
             editingName: false,
             editNameValue: '',
-            referralCode: 'TP-XXXX',
+            referralCode: '',
             referralCopied: false,
+            giftsRemaining: 0,
 
             // Theme
             theme: localStorage.getItem('resr_theme') || 'dark',
@@ -1692,10 +1700,11 @@
                             this.userName = data.resy_email.split('@')[0];
                             this.userName = this.userName.charAt(0).toUpperCase() + this.userName.slice(1);
                         }
-                        // Generate referral code from user ID
-                        if (data.user_id) {
-                            this.referralCode = 'TP-' + data.user_id.substring(0, 6).toUpperCase();
+                        // Load referral data from profile
+                        if (data.referral_code) {
+                            this.referralCode = data.referral_code;
                         }
+                        this.giftsRemaining = data.gifts_remaining || 0;
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
             },

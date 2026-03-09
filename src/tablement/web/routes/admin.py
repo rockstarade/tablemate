@@ -128,7 +128,7 @@ async def list_users():
     try:
         resp = (
             await svc.table("profiles")
-            .select("id, resy_email, stripe_customer_id, created_at, updated_at")
+            .select("id, resy_email, stripe_customer_id, credits, gifts_remaining, referral_code, created_at, updated_at")
             .order("created_at", desc=True)
             .execute()
         )
@@ -139,12 +139,35 @@ async def list_users():
                 "resy_email": row.get("resy_email"),
                 "resy_linked": bool(row.get("resy_email")),
                 "stripe_linked": bool(row.get("stripe_customer_id")),
+                "credits": row.get("credits", 0),
+                "gifts_remaining": row.get("gifts_remaining", 0),
+                "referral_code": row.get("referral_code"),
                 "created_at": str(row.get("created_at", "")),
             })
         return {"users": users, "total": len(users)}
     except Exception as e:
         logger.warning("Failed to list users: %s", e)
         return {"users": [], "total": 0, "error": str(e)}
+
+
+@router.post("/users/{user_id}/credits", dependencies=[Depends(_require_admin)])
+async def add_user_credits(user_id: str, body: dict):
+    """Manually add credits to a user's balance."""
+    amount = body.get("amount", 0)
+    reason = body.get("reason", "Admin credit")
+    if not isinstance(amount, int) or amount < 1 or amount > 100:
+        raise HTTPException(400, "Amount must be 1-100")
+
+    new_balance = await db.add_credits(user_id, amount)
+    await db.create_transaction(
+        user_id=user_id,
+        type="admin_credit",
+        amount_cents=0,
+        credits_delta=amount,
+        description=reason,
+    )
+    logger.info("Admin added %d credits to user %s — balance now %d", amount, user_id, new_balance)
+    return {"success": True, "credits_added": amount, "new_balance": new_balance}
 
 
 # ---------------------------------------------------------------------------

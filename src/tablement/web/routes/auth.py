@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import logging
 import os
+import secrets
+import string
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -36,6 +38,15 @@ router = APIRouter()
 # Dev mode token store (in-memory, lost on restart — that's fine for dev)
 _dev_tokens: dict[str, str] = {}  # token -> user_id
 
+# Referral code alphabet (uppercase + digits, no ambiguous chars)
+_REFERRAL_CHARS = string.ascii_uppercase + string.digits
+
+
+def _generate_referral_code() -> str:
+    """Generate a unique referral code like TP-K9X3M2."""
+    suffix = "".join(secrets.choice(_REFERRAL_CHARS) for _ in range(6))
+    return f"TP-{suffix}"
+
 
 @router.post("/send-otp", response_model=OtpSendResponse)
 @limiter.limit("5/minute")
@@ -51,6 +62,31 @@ async def send_otp(request: Request, body: OtpSendRequest):
 
     redacted = body.phone[:5] + "***" + body.phone[-2:] if len(body.phone) > 7 else "***"
     logger.info("Sending OTP to %s", redacted)
+
+    # VoIP check via Twilio Lookup (block Google Voice, TextNow, etc.)
+    twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
+    twilio_auth = os.environ.get("TWILIO_AUTH_TOKEN", "")
+    if twilio_sid and twilio_auth:
+        try:
+            from twilio.rest import Client as TwilioClient
+            twilio_client = TwilioClient(twilio_sid, twilio_auth)
+            lookup = twilio_client.lookups.v2.phone_numbers(body.phone).fetch(
+                fields="line_type_intelligence"
+            )
+            line_type = (lookup.line_type_intelligence or {}).get("type", "")
+            logger.info("Twilio lookup %s: type=%s", redacted, line_type)
+            if line_type == "voip":
+                raise HTTPException(
+                    status_code=400,
+                    detail="VoIP numbers are not supported. Please use a mobile phone number.",
+                )
+        except HTTPException:
+            raise
+        except ImportError:
+            logger.warning("twilio package not installed — skipping VoIP check")
+        except Exception as e:
+            # Don't block sign-up if Twilio lookup fails
+            logger.warning("Twilio lookup failed for %s: %s", redacted, e)
 
     try:
         await client.auth.sign_in_with_otp(
@@ -107,8 +143,57 @@ async def verify_otp(request: Request, body: OtpVerifyRequest):
     # Ensure a profile row exists for this user
     user_id = resp.user.id
     profile = await db.get_profile(user_id)
-    if not profile:
-        await db.upsert_profile(user_id)
+    is_new_user = not profile
+    if is_new_user:
+        # Generate a unique referral code for this new user
+        referral_code = _generate_referral_code()
+        for _ in range(5):  # retry on collision
+            existing = await db.get_profile_by_referral_code(referral_code)
+            if not existing:
+                break
+            referral_code = _generate_referral_code()
+        await db.upsert_profile(user_id, referral_code=referral_code, gifts_remaining=3)
+        logger.info("New user %s — assigned referral code %s", user_id, referral_code)
+
+        # Handle referral code redemption (new users only)
+        ref_code = (body.referral_code or "").strip().upper()
+        if ref_code:
+            try:
+                referrer = await db.get_profile_by_referral_code(ref_code)
+                if referrer and referrer["id"] != user_id:
+                    referrer_gifts = referrer.get("gifts_remaining", 0)
+                    if referrer_gifts > 0:
+                        # Deduct a gift from referrer
+                        await db.decrement_gifts(referrer["id"])
+                        # Give new user 1 free credit
+                        await db.add_credits(user_id, 1)
+                        # Track who referred whom
+                        await db.upsert_profile(user_id, referred_by=referrer["id"])
+                        # Audit trail
+                        await db.create_transaction(
+                            user_id=user_id,
+                            type="gift_received",
+                            amount_cents=0,
+                            credits_delta=1,
+                            description=f"Referral gift from {ref_code}",
+                        )
+                        await db.create_transaction(
+                            user_id=referrer["id"],
+                            type="gift_sent",
+                            amount_cents=0,
+                            credits_delta=0,
+                            description=f"Gift sent to new user (code {ref_code})",
+                        )
+                        logger.info(
+                            "Referral redeemed: %s used code %s — referrer %s gifts now %d",
+                            user_id, ref_code, referrer["id"], referrer_gifts - 1,
+                        )
+                    else:
+                        logger.info("Referral code %s has no gifts remaining", ref_code)
+                else:
+                    logger.info("Invalid referral code %s (not found or self-referral)", ref_code)
+            except Exception as e:
+                logger.warning("Referral redemption failed for code %s: %s", ref_code, e)
 
     return OtpVerifyResponse(
         access_token=resp.session.access_token,
@@ -336,6 +421,8 @@ async def me(user_id: str = Depends(get_user_id)):
         opentable_linked=bool(profile.get("opentable_linked")),
         opentable_diner_id=profile.get("opentable_diner_id"),
         stripe_linked=bool(profile.get("stripe_customer_id")),
+        referral_code=profile.get("referral_code"),
+        gifts_remaining=profile.get("gifts_remaining", 0),
     )
 
 

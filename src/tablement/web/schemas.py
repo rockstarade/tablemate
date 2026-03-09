@@ -22,6 +22,7 @@ class OtpSendResponse(BaseModel):
 class OtpVerifyRequest(BaseModel):
     phone: str
     code: str = Field(..., min_length=6, max_length=6)
+    referral_code: str | None = None
 
 
 class OtpVerifyResponse(BaseModel):
@@ -48,6 +49,8 @@ class UserProfileResponse(BaseModel):
     opentable_linked: bool = False
     opentable_diner_id: str | None = None
     stripe_linked: bool = False
+    referral_code: str | None = None
+    gifts_remaining: int = 0
 
 
 # ---------------------------------------------------------------------------

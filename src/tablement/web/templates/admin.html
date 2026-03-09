@@ -297,6 +297,9 @@
                                 <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">User ID</th>
                                 <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Resy</th>
                                 <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Stripe</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Credits</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Gifts</th>
+                                <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Referral</th>
                                 <th class="text-left px-5 py-3 text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Joined</th>
                             </tr>
                         </thead>
@@ -321,6 +324,19 @@
                                         <span class="badge"
                                             :class="user.stripe_linked ? 'badge-success' : 'badge-muted'"
                                             x-text="user.stripe_linked ? 'Active' : 'None'"></span>
+                                    </td>
+                                    <td class="px-5 py-3.5">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-semibold tabular-nums" style="color: var(--c1);" x-text="user.credits || 0"></span>
+                                            <button @click="promptAddCredits(user)"
+                                                class="w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold transition-colors"
+                                                style="background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent);"
+                                                title="Add credits">+</button>
+                                        </div>
+                                    </td>
+                                    <td class="px-5 py-3.5 text-sm tabular-nums" style="color: var(--c2);" x-text="user.gifts_remaining || 0"></td>
+                                    <td class="px-5 py-3.5">
+                                        <span class="text-xs font-mono" style="color: var(--c3);" x-text="user.referral_code || '—'"></span>
                                     </td>
                                     <td class="px-5 py-3.5 text-sm" style="color: var(--c3);" x-text="formatDate(user.created_at)"></td>
                                 </tr>
@@ -555,6 +571,28 @@
                     });
                     if (resp.ok) { await this.loadReservations(); await this.loadStats(); }
                 } catch (e) { console.error('Cancel failed:', e); }
+            },
+
+            async promptAddCredits(user) {
+                const amount = prompt(`Add credits to ${user.resy_email || user.id.substring(0, 8)}.\n\nHow many credits?`, '1');
+                if (!amount) return;
+                const n = parseInt(amount);
+                if (isNaN(n) || n < 1 || n > 100) { alert('Enter a number between 1 and 100'); return; }
+                const reason = prompt('Reason (optional):', 'Admin credit') || 'Admin credit';
+                try {
+                    const resp = await fetch(`/api/admin/users/${user.id}/credits`, {
+                        method: 'POST',
+                        headers: this.headers(),
+                        body: JSON.stringify({ amount: n, reason }),
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        user.credits = data.new_balance;
+                        alert(`Added ${n} credit(s). New balance: ${data.new_balance}`);
+                    } else {
+                        alert('Failed: ' + (data.detail || 'Unknown error'));
+                    }
+                } catch (e) { alert('Error: ' + e.message); }
             },
 
             formatDate(dateStr) {
