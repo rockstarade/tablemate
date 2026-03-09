@@ -190,7 +190,7 @@ def create_app() -> FastAPI:
 
     @app.get("/")
     async def landing(request: Request):
-        return templates.TemplateResponse("landing.html", {"request": request})
+        return templates.TemplateResponse("landing_v8.html", {"request": request})
 
     @app.get("/v2")
     async def landing_v2(request: Request):
