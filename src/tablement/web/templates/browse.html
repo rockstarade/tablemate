@@ -360,60 +360,62 @@
         <!-- Main nav -->
         <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
             <a href="/browse"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all"
+                class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-semibold transition-all"
                 style="background: var(--nav-active-bg); color: var(--nav-active);">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                 Home
             </a>
             <button @click="openReservations()"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 My Reservations
                 <span x-show="activeResCount > 0"
-                    class="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    class="ml-auto text-[11px] font-bold px-1.5 py-0.5 rounded-full"
                     style="background: var(--status-sniping-bg); color: var(--status-sniping);"
                     x-text="activeResCount"></span>
             </button>
             <a href="/browse#all-restaurants"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all"
+                class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 All Restaurants
             </a>
         </nav>
 
         <!-- Account section -->
         <div class="px-3 py-3" style="border-top: 1px solid var(--border);">
-            <!-- Reservation bank -->
-            <div class="mx-2 mb-3 rounded-xl px-4 py-3.5" style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border);">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-widest mb-0.5" style="color: var(--res-bank-text);">Reservations</p>
-                        <p class="text-xs" style="color: var(--c3);">Active bookings</p>
-                    </div>
-                    <p class="text-3xl font-extrabold leading-none" style="color: var(--c1);" x-text="activeResCount">0</p>
+            <!-- Restaurant Suggestions -->
+            <button @click="showSuggestionForm = true"
+                class="w-full mx-2 mb-3 rounded-xl px-4 py-3.5 flex items-center gap-3 text-left transition-all"
+                style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border); color: var(--c1); max-width: calc(100% - 1rem);"
+                onmouseover="this.style.borderColor='var(--accent)';"
+                onmouseout="this.style.borderColor='var(--res-bank-border)';">
+                <svg class="w-[22px] h-[22px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                <div>
+                    <p class="text-[15px] font-semibold">Restaurant Suggestions</p>
+                    <p class="text-xs" style="color: var(--c3);">Suggest a restaurant to add</p>
                 </div>
-            </div>
+            </button>
 
             <button @click="showSettings = true"
-                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Account
             </button>
             <button @click="showSupport = true"
-                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
                 style="color: var(--nav);"
                 onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
                 onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 Support
             </button>
         </div>
@@ -421,11 +423,11 @@
         <!-- Sign out -->
         <div class="px-3 py-3" style="border-top: 1px solid var(--border);">
             <button @click="signOut()"
-                class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-left"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
                 style="color: var(--c3);"
                 onmouseover="this.style.color='var(--signout-h)'; this.style.background='rgba(239,68,68,0.05)';"
                 onmouseout="this.style.color='var(--c3)'; this.style.background='transparent';">
-                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 Sign Out
             </button>
         </div>
@@ -494,7 +496,8 @@
     </div>
 
     <!-- ═══════════════ TOP BAR ═══════════════ -->
-    <header class="fixed top-0 left-0 lg:left-64 right-0 z-30 topbar-bg">
+    <header class="fixed top-0 left-0 right-0 z-30 topbar-bg transition-[left] duration-300 ease-out"
+        :class="showReservations ? 'lg:left-[796px]' : 'lg:left-64'">
         <div class="flex items-center gap-4 px-5 lg:px-8 py-5">
             <button @click="sidebarOpen = true" class="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-all"
                 style="color: var(--nav);"
@@ -579,7 +582,8 @@
     </header>
 
     <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
-    <main class="lg:ml-64 pt-[84px] pb-24 lg:pb-8 min-h-screen">
+    <main class="pt-[84px] pb-24 lg:pb-8 min-h-screen transition-[margin] duration-300 ease-out"
+        :class="showReservations ? 'lg:ml-[796px]' : 'lg:ml-64'">
         <div class="px-5 lg:px-8 py-6 lg:py-8 max-w-[1800px] mx-auto">
 
             <!-- Page heading -->
@@ -771,11 +775,17 @@
         </div>
     </main>
 
-    <!-- ═══════════════ RESERVATIONS PANEL (Sidebar — left) ═══════════════ -->
-    <div x-show="showReservations" x-cloak class="fixed top-0 left-0 bottom-0 z-[60] w-full sm:w-[540px] shadow-2xl panel-bg flex flex-col"
+    <!-- ═══════════════ RESERVATIONS PANEL (Sidebar — push on desktop, overlay on mobile) ═══════════════ -->
+    <!-- Mobile backdrop -->
+    <div x-show="showReservations" x-cloak class="fixed inset-0 z-[59] lg:hidden backdrop-blur-sm"
+        style="background: var(--bg-overlay);"
+        @click="showReservations = false"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+    <div x-show="showReservations" x-cloak class="fixed top-0 left-0 lg:left-64 bottom-0 z-[60] w-full sm:w-[540px] lg:w-[532px] shadow-2xl panel-bg flex flex-col"
         style="border-right: 1px solid var(--border);"
-        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
-        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full lg:translate-x-0 lg:opacity-0" x-transition:enter-end="translate-x-0 lg:opacity-100"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0 lg:opacity-100" x-transition:leave-end="-translate-x-full lg:translate-x-0 lg:opacity-0"
         @keydown.escape.window="showReservations = false">
 
             <!-- Header -->
@@ -948,7 +958,10 @@
 
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
-                <h2 class="text-lg font-bold" style="color: var(--c1);">Account</h2>
+                <div>
+                    <p class="text-sm" style="color: var(--c3);">Welcome back,</p>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);" x-text="userName ? userName.split(' ')[0] : 'there'"></h2>
+                </div>
                 <button @click="showSettings = false" class="transition-colors" style="color: var(--c3);"
                     onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1129,6 +1142,55 @@
                     </div>
                 </div>
 
+                <!-- Reservation Balance -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Reservation Balance</p>
+                    <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium" style="color: var(--c1);">Available Credits</p>
+                                <p class="text-xs" style="color: var(--c3);">Applied automatically when a reservation is confirmed</p>
+                            </div>
+                            <span class="text-2xl font-bold" style="color: var(--accent);" x-text="credits"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Refer & Gift -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Share</p>
+                    <div class="space-y-2">
+                        <button @click="showSettings = false; showReferral = true"
+                            class="w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all"
+                            style="background: var(--bg-input); border: 1px solid var(--border-subtle);"
+                            onmouseover="this.style.borderColor='var(--accent-border)';"
+                            onmouseout="this.style.borderColor='var(--border-subtle)';">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--accent-bg);">
+                                <svg class="w-4 h-4" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold" style="color: var(--c1);">Refer a Friend</p>
+                                <p class="text-xs" style="color: var(--c3);">Get 1 free reservation credit</p>
+                            </div>
+                            <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        <button @click="showSettings = false; showReferral = true"
+                            class="w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all"
+                            style="background: var(--bg-input); border: 1px solid var(--border-subtle);"
+                            onmouseover="this.style.borderColor='var(--accent-border)';"
+                            onmouseout="this.style.borderColor='var(--border-subtle)';">
+                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--accent-bg);">
+                                <svg class="w-4 h-4" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold" style="color: var(--c1);">Gift a Reservation</p>
+                                <p class="text-xs" style="color: var(--c3);">You have <span class="font-semibold" style="color: var(--accent);">3 gifts</span> to give</p>
+                            </div>
+                            <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Theme -->
                 <div>
                     <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Appearance</p>
@@ -1196,6 +1258,66 @@
                         <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">Can I cancel?</span> You can cancel any active reservation request at any time.</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ RESTAURANT SUGGESTION MODAL ═══════════════ -->
+    <div x-show="showSuggestionForm" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showSuggestionForm = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showSuggestionForm = false"
+            x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showSuggestionForm = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                    <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">Restaurant Suggestions</h2>
+                    <p class="text-sm" style="color: var(--c3);">Tell us what to add</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5" style="color: var(--c2);">Restaurant Name</label>
+                    <input x-model="suggestionName" type="text" placeholder="e.g. Tatiana by Kwame"
+                        class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--accent)';"
+                        onblur="this.style.borderColor='var(--border)';">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5" style="color: var(--c2);">City</label>
+                    <select x-model="suggestionCity"
+                        class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all appearance-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);">
+                        <option value="nyc">New York City</option>
+                        <option value="la">Los Angeles</option>
+                        <option value="chicago">Chicago</option>
+                        <option value="miami">Miami</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5" style="color: var(--c2);">Notes <span style="color: var(--c4);">(optional)</span></label>
+                    <textarea x-model="suggestionNotes" rows="3" placeholder="Why this restaurant? Any details that might help..."
+                        class="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                        onfocus="this.style.borderColor='var(--accent)';"
+                        onblur="this.style.borderColor='var(--border)';"></textarea>
+                </div>
+                <button @click="submitSuggestion()"
+                    :disabled="!suggestionName.trim() || suggestionSubmitting"
+                    class="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40"
+                    style="background: var(--accent); color: #fff;">
+                    <span x-show="!suggestionSubmitting">Submit Suggestion</span>
+                    <span x-show="suggestionSubmitting">Submitting...</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1413,6 +1535,11 @@
             showReservations: false,
             showSettings: false,
             showSupport: false,
+            showSuggestionForm: false,
+            suggestionName: '',
+            suggestionCity: 'nyc',
+            suggestionNotes: '',
+            suggestionSubmitting: false,
             showReferral: false,
             showResyLink: false,
             pendingVenueId: null,
@@ -2017,6 +2144,19 @@
                 this.referralCopied = true;
                 this.showToast('Code copied!', '&#128203;');
                 setTimeout(() => { this.referralCopied = false; }, 2000);
+            },
+
+            async submitSuggestion() {
+                if (!this.suggestionName.trim()) return;
+                this.suggestionSubmitting = true;
+                // Placeholder — just show success toast for now
+                await new Promise(r => setTimeout(r, 600));
+                this.showToast('Suggestion received! We\'ll look into it.', '&#9889;');
+                this.suggestionName = '';
+                this.suggestionCity = 'nyc';
+                this.suggestionNotes = '';
+                this.suggestionSubmitting = false;
+                this.showSuggestionForm = false;
             },
 
             // ── Resy Phone OTP ──

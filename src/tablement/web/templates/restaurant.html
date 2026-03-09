@@ -32,6 +32,8 @@
             }
         }
     </script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>window.__STRIPE_PK__ = "{{ stripe_pk }}";</script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -591,6 +593,16 @@
             resyLoading: false,
             resyError: '',
 
+            // Payment method
+            hasPaymentMethod: false,
+            showPaymentLink: false,
+            paymentCardLoading: false,
+            paymentCardError: '',
+            _stripe: null,
+            _stripeElements: null,
+            _cardElement: null,
+            _setupClientSecret: null,
+
             get currentStep() {
                 if (this.selectedDates.length > 0 && this.selectedTimes.length > 0) return 3;
                 if (this.selectedDates.length > 0) return 2;
@@ -617,6 +629,15 @@
                         const meData = await meResp.json();
                         this.resyLinked = meData.resy_linked || false;
                         this.otLinked = meData.opentable_linked || false;
+                    }
+                } catch (e) {}
+
+                // Check if user has a payment method
+                try {
+                    const pmResp = await this.authFetch('/api/payments/methods');
+                    if (pmResp.ok) {
+                        const pmData = await pmResp.json();
+                        this.hasPaymentMethod = pmData.methods && pmData.methods.length > 0;
                     }
                 } catch (e) {}
 
@@ -852,6 +873,8 @@
                 } else {
                     if (!this.resyLinked) { this.showResyLink = true; return; }
                 }
+                // Check payment method
+                if (!this.hasPaymentMethod) { this.showPaymentLink = true; this.initPaymentSetup(); return; }
                 // If no email saved and prompt not showing yet, show the email prompt
                 const savedEmail = localStorage.getItem('resr_notify_email');
                 if (!savedEmail && !this.showEmailPrompt) {
@@ -1085,6 +1108,81 @@
                 } catch (e) { this.otError = e.message; }
                 finally { this.otLoading = false; }
             },
+
+            // ═══ Payment Method Link ═══
+            async initPaymentSetup() {
+                this.paymentCardError = '';
+                try {
+                    const resp = await this.authFetch('/api/payments/setup-intent', { method: 'POST' });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to start card setup');
+                    this._setupClientSecret = data.client_secret;
+
+                    const pk = window.__STRIPE_PK__;
+                    if (!pk) { this.paymentCardError = 'Stripe not configured'; return; }
+                    this._stripe = Stripe(pk);
+                    this._stripeElements = this._stripe.elements();
+                    const isDark = this.theme === 'dark';
+                    this._cardElement = this._stripeElements.create('card', {
+                        style: {
+                            base: {
+                                color: isDark ? '#e2e8f0' : '#1e293b',
+                                fontFamily: 'Inter, system-ui, sans-serif',
+                                fontSize: '15px',
+                                '::placeholder': { color: isDark ? '#64748b' : '#94a3b8' },
+                            },
+                            invalid: { color: '#ef4444' },
+                        },
+                    });
+                    this.$nextTick(() => {
+                        const el = document.getElementById('card-element-restaurant');
+                        if (el) this._cardElement.mount(el);
+                    });
+                } catch (e) { this.paymentCardError = e.message; }
+            },
+
+            async confirmPaymentCard() {
+                if (!this._stripe || !this._setupClientSecret || !this._cardElement) return;
+                this.paymentCardLoading = true;
+                this.paymentCardError = '';
+                try {
+                    const { setupIntent, error } = await this._stripe.confirmCardSetup(this._setupClientSecret, {
+                        payment_method: { card: this._cardElement },
+                    });
+                    if (error) throw new Error(error.message);
+
+                    // Save payment method to our backend
+                    const pmId = setupIntent.payment_method;
+                    const saveResp = await this.authFetch('/api/payments/methods', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ stripe_payment_method_id: pmId }),
+                    });
+                    if (!saveResp.ok) {
+                        const saveData = await saveResp.json();
+                        throw new Error(saveData.detail || 'Failed to save card');
+                    }
+
+                    this.hasPaymentMethod = true;
+                    this.showPaymentLink = false;
+                    this.showToast('Card saved!');
+                    // Continue the booking flow
+                    this.handleBookClick();
+                } catch (e) { this.paymentCardError = e.message; }
+                finally { this.paymentCardLoading = false; }
+            },
+
+            skipPaymentLink() {
+                this.showPaymentLink = false;
+                // Continue without card — they'll be prompted again next time
+                const savedEmail = localStorage.getItem('resr_notify_email');
+                if (!savedEmail && !this.showEmailPrompt) {
+                    this.showEmailPrompt = true;
+                    this.$nextTick(() => { if (this.$refs.emailInput) this.$refs.emailInput.focus(); });
+                    return;
+                }
+                this.submitBooking();
+            },
         };
     }
     </script>
@@ -1270,6 +1368,61 @@
                 </button>
             </form>
             <p x-show="otError" x-cloak class="mt-4 text-red-400 text-sm" x-text="otError"></p>
+        </div>
+    </div>
+
+    <!-- ═══ PAYMENT LINK MODAL ═══ -->
+    <div x-show="showPaymentLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showPaymentLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showPaymentLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showPaymentLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+
+            <!-- Card icon -->
+            <div class="flex justify-center mb-5">
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                    <svg class="w-8 h-8" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-xl font-bold text-center mb-2" style="color: var(--c1);">Link your payment method</h2>
+            <p class="text-sm text-center mb-6" style="color: var(--c3);">You will only be charged if your reservation is successful.</p>
+
+            <!-- Pricing info -->
+            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 flex-shrink-0" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <div>
+                        <p class="text-sm font-medium" style="color: var(--c1);">$12 per successful reservation</p>
+                        <p class="text-xs" style="color: var(--c3);">No charge if we don't find a table</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stripe card element -->
+            <div id="card-element-restaurant" class="px-4 py-3.5 rounded-xl mb-3" style="background: var(--bg-input); border: 1px solid var(--border);"></div>
+            <p x-show="paymentCardError" x-cloak class="text-xs mb-3" style="color: var(--status-failed);" x-text="paymentCardError"></p>
+
+            <button @click="confirmPaymentCard()" :disabled="paymentCardLoading"
+                class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 mb-3"
+                style="background: var(--accent); color: #fff;">
+                <span x-show="!paymentCardLoading">Confirm</span>
+                <span x-show="paymentCardLoading" class="flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                    Saving...
+                </span>
+            </button>
+
+            <button @click="skipPaymentLink()" class="w-full py-2 text-sm transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                Skip for now
+            </button>
         </div>
     </div>
 
