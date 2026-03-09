@@ -309,25 +309,19 @@
         .theme-toggle { transition: transform 0.3s ease; }
         .theme-toggle:hover { transform: rotate(15deg); }
 
-        /* Button fill animation */
+        /* Button hover — flip to white bg + accent text */
         .btn-book {
             position: relative;
             overflow: hidden;
             z-index: 1;
+            transition: all 0.25s ease;
         }
-        .btn-book::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .btn-book:hover {
+            background: #fff !important;
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        .dark .btn-book::before { background: #f59e0b; }
-        .btn-book::before { background: #0ea5e9; }
-        .btn-book:hover::before { opacity: 1; }
-        .btn-book:hover { color: #0f172a !important; border-color: transparent !important; }
-        .dark .btn-book:hover { color: #0f172a !important; }
 
         /* Stagger animation for cards */
         .stagger-item {
@@ -385,6 +379,14 @@
                 <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 All Restaurants
             </a>
+            <button x-show="outsideNYCRestaurants.length > 0" @click="scrollToOutside()"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
+                style="color: var(--nav);"
+                onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
+                onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
+                <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Outside of New York
+            </button>
         </nav>
 
         <!-- Account section -->
@@ -395,11 +397,8 @@
                 style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border); color: var(--c1); max-width: calc(100% - 1rem);"
                 onmouseover="this.style.borderColor='var(--accent)';"
                 onmouseout="this.style.borderColor='var(--res-bank-border)';">
-                <svg class="w-[22px] h-[22px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent);"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                <div>
-                    <p class="text-[15px] font-semibold">Restaurant Suggestions</p>
-                    <p class="text-xs" style="color: var(--c3);">Suggest a restaurant to add</p>
-                </div>
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--c3);"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                <p class="text-xs font-medium" style="color: var(--c3); opacity: 0.7;">Restaurant suggestion?</p>
             </button>
 
             <button @click="showSettings = true"
@@ -473,6 +472,12 @@
                     <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     All Restaurants
                 </a>
+                <button x-show="outsideNYCRestaurants.length > 0" @click="sidebarOpen = false; scrollToOutside()"
+                    class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left"
+                    style="color: var(--nav);">
+                    <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Outside of New York
+                </button>
             </nav>
             <div class="px-3 py-4" style="border-top: 1px solid var(--border);">
                 <div class="mx-2 mb-3 rounded-xl px-4 py-3" style="background: var(--res-bank-bg); border: 1px solid var(--res-bank-border);">
@@ -555,7 +560,7 @@
                 class="relative flex items-center gap-2 px-4 py-3 rounded-xl transition-all"
                 style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
                 <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                <span class="font-bold text-sm" style="color: var(--accent);">3</span>
+                <span class="font-bold text-base" style="color: var(--accent);" x-text="giftsRemaining"></span>
             </button>
 
             <!-- Theme toggle -->
@@ -622,36 +627,35 @@
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.06) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
                             @click="goToRestaurant(r)">
-                            <div class="relative h-48 sm:h-56 overflow-hidden img-placeholder">
+                            <div class="relative h-56 sm:h-64 overflow-hidden img-placeholder">
                                 <span class="initials" x-text="r.name ? r.name.split(' ').map(w => w[0]).join('').slice(0,3) : ''"></span>
-                                <img :src="r.image_url" :alt="r.name"
+                                <img :src="r.image_url" :alt="r.name" loading="lazy"
                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                                <!-- Top-right: Hot + Platform badges -->
+                                <!-- Top-right: Hot badge + Platform icon -->
                                 <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
                                         &#x1F525; Hot
                                     </span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
-                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white/90 text-gray-800'"
-                                        x-text="r.platform === 'opentable' ? 'OpenTable' : 'Resy'"></span>
+                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
+                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
+                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
-                                <!-- Top-left: Cuisine + City -->
-                                <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
-                                        x-text="r.cuisine"></span>
-                                    <span x-show="r.city && r.city !== 'nyc'"
-                                        class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
-                                        x-text="r.city === 'boston' ? 'Boston' : r.city.toUpperCase()"></span>
-                                </div>
-                                <!-- Restaurant name overlay on image -->
-                                <div class="absolute bottom-3 left-3 right-3">
-                                    <h3 class="text-lg font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
-                                    <p class="text-xs text-white/60 mt-0.5" x-text="r.neighborhood"></p>
+                                <!-- Top-left: City badge only -->
+                                <div x-show="r.city && r.city !== 'nyc'" class="absolute top-3 left-3">
+                                    <span class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></span>
                                 </div>
                             </div>
                             <div class="p-4">
+                                <h3 class="text-base font-bold leading-snug mb-0.5" style="color: var(--c1);" x-text="r.name"></h3>
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <div class="flex items-center gap-1 text-xs" style="color: var(--c3);">
+                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <span x-text="r.neighborhood"></span>
+                                    </div>
+                                    <span x-show="r.price_level" class="text-xs font-semibold" style="color: var(--c3);" x-text="'$'.repeat(r.price_level || 0)"></span>
+                                </div>
                                 <p x-show="r.tagline" class="text-[11px] leading-snug mb-2.5 line-clamp-2" style="color: var(--c3);" x-text="r.tagline"></p>
                                 <div class="flex items-center justify-between mb-3">
                                     <p class="text-xs">
@@ -661,7 +665,7 @@
                                 </div>
                                 <button @click.stop="goToRestaurant(r)"
                                     class="btn-book w-full py-2.5 rounded-xl text-xs font-bold transition-all"
-                                    style="background: var(--btn-hot-bg); color: var(--btn-hot-text); border: 1px solid transparent;">
+                                    style="background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--btn-border);">
                                     Book Now
                                 </button>
                             </div>
@@ -704,36 +708,36 @@
                         <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
                             :style="'animation-delay: ' + (idx * 0.04) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
                             @click="goToRestaurant(r)">
-                            <div class="relative h-44 sm:h-52 overflow-hidden img-placeholder">
+                            <div class="relative h-52 sm:h-60 overflow-hidden img-placeholder">
                                 <span class="initials" x-text="r.name ? r.name.split(' ').map(w => w[0]).join('').slice(0,3) : ''"></span>
-                                <img :src="r.image_url" :alt="r.name"
+                                <img :src="r.image_url" :alt="r.name" loading="lazy"
                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
-                                <!-- Top-left: Cuisine + City -->
-                                <div class="absolute top-3 left-3 flex flex-col gap-1.5">
-                                    <span class="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-[10px] font-medium text-white/80"
-                                        x-text="r.cuisine"></span>
-                                    <span x-show="r.city && r.city !== 'nyc'"
-                                        class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
-                                        x-text="r.city === 'boston' ? 'Boston' : r.city.toUpperCase()"></span>
+                                <!-- Top-left: City badge only -->
+                                <div x-show="r.city && r.city !== 'nyc'" class="absolute top-3 left-3">
+                                    <span class="px-2 py-0.5 rounded-md bg-blue-500/80 backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></span>
                                 </div>
-                                <!-- Top-right: Hot badge + Platform badge -->
+                                <!-- Top-right: Platform icon -->
                                 <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                                     <span x-show="isHotRestaurant(r)"
                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500 text-[10px] font-bold text-white uppercase tracking-wide shadow-lg shadow-orange-500/30">
                                         &#x1F525; Hot
                                     </span>
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
-                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white/90 text-gray-800'"
-                                        x-text="r.platform === 'opentable' ? 'OpenTable' : 'Resy'"></span>
-                                </div>
-                                <div class="absolute bottom-3 left-3 right-3">
-                                    <h3 class="text-base font-bold text-white leading-snug drop-shadow-lg" x-text="r.name"></h3>
-                                    <p class="text-[11px] text-white/60 mt-0.5" x-text="r.neighborhood"></p>
+                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
+                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
+                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
                             </div>
                             <div class="p-4">
+                                <h3 class="text-base font-bold leading-snug mb-0.5" style="color: var(--c1);" x-text="r.name"></h3>
+                                <div class="flex items-center gap-1.5 mb-2">
+                                    <div class="flex items-center gap-1 text-xs" style="color: var(--c3);">
+                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                        <span x-text="r.neighborhood"></span>
+                                    </div>
+                                    <span x-show="r.price_level" class="text-xs font-semibold" style="color: var(--c3);" x-text="'$'.repeat(r.price_level || 0)"></span>
+                                </div>
                                 <p x-show="r.tagline" class="text-[11px] leading-snug mb-2.5 line-clamp-2" style="color: var(--c3);" x-text="r.tagline"></p>
                                 <div class="flex items-center justify-between mb-3">
                                     <p class="text-xs">
@@ -770,6 +774,48 @@
                     <button @click="activeFilter = 'all'" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all" style="background: var(--btn-hot-bg); color: var(--btn-hot-text);">
                         Show All
                     </button>
+                </div>
+            </section>
+
+            <!-- ═══════════════ OUTSIDE OF NEW YORK ═══════════════ -->
+            <section x-show="outsideNYCRestaurants.length > 0" id="outside-nyc" class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <svg class="w-6 h-6" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">Outside of New York</h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+                    <template x-for="(r, idx) in outsideNYCRestaurants" :key="r.venue_id">
+                        <div class="restaurant-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
+                            style="background: var(--card-bg); border: 1px solid var(--card-border);"
+                            @click="goToRestaurant(r)">
+                            <div class="relative h-52 sm:h-60 overflow-hidden">
+                                <img :src="r.image_url" :alt="r.name" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy">
+                                <!-- Platform icon -->
+                                <div class="absolute top-3 right-3">
+                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md"
+                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
+                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-sm mb-1" style="color: var(--c1);" x-text="r.name"></h3>
+                                <div class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--accent);" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                                    <p class="text-xs font-bold" style="color: var(--accent);"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></p>
+                                    <span x-show="r.neighborhood" class="text-xs" style="color: var(--c3);" x-text="' · ' + r.neighborhood"></span>
+                                </div>
+                                <div x-show="r.price_level" class="mt-1">
+                                    <span class="text-xs font-semibold" style="color: var(--c3);" x-text="'$'.repeat(r.price_level)"></span>
+                                </div>
+                                <button @click.stop="goToRestaurant(r)"
+                                    class="btn-book w-full py-2.5 rounded-xl text-xs font-bold transition-all mt-3"
+                                    style="background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--btn-border);">
+                                    Book Now
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </section>
         </div>
@@ -821,22 +867,34 @@
                     <div>
                         <!-- Active & Secured reservations -->
                         <template x-for="res in reservations.filter(r => !isHistoryRes(r.status))" :key="res.id">
-                            <div class="rounded-xl p-4 mb-3 transition-all"
-                                style="background: var(--bg-card); border: 1px solid var(--border);"
-                                :style="res.status === 'confirmed' ? 'border-color: var(--status-confirmed); box-shadow: 0 0 20px rgba(16,185,129,0.08);' : ''">
+                            <div class="rounded-2xl p-5 mb-4 transition-all"
+                                style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--card-shadow);"
+                                :style="res.status === 'confirmed' ? 'border-color: var(--status-confirmed); box-shadow: 0 0 24px rgba(16,185,129,0.1);' : ''">
 
                                 <!-- Secured -->
                                 <template x-if="res.status === 'confirmed'">
                                     <div>
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-base" style="color: var(--status-confirmed);">&#10003;</span>
-                                            <span class="text-sm font-bold uppercase tracking-wide" style="color: var(--status-confirmed);">Secured</span>
+                                        <!-- Big green Reserved badge -->
+                                        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl mb-4"
+                                            style="background: var(--status-confirmed-bg); border: 1px solid var(--status-confirmed);">
+                                            <svg class="w-5 h-5" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                            <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--status-confirmed);">Reserved</span>
                                         </div>
-                                        <h3 class="text-lg font-bold mb-2" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                        <div class="space-y-1 text-sm" style="color: var(--c2);">
-                                            <p x-text="formatDateFull(res.target_date)"></p>
-                                            <p x-text="'Party of ' + res.party_size"></p>
-                                            <p x-show="res.time_preferences?.length" x-text="'Time: ' + formatTimePrefs(res.time_preferences)"></p>
+                                        <!-- Card content with thumbnail -->
+                                        <div class="flex items-start gap-3">
+                                            <img x-show="getResImage(res.venue_id)" :src="getResImage(res.venue_id)" :alt="res.venue_name" loading="lazy"
+                                                class="w-14 h-14 rounded-xl object-cover flex-shrink-0">
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="text-lg font-bold mb-1" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                                <div class="space-y-1 text-sm" style="color: var(--c2);">
+                                                    <p x-text="formatDateFull(res.target_date)"></p>
+                                                    <p class="flex items-center gap-1.5">
+                                                        <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                        <span x-text="'Party of ' + res.party_size"></span>
+                                                    </p>
+                                                    <p x-show="res.time_preferences?.length" x-text="'Time: ' + formatTimePrefs(res.time_preferences)"></p>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div x-show="res.elapsed_seconds" class="mt-2 text-xs" style="color: var(--c4);" x-text="'Booked in ' + (res.elapsed_seconds < 1 ? Math.round(res.elapsed_seconds * 1000) + 'ms' : res.elapsed_seconds.toFixed(1) + 's')"></div>
                                         <div class="flex gap-2 mt-3">
@@ -860,15 +918,22 @@
                                 <!-- Pending (scheduled, monitoring, sniping) -->
                                 <template x-if="isActiveRes(res.status)">
                                     <div>
-                                        <div class="flex items-center justify-between mb-2">
-                                            <h3 class="text-base font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
-                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                                <img x-show="getResImage(res.venue_id)" :src="getResImage(res.venue_id)" :alt="res.venue_name" loading="lazy"
+                                                    class="w-12 h-12 rounded-xl object-cover flex-shrink-0">
+                                                <h3 class="text-base font-bold" style="color: var(--c1);" x-text="res.venue_name"></h3>
+                                            </div>
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0"
                                                 :style="'background:' + resStatusBg(res.status) + '; color:' + resStatusColor(res.status)"
                                                 x-text="resStatusLabel(res.status)"></span>
                                         </div>
-                                        <div class="space-y-1 mb-3 text-sm" style="color: var(--c3);">
+                                        <div class="space-y-1.5 mb-3 text-sm" style="color: var(--c3);">
                                             <p x-text="resGroupDates(res)"></p>
-                                            <p x-text="'Party of ' + res.party_size"></p>
+                                            <p class="flex items-center gap-1.5">
+                                                <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c3);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                <span x-text="'Party of ' + res.party_size"></span>
+                                            </p>
                                             <p x-show="res.time_preferences?.length" x-text="'Times: ' + formatTimePrefs(res.time_preferences)"></p>
                                         </div>
                                         <div x-show="res._live" class="flex items-center gap-2 mb-3">
@@ -877,13 +942,64 @@
                                                 <span x-text="res._liveMessage || resStatusLabel(res.status)"></span><span x-show="res.status === 'monitoring'" class="animated-dots"><span>.</span><span>.</span><span>.</span></span>
                                             </span>
                                         </div>
-                                        <button @click="confirmCancelId = res.id"
-                                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                            style="border: 1px solid var(--status-failed-bg); color: var(--status-failed);"
-                                            onmouseover="this.style.background='var(--status-failed-bg)';"
-                                            onmouseout="this.style.background='transparent';">
-                                            Cancel
-                                        </button>
+                                        <div class="flex gap-2">
+                                            <button @click="startModify(res)"
+                                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                                style="border: 1px solid var(--accent-border); color: var(--accent);"
+                                                onmouseover="this.style.background='var(--accent-soft)';"
+                                                onmouseout="this.style.background='transparent';">
+                                                Modify
+                                            </button>
+                                            <button @click="confirmCancelId = res.id"
+                                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                                                style="border: 1px solid var(--status-failed-bg); color: var(--status-failed);"
+                                                onmouseover="this.style.background='var(--status-failed-bg)';"
+                                                onmouseout="this.style.background='transparent';">
+                                                Cancel
+                                            </button>
+                                        </div>
+
+                                        <!-- Modify inline form -->
+                                        <div x-show="modifyingResId === res.id" x-cloak x-transition
+                                            class="mt-3 p-4 rounded-xl space-y-3" style="background: var(--bg-input); border: 1px solid var(--accent-border);">
+                                            <p class="text-xs font-semibold uppercase tracking-wider" style="color: var(--accent);">Modify Reservation</p>
+                                            <div>
+                                                <label class="text-[11px] font-medium mb-1 block" style="color: var(--c3);">Date</label>
+                                                <input type="date" x-model="modifyDate"
+                                                    class="w-full px-3 py-2 rounded-lg text-sm"
+                                                    style="background: var(--bg-card); border: 1px solid var(--border); color: var(--c1);">
+                                            </div>
+                                            <div>
+                                                <label class="text-[11px] font-medium mb-1 block" style="color: var(--c3);">Party Size</label>
+                                                <select x-model="modifyPartySize"
+                                                    class="w-full px-3 py-2 rounded-lg text-sm"
+                                                    style="background: var(--bg-card); border: 1px solid var(--border); color: var(--c1);">
+                                                    <template x-for="n in [1,2,3,4,5,6,7,8]" :key="n">
+                                                        <option :value="n" x-text="n + (n === 1 ? ' guest' : ' guests')"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label class="text-[11px] font-medium mb-1 block" style="color: var(--c3);">Preferred Time</label>
+                                                <input type="time" x-model="modifyTime"
+                                                    class="w-full px-3 py-2 rounded-lg text-sm"
+                                                    style="background: var(--bg-card); border: 1px solid var(--border); color: var(--c1);">
+                                            </div>
+                                            <div class="flex gap-2 pt-1">
+                                                <button @click="submitModify(res)" :disabled="modifySubmitting || !modifyDate"
+                                                    class="flex-1 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50"
+                                                    style="background: var(--accent); color: var(--bg);">
+                                                    <span x-show="!modifySubmitting">Save Changes</span>
+                                                    <span x-show="modifySubmitting">Saving...</span>
+                                                </button>
+                                                <button @click="modifyingResId = null"
+                                                    class="flex-1 py-2 rounded-lg text-xs font-medium"
+                                                    style="border: 1px solid var(--border); color: var(--c3);">
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         <!-- Cancel confirmation inline -->
                                         <div x-show="confirmCancelId === res.id" x-cloak x-transition
                                             class="mt-3 p-3 rounded-xl" style="background: var(--status-failed-bg); border: 1px solid var(--status-failed);">
@@ -959,8 +1075,8 @@
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5" style="border-bottom: 1px solid var(--border);">
                 <div>
-                    <p class="text-sm" style="color: var(--c3);">Welcome back,</p>
-                    <h2 class="text-lg font-bold" style="color: var(--c1);" x-text="userName ? userName.split(' ')[0] : 'there'"></h2>
+                    <p class="text-base" style="color: var(--c3);">Welcome back,</p>
+                    <h2 class="text-xl font-bold" style="color: var(--c1);" x-text="userName ? userName.split(' ')[0] : 'there'"></h2>
                 </div>
                 <button @click="showSettings = false" class="transition-colors" style="color: var(--c3);"
                     onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
@@ -980,7 +1096,7 @@
                             <div class="flex-1 min-w-0">
                                 <template x-if="!editingName">
                                     <div class="flex items-center gap-2">
-                                        <p class="text-sm font-semibold truncate" style="color: var(--c1);" x-text="userName || 'User'"></p>
+                                        <p class="text-base font-semibold truncate" style="color: var(--c1);" x-text="userName || 'User'"></p>
                                         <button @click="editingName = true; editNameValue = userName"
                                             class="text-[11px] font-medium transition-colors" style="color: var(--accent);">Edit</button>
                                     </div>
@@ -995,7 +1111,7 @@
                                             class="text-[11px] font-semibold" style="color: var(--status-confirmed);">Save</button>
                                     </div>
                                 </template>
-                                <p class="text-xs mt-0.5" style="color: var(--c3);" x-text="userEmail || 'No email linked'"></p>
+                                <p class="text-sm mt-0.5" style="color: var(--c3);" x-text="userEmail || 'No email linked'"></p>
                             </div>
                         </div>
                     </div>
@@ -1007,8 +1123,8 @@
                     <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <p class="text-sm font-semibold" style="color: var(--c1);">tablepass Member</p>
-                                <p class="text-xs" style="color: var(--status-confirmed);">Active</p>
+                                <p class="text-base font-semibold" style="color: var(--c1);">tablepass Member</p>
+                                <p class="text-sm" style="color: var(--status-confirmed);">Active</p>
                             </div>
                             <div class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
                                 style="background: var(--status-confirmed-bg); color: var(--status-confirmed);">
@@ -1017,16 +1133,16 @@
                         </div>
                         <div class="flex gap-3">
                             <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
-                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.filter(r => r.status === 'confirmed').length">0</p>
-                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Secured</p>
+                                <p class="text-xl font-bold" style="color: var(--c1);" x-text="reservations.filter(r => r.status === 'confirmed').length">0</p>
+                                <p class="text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Secured</p>
                             </div>
                             <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
-                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.filter(r => isActiveRes(r.status)).length">0</p>
-                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Pending</p>
+                                <p class="text-xl font-bold" style="color: var(--c1);" x-text="reservations.filter(r => isActiveRes(r.status)).length">0</p>
+                                <p class="text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Pending</p>
                             </div>
                             <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
-                                <p class="text-lg font-bold" style="color: var(--c1);" x-text="reservations.length">0</p>
-                                <p class="text-[10px] font-medium uppercase tracking-wider" style="color: var(--c3);">Total</p>
+                                <p class="text-xl font-bold" style="color: var(--c1);" x-text="reservations.length">0</p>
+                                <p class="text-xs font-medium uppercase tracking-wider" style="color: var(--c3);">Total</p>
                             </div>
                         </div>
                     </div>
@@ -1042,13 +1158,35 @@
                                 <svg x-show="!resyLinked" class="w-4 h-4" style="color: var(--status-failed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             </div>
                             <div>
-                                <p class="text-sm font-medium" style="color: var(--c1);" x-text="resyLinked ? 'Connected' : 'Not connected'"></p>
-                                <p class="text-xs" style="color: var(--c3);">Resy booking account</p>
+                                <p class="text-base font-medium" style="color: var(--c1);" x-text="resyLinked ? 'Connected' : 'Not connected'"></p>
+                                <p class="text-sm" style="color: var(--c3);">Resy booking account</p>
                             </div>
                         </div>
                         <button x-show="!resyLinked" @click="showSettings = false; showResyLink = true"
                             class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                             style="background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent);">
+                            Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OpenTable Account -->
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">OpenTable Account</p>
+                    <div class="flex items-center justify-between p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="otLinked ? 'background: var(--status-confirmed-bg);' : 'background: var(--status-failed-bg);'">
+                                <svg x-show="otLinked" class="w-4 h-4" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <svg x-show="!otLinked" class="w-4 h-4" style="color: var(--status-failed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-base font-medium" style="color: var(--c1);" x-text="otLinked ? 'Connected' : 'Not connected'"></p>
+                                <p class="text-sm" style="color: var(--c3);">OpenTable booking account</p>
+                            </div>
+                        </div>
+                        <button x-show="!otLinked" @click="showSettings = false; showOTLink = true"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                            style="background: rgba(218,55,67,0.15); border: 1px solid rgba(218,55,67,0.3); color: #da3743;">
                             Link
                         </button>
                     </div>
@@ -1067,8 +1205,8 @@
                                         <svg class="w-4 h-4" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-medium" style="color: var(--c1);"><span x-text="cardBrand" class="capitalize"></span> ···· <span x-text="cardLast4"></span></p>
-                                        <p class="text-xs" style="color: var(--c3);">Default card</p>
+                                        <p class="text-base font-medium" style="color: var(--c1);"><span x-text="cardBrand" class="capitalize"></span> ···· <span x-text="cardLast4"></span></p>
+                                        <p class="text-sm" style="color: var(--c3);">Default card</p>
                                     </div>
                                 </div>
                                 <button @click="removeCard()" class="text-xs transition-colors" style="color: var(--c3);"
@@ -1084,8 +1222,8 @@
                                         <svg class="w-4 h-4" style="color: var(--status-failed);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-medium" style="color: var(--c1);">No card linked</p>
-                                        <p class="text-xs" style="color: var(--c3);">Required for bookings</p>
+                                        <p class="text-base font-medium" style="color: var(--c1);">No card linked</p>
+                                        <p class="text-sm" style="color: var(--c3);">Required for bookings</p>
                                     </div>
                                 </div>
                                 <button @click="startCardSetup()"
@@ -1093,6 +1231,10 @@
                                     style="background: var(--accent-bg); border: 1px solid var(--accent-border); color: var(--accent);">
                                     Add Card
                                 </button>
+                            </div>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <svg class="w-3 h-3" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span class="text-[10px]" style="color: var(--c4);">Powered by <strong>Stripe</strong></span>
                             </div>
                         </template>
 
@@ -1114,80 +1256,35 @@
                                     Cancel
                                 </button>
                             </div>
+                            <div class="flex items-center justify-center gap-1.5 mt-3">
+                                <svg class="w-3 h-3" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span class="text-[10px]" style="color: var(--c4);">Powered by <strong>Stripe</strong></span>
+                            </div>
                         </div>
 
                         <!-- Credits row -->
                         <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px;">
                             <div class="flex items-center justify-between mb-2">
                                 <div>
-                                    <p class="text-sm font-medium" style="color: var(--c1);">Credits</p>
-                                    <p class="text-xs" style="color: var(--c3);">Used automatically on success</p>
+                                    <p class="text-base font-medium" style="color: var(--c1);">Available Credits</p>
+                                    <p class="text-sm" style="color: var(--c3);">Applied automatically when a reservation is successful</p>
                                 </div>
                                 <span class="text-xl font-bold" style="color: var(--accent);" x-text="credits"></span>
                             </div>
                             <div class="flex gap-2">
                                 <button @click="buyCredits('single')" :disabled="!cardBrand || buyingCredits"
-                                    class="flex-1 py-2 rounded-lg text-xs font-medium transition-all"
+                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
                                     :style="cardBrand ? 'color: var(--c1); border: 1px solid var(--border);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
                                     1 for $12
                                 </button>
                                 <button @click="buyCredits('five_pack')" :disabled="!cardBrand || buyingCredits"
-                                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                                    class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
                                     :style="cardBrand ? 'color: var(--accent); border: 1px solid var(--accent-border); background: var(--accent-bg);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
                                     5 for $50
                                 </button>
                             </div>
-                            <p class="text-[10px] mt-2" style="color: var(--c4);">No credits? $12 charged per successful booking.</p>
+                            <p class="text-xs mt-2" style="color: var(--c4);">No credits? $12 charged per successful booking.</p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Reservation Balance -->
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Reservation Balance</p>
-                    <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium" style="color: var(--c1);">Available Credits</p>
-                                <p class="text-xs" style="color: var(--c3);">Applied automatically when a reservation is confirmed</p>
-                            </div>
-                            <span class="text-2xl font-bold" style="color: var(--accent);" x-text="credits"></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Refer & Gift -->
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Share</p>
-                    <div class="space-y-2">
-                        <button @click="showSettings = false; showReferral = true"
-                            class="w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all"
-                            style="background: var(--bg-input); border: 1px solid var(--border-subtle);"
-                            onmouseover="this.style.borderColor='var(--accent-border)';"
-                            onmouseout="this.style.borderColor='var(--border-subtle)';">
-                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--accent-bg);">
-                                <svg class="w-4 h-4" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold" style="color: var(--c1);">Refer a Friend</p>
-                                <p class="text-xs" style="color: var(--c3);">Get 1 free reservation credit</p>
-                            </div>
-                            <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </button>
-                        <button @click="showSettings = false; showReferral = true"
-                            class="w-full flex items-center gap-3 p-4 rounded-xl text-left transition-all"
-                            style="background: var(--bg-input); border: 1px solid var(--border-subtle);"
-                            onmouseover="this.style.borderColor='var(--accent-border)';"
-                            onmouseout="this.style.borderColor='var(--border-subtle)';">
-                            <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--accent-bg);">
-                                <svg class="w-4 h-4" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold" style="color: var(--c1);">Gift a Reservation</p>
-                                <p class="text-xs" style="color: var(--c3);">You have <span class="font-semibold" style="color: var(--accent);" x-text="giftsRemaining + ' gift' + (giftsRemaining !== 1 ? 's' : '')"></span> to give</p>
-                            </div>
-                            <svg class="w-4 h-4 flex-shrink-0" style="color: var(--c4);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </button>
                     </div>
                 </div>
 
@@ -1196,8 +1293,8 @@
                     <p class="text-xs font-bold uppercase tracking-widest mb-3" style="color: var(--c3);">Appearance</p>
                     <div class="flex items-center justify-between p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
                         <div>
-                            <p class="text-sm font-medium" style="color: var(--c1);">Theme</p>
-                            <p class="text-xs" style="color: var(--c3);" x-text="theme === 'dark' ? 'Dark mode' : 'Light mode'"></p>
+                            <p class="text-base font-medium" style="color: var(--c1);">Theme</p>
+                            <p class="text-sm" style="color: var(--c3);" x-text="theme === 'dark' ? 'Dark mode' : 'Light mode'"></p>
                         </div>
                         <button @click="toggleTheme()" class="relative w-11 h-6 rounded-full transition-colors"
                             :style="theme === 'dark' ? 'background: var(--nav-active);' : 'background: var(--c4);'">
@@ -1243,19 +1340,19 @@
             </div>
             <div class="space-y-4">
                 <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">Email us</p>
-                    <p class="text-sm" style="color: var(--accent);">support@tablepass.nyc</p>
+                    <p class="text-base font-semibold mb-1" style="color: var(--c1);">Email us</p>
+                    <p class="text-base" style="color: var(--accent);">support@tablepass.nyc</p>
                 </div>
                 <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">Response time</p>
-                    <p class="text-xs" style="color: var(--c3);">We typically respond within a few hours during business days.</p>
+                    <p class="text-base font-semibold mb-1" style="color: var(--c1);">Response time</p>
+                    <p class="text-sm" style="color: var(--c3);">We typically respond within a few hours during business days.</p>
                 </div>
                 <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                    <p class="text-sm font-semibold mb-1" style="color: var(--c1);">FAQ</p>
+                    <p class="text-base font-semibold mb-1" style="color: var(--c1);">FAQ</p>
                     <div class="space-y-2 mt-2">
-                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">How does it work?</span> We monitor restaurant booking systems and grab tables the moment they become available.</p>
-                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">Is it safe?</span> Yes. We use your Resy credentials securely to make bookings on your behalf.</p>
-                        <p class="text-xs" style="color: var(--c2);"><span class="font-semibold">Can I cancel?</span> You can cancel any active reservation request at any time.</p>
+                        <p class="text-sm" style="color: var(--c2);"><span class="font-semibold">How does it work?</span> We monitor restaurant booking systems and grab tables the moment they become available.</p>
+                        <p class="text-sm" style="color: var(--c2);"><span class="font-semibold">Is it safe?</span> Yes. We use your Resy credentials securely to make bookings on your behalf.</p>
+                        <p class="text-sm" style="color: var(--c2);"><span class="font-semibold">Can I cancel?</span> You can cancel any active reservation request at any time.</p>
                     </div>
                 </div>
             </div>
@@ -1278,7 +1375,7 @@
                     <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                 </div>
                 <div>
-                    <h2 class="text-lg font-bold" style="color: var(--c1);">Restaurant Suggestions</h2>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">Restaurant suggestion?</h2>
                     <p class="text-sm" style="color: var(--c3);">Tell us what to add</p>
                 </div>
             </div>
@@ -1501,6 +1598,55 @@
         </div>
     </div>
 
+    <!-- ═══════════════ OPENTABLE LINK MODAL ═══════════════ -->
+    <div x-show="showOTLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showOTLink = false">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showOTLink = false"></div>
+        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+            style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <button @click="showOTLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #da3743;">
+                    <span class="text-white text-xs font-bold">OT</span>
+                </div>
+                <h2 class="text-lg font-bold" style="color: var(--c1);">Link your OpenTable account</h2>
+            </div>
+            <p class="text-sm mb-5" style="color: var(--c3);">We need your OpenTable Bearer token to book on your behalf.</p>
+
+            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border);">
+                <p class="text-xs font-semibold mb-2" style="color: var(--c2);">How to get your token:</p>
+                <ol class="text-xs space-y-1.5" style="color: var(--c3); list-style-type: decimal; padding-left: 1.2em;">
+                    <li>Install a network proxy (Charles Proxy or mitmproxy)</li>
+                    <li>Open the OpenTable mobile app on your phone</li>
+                    <li>Look for requests to <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">mobile-api.opentable.com</code></li>
+                    <li>Copy the <code class="px-1 py-0.5 rounded" style="background: var(--bg-hover); font-size: 10px;">Authorization: Bearer ...</code> header value</li>
+                </ol>
+            </div>
+
+            <form @submit.prevent="linkOpenTable()">
+                <textarea x-model="otBearerToken" placeholder="Paste your OpenTable Bearer token here..."
+                    rows="3"
+                    class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none resize-none font-mono"
+                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1); font-size: 11px;"
+                    onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
+                    onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"></textarea>
+                <button type="submit" :disabled="otLoading || !otBearerToken.trim()"
+                    class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                    :style="otBearerToken.trim() ? 'background: #da3743; color: white;' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
+                    <span x-show="!otLoading">Link OpenTable Account</span>
+                    <span x-show="otLoading" class="flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                        Validating...
+                    </span>
+                </button>
+            </form>
+            <p x-show="otError" x-cloak class="mt-4 text-red-400 text-sm" x-text="otError"></p>
+        </div>
+    </div>
+
     <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
     <nav class="fixed bottom-0 inset-x-0 z-50 lg:hidden mobile-nav-bg">
         <div class="flex items-center justify-around py-2.5 px-2">
@@ -1530,6 +1676,7 @@
             loading: true,
             token: localStorage.getItem('tablement_token'),
             resyLinked: false,
+            otLinked: false,
 
             // UI
             sidebarOpen: false,
@@ -1549,6 +1696,10 @@
             suggestionSubmitting: false,
             showReferral: false,
             showResyLink: false,
+            showOTLink: false,
+            otBearerToken: '',
+            otLoading: false,
+            otError: '',
             pendingVenueId: null,
 
             // User
@@ -1568,6 +1719,11 @@
             reservationsLoading: true,
             eventSources: {},
             confirmCancelId: null,
+            modifyingResId: null,
+            modifyDate: '',
+            modifyPartySize: 2,
+            modifyTime: '',
+            modifySubmitting: false,
 
             // Resy link
             resyLinkTab: 'phone',
@@ -1634,6 +1790,24 @@
 
                 // Proactive token refresh — keep session alive
                 this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
+
+                // Capture user location for admin map — ping every 60s
+                this._sendLocation();
+                this._locationInterval = setInterval(() => this._sendLocation(), 60000);
+            },
+
+            // ── Location Ping ──
+            _sendLocation() {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    try {
+                        await this.authFetch('/api/auth/update-location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        });
+                    } catch (e) { /* silent */ }
+                }, () => {}, { enableHighAccuracy: false, timeout: 5000 });
             },
 
             // ── Session Token Refresh ──
@@ -1695,6 +1869,7 @@
                     if (resp.ok) {
                         const data = await resp.json();
                         this.resyLinked = data.resy_linked || false;
+                        this.otLinked = data.opentable_linked || false;
                         if (data.resy_email) {
                             this.userEmail = data.resy_email;
                             this.userName = data.resy_email.split('@')[0];
@@ -1901,13 +2076,18 @@
             },
 
             get filteredRestaurants() {
-                if (this.activeFilter === 'all') return this.restaurants;
-                return this.restaurants.filter(r => {
+                const nyc = this.restaurants.filter(r => !r.city || r.city === 'nyc');
+                if (this.activeFilter === 'all') return nyc;
+                return nyc.filter(r => {
                     const cuisine = (r.cuisine || '').toLowerCase();
                     const neighborhood = (r.neighborhood || '').toLowerCase();
                     const f = this.activeFilter.toLowerCase();
                     return cuisine.includes(f) || neighborhood.includes(f);
                 });
+            },
+
+            get outsideNYCRestaurants() {
+                return this.restaurants.filter(r => r.city && r.city !== 'nyc');
             },
 
             get filterChips() {
@@ -1952,6 +2132,10 @@
                 } catch (e) { console.error('Search failed:', e); }
             },
 
+            scrollToOutside() {
+                const el = document.getElementById('outside-nyc');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            },
             goToRestaurant(r) {
                 const venueId = r.venue_id || r.resy_id;
                 this.searchResults = []; this.searchQuery = '';
@@ -2020,8 +2204,13 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Scheduled', monitoring: 'Scanning', sniping: 'Booking', confirmed: 'Secured', failed: 'Failed' };
+                const map = { scheduled: 'Scheduled', monitoring: 'Awaiting', sniping: 'Booking', confirmed: 'Reserved', failed: 'Failed' };
                 return map[status] || status;
+            },
+
+            getResImage(venueId) {
+                const r = this.restaurants.find(r => r.venue_id == venueId);
+                return r ? r.image_url : '';
             },
 
             async cancelRes(id) {
@@ -2039,6 +2228,65 @@
                 } catch (e) { console.error('Cancel failed:', e); }
             },
 
+            startModify(res) {
+                this.confirmCancelId = null;
+                this.modifyingResId = res.id;
+                this.modifyDate = res.target_date || '';
+                this.modifyPartySize = res.party_size || 2;
+                this.modifyTime = res.time_preferences?.[0]?.time || '';
+            },
+
+            async submitModify(res) {
+                if (this.modifySubmitting || !this.modifyDate) return;
+                this.modifySubmitting = true;
+                try {
+                    // Find the restaurant data for drop_time info
+                    const rest = this.restaurants.find(r => r.venue_id == res.venue_id);
+                    let dropTime = null;
+                    if (rest && rest.drop_days_ahead) {
+                        dropTime = { hour: rest.drop_hour || 10, minute: rest.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: rest.drop_days_ahead };
+                    }
+                    const platform = (rest && rest.platform === 'opentable') ? 'opentable' : 'resy';
+                    const timePrefs = this.modifyTime ? [{ time: this.modifyTime, seating_type: null }] : (res.time_preferences || []);
+                    const payload = {
+                        venue_id: res.venue_id, venue_name: res.venue_name,
+                        party_size: parseInt(this.modifyPartySize),
+                        dates: [this.modifyDate],
+                        time_preferences: timePrefs,
+                        drop_time: dropTime, book_earliest: true,
+                        notification_email: res.notification_email || null,
+                        platform: platform,
+                    };
+
+                    // Cancel the old reservation first
+                    const cancelResp = await fetch(`/api/reservations/${res.id}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!cancelResp.ok) throw new Error('Failed to cancel original reservation');
+
+                    // Close SSE for old reservation
+                    if (this.eventSources[res.id]) { this.eventSources[res.id].close(); delete this.eventSources[res.id]; }
+
+                    // Create the new reservation
+                    const resp = await fetch('/api/reservations/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!resp.ok) throw new Error('Failed to create modified reservation');
+
+                    this.modifyingResId = null;
+                    this.showToast('Reservation modified');
+                    // Reload reservations to pick up the new one
+                    await this.loadReservations();
+                } catch (e) {
+                    this.showToast(e.message || 'Modification failed');
+                } finally {
+                    this.modifySubmitting = false;
+                }
+            },
+
             // ── SSE ──
             connectSSE(res) {
                 const id = res.id;
@@ -2054,7 +2302,7 @@
                 });
                 es.addEventListener('snipe_attempt', (e) => {
                     const data = JSON.parse(e.data);
-                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Scanning for cancellations';
+                    res._liveMessage = data.slots_found > 0 ? `Found ${data.slots_found} opening — booking now!` : 'Awaiting cancellation';
                 });
                 es.addEventListener('countdown_tick', (e) => {
                     const data = JSON.parse(e.data);
@@ -2091,7 +2339,7 @@
                 };
             },
             friendlyPhase(data) {
-                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Scanning for cancellations' };
+                const map = { waiting: 'Getting ready...', authenticating: 'Connecting to Resy...', warming: 'Warming up...', sniping: 'Looking for your table...', monitoring: 'Awaiting cancellation' };
                 return map[data.phase] || data.message || 'Working on it...';
             },
             mapPhase(phase) {
@@ -2332,6 +2580,25 @@
                     }
                 } catch (e) { this.resyError = e.message; }
                 finally { this.resyLoading = false; }
+            },
+
+            async linkOpenTable() {
+                if (!this.otBearerToken.trim()) { this.otError = 'Please paste your OpenTable Bearer token'; return; }
+                this.otLoading = true; this.otError = '';
+                try {
+                    const resp = await this.authFetch('/api/auth/link-opentable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bearer_token: this.otBearerToken.trim() }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Failed to link OpenTable');
+                    this.otLinked = true;
+                    this.showOTLink = false;
+                    this.otBearerToken = '';
+                    this.showToast('OpenTable account linked!' + (data.diner_name ? ' (' + data.diner_name + ')' : ''));
+                } catch (e) { this.otError = e.message; }
+                finally { this.otLoading = false; }
             },
 
             // ── Toast ──

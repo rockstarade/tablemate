@@ -23,6 +23,7 @@
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/globe.gl@2.27.2/dist/globe.gl.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
@@ -38,6 +39,7 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
             50% { box-shadow: 0 0 12px 4px rgba(245, 158, 11, 0.3); }
         }
+        #globe-container canvas { border-radius: 12px; }
     </style>
 </head>
 <body class="text-slate-200 antialiased" x-data="vipApp()" x-init="init()">
@@ -99,6 +101,21 @@
 
             <!-- ==================== TAB 1: DASHBOARD ==================== -->
             <div x-show="activeTab === 'dashboard'" class="space-y-6">
+                <!-- Live Globe -->
+                <div class="relative rounded-xl overflow-hidden border border-slate-700/50" style="background: #070d1a;">
+                    <div class="absolute top-4 left-5 z-10 flex items-center gap-3">
+                        <h2 class="text-sm font-semibold text-white/90 tracking-wide uppercase">Live View</h2>
+                        <span class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400/80">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+                        </span>
+                    </div>
+                    <div class="absolute top-4 right-5 z-10 flex items-center gap-4 text-[11px] text-slate-400">
+                        <span x-text="userLocations.filter(l => _getUserTier(l) === 'online').length + ' online'" class="tabular-nums"></span>
+                        <span x-text="userLocations.length + ' total'" class="tabular-nums"></span>
+                    </div>
+                    <div id="globe-container" style="height: 420px; width: 100%;"></div>
+                </div>
+
                 <!-- Stats Bar -->
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div class="glass rounded-xl border border-slate-700/50 p-5">
@@ -590,6 +607,67 @@
                                 <span x-show="snipeResult?.error && !snipeResult?.dry_run" class="text-red-400 ml-2" x-text="snipeResult?.error"></span>
                                 <span x-show="snipeResult?.resy_token" class="text-emerald-400 ml-2" x-text="'Token: ' + snipeResult?.resy_token"></span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Reservation for User -->
+                <div class="pt-6 border-t border-slate-700/30">
+                    <h2 class="text-xl font-bold text-white mb-4">Create Reservation for User</h2>
+                    <div class="glass rounded-xl border border-slate-700/50 p-6 space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Phone Number</label>
+                                <input type="tel" x-model="userRes.phone" placeholder="+1 (555) 123-4567"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Restaurant</label>
+                                <select x-model="userRes.venue_id" @change="userRes.venue_name = ($event.target.selectedOptions[0]?.text || '')"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                    <option value="">Select restaurant...</option>
+                                    <template x-for="r in (restMgr.restaurants || [])" :key="r.venue_id">
+                                        <option :value="r.venue_id" x-text="r.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Dates (comma-separated)</label>
+                                <input type="text" x-model="userRes.dates" placeholder="2026-03-15, 2026-03-16"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Party Size</label>
+                                <input type="number" x-model.number="userRes.party_size" min="1" max="20"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Preferred Time</label>
+                                <input type="time" x-model="userRes.time"
+                                    class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <label class="flex items-center gap-2 text-sm text-slate-400">
+                                <input type="radio" x-model="userRes.mode" value="monitor" class="rounded"> Monitor (cancellations)
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-400">
+                                <input type="radio" x-model="userRes.mode" value="snipe" class="rounded"> Snipe (drop time)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button @click="createUserReservation()" :disabled="userRes.creating || !userRes.phone || !userRes.venue_id || !userRes.dates"
+                                class="px-5 py-2.5 rounded-lg bg-brand-500 hover:bg-brand-400 text-slate-900 font-semibold text-sm transition-all disabled:opacity-50">
+                                <span x-show="!userRes.creating">Create Reservation</span>
+                                <span x-show="userRes.creating" class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                    Creating...
+                                </span>
+                            </button>
+                            <p x-show="userRes.error" class="text-red-400 text-sm" x-text="userRes.error"></p>
+                            <p x-show="userRes.success" class="text-emerald-400 text-sm" x-text="userRes.success"></p>
                         </div>
                     </div>
                 </div>
@@ -1317,6 +1395,15 @@
                                         <span class="text-xs font-mono text-slate-300" x-text="user.referral_code"></span>
                                     </div>
                                 </div>
+                                <!-- Ban user button -->
+                                <div x-show="user.phone" class="flex items-center gap-3 pt-3 border-t border-slate-700/30">
+                                    <button @click="banUser(user)" :disabled="banningUser === user.id"
+                                        class="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-medium transition-colors border border-red-500/20">
+                                        <span x-show="banningUser !== user.id">Ban Phone</span>
+                                        <span x-show="banningUser === user.id" class="animate-pulse">Banning...</span>
+                                    </button>
+                                    <span x-show="banResult === user.id" class="text-xs text-red-400">Banned!</span>
+                                </div>
                                 <!-- Test Auth button for linked users -->
                                 <div x-show="user.resy_linked" class="flex items-center gap-3 pt-3">
                                     <button @click="testAuth(user.id)" :disabled="authTesting === user.id"
@@ -1486,7 +1573,17 @@
                                     <label class="text-[10px] text-slate-500 block mb-1">Image URL</label>
                                     <input type="text" x-model="r.image_url" placeholder="Paste image URL..." class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500">
                                 </div>
-                                <div class="grid grid-cols-3 md:grid-cols-7 gap-3">
+                                <div class="grid grid-cols-4 md:grid-cols-8 gap-3">
+                                    <div>
+                                        <label class="text-[10px] text-slate-500 block mb-1">Price Level</label>
+                                        <select x-model.number="r.price_level" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
+                                            <option :value="null">—</option>
+                                            <option value="1">$</option>
+                                            <option value="2">$$</option>
+                                            <option value="3">$$$</option>
+                                            <option value="4">$$$$</option>
+                                        </select>
+                                    </div>
                                     <div>
                                         <label class="text-[10px] text-slate-500 block mb-1">Slot Interval</label>
                                         <select x-model.number="r.slot_interval" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
@@ -1720,6 +1817,8 @@
                 </div>
             </div>
 
+            <!-- Map tab removed — globe is now on Dashboard -->
+
         </main>
     </div>
     <script>
@@ -1810,6 +1909,30 @@
             otpUserId: '',
             otpResyEmail: '',
             otpResyPassword: '',
+
+            // Ban users
+            banningUser: null,
+            banResult: null,
+
+            // Globe
+            userLocations: [],
+            mapLoading: false,
+            _globe: null,
+            _mapPollId: null,
+
+            // Create reservation for user
+            userRes: {
+                phone: '',
+                venue_id: '',
+                venue_name: '',
+                dates: '',
+                party_size: 2,
+                time: '19:00',
+                mode: 'monitor',
+                creating: false,
+                error: '',
+                success: '',
+            },
 
             // Ops
             health: {},
@@ -1935,6 +2058,12 @@
                     this._scheduleChartRender();
                 }
                 if (id === 'intelligence' && !this.scouts.loaded) this.loadScouts();
+                if (id === 'operations' && !this.restMgr.loaded) this.loadRestaurantsMgr();
+                if (id === 'dashboard') {
+                    this._startMapPoll();
+                } else {
+                    this._stopMapPoll();
+                }
                 if (id === 'settings') {
                     if (!this.restMgr.loaded) this.loadRestaurantsMgr();
                     if (!this.scoutSettings) this.loadScoutSettings();
@@ -1992,6 +2121,7 @@
                     this.loadAdminUsers(),
                     this.loadAdminReservations(),
                     this.loadAnalytics(),
+                    this.loadUserLocations(),
                 ]);
                 // Render charts AFTER all parallel loads complete so Alpine
                 // reactive cascades don't collapse the Chart.js canvases.
@@ -1999,6 +2129,7 @@
                     this._scheduleChartRender();
                 }
                 this.jobsRefreshTimer = setInterval(() => this.fetchActiveJobs(), 5000);
+                this._startMapPoll();
             },
 
             // ----- Active Jobs -----
@@ -2834,6 +2965,7 @@
                     const body = {
                         name: r.name, cuisine: r.cuisine, neighborhood: r.neighborhood,
                         url_slug: r.url_slug, image_url: r.image_url || null,
+                        price_level: r.price_level || null,
                         slot_interval: r.slot_interval || 15,
                         drop_days_ahead: r.drop_days_ahead, drop_hour: r.drop_hour, drop_minute: r.drop_minute,
                         service_start: r.service_start, service_end: r.service_end,
@@ -2930,6 +3062,162 @@
                         alert('Failed: ' + (data.detail || 'Unknown error'));
                     }
                 } catch (e) { alert('Error: ' + e.message); }
+            },
+            async loadUserLocations() {
+                this.mapLoading = true;
+                try {
+                    const resp = await fetch('/api/admin/user-locations', { headers: this.headers() });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.userLocations = data.locations || [];
+                        this.$nextTick(() => this._updateGlobe());
+                    }
+                } catch (e) { console.warn('Failed to load locations:', e); }
+                this.mapLoading = false;
+            },
+
+            _startMapPoll() {
+                this._stopMapPoll();
+                this._mapPollId = setInterval(() => this.loadUserLocations(), 30000);
+            },
+            _stopMapPoll() {
+                if (this._mapPollId) { clearInterval(this._mapPollId); this._mapPollId = null; }
+            },
+
+            _getUserTier(loc) {
+                // Three tiers: online (<10min), recent (<1hr), offline (>1hr)
+                const lastSeen = loc.last_seen_at ? new Date(loc.last_seen_at) : null;
+                if (!lastSeen) return 'offline';
+                const ago = Date.now() - lastSeen.getTime();
+                if (ago < 10 * 60 * 1000) return 'online';    // <10 min
+                if (ago < 60 * 60 * 1000) return 'recent';     // <1 hour
+                return 'offline';
+            },
+
+            _tierColor(tier) {
+                return { online: '#00ffaa', recent: '#f59e0b', offline: '#6d28d9' }[tier];
+            },
+
+            _updateGlobe() {
+                const container = document.getElementById('globe-container');
+                if (!container || !window.Globe) return;
+
+                const points = this.userLocations
+                    .filter(l => l.lat && l.lng)
+                    .map(l => {
+                        const tier = this._getUserTier(l);
+                        return {
+                            lat: l.lat,
+                            lng: l.lng,
+                            tier,
+                            color: this._tierColor(tier),
+                            size: tier === 'online' ? 0.6 : tier === 'recent' ? 0.35 : 0.15,
+                            alt: tier === 'online' ? 0.04 : tier === 'recent' ? 0.02 : 0.005,
+                            phone: l.phone ? l.phone.substring(0, 6) + '***' + l.phone.slice(-2) : '',
+                            city: l.city || '',
+                        };
+                    });
+
+                if (!this._globe) {
+                    this._globe = Globe()
+                        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+                        .backgroundImageUrl('')
+                        .showAtmosphere(true)
+                        .atmosphereColor('#334155')
+                        .atmosphereAltitude(0.15)
+                        .pointsData(points)
+                        .pointLat('lat')
+                        .pointLng('lng')
+                        .pointColor('color')
+                        .pointAltitude('alt')
+                        .pointRadius('size')
+                        .pointsMerge(false)
+                        .pointLabel(d => `
+                            <div style="font-family: system-ui; font-size: 12px; background: rgba(15,23,42,0.92); border: 1px solid ${d.color}40; border-radius: 8px; padding: 8px 12px; box-shadow: 0 0 12px ${d.color}30;">
+                                <div style="font-weight: 700; color: #f1f5f9; margin-bottom: 2px;">${d.phone || 'User'}</div>
+                                <div style="color: #94a3b8; font-size: 11px;">${d.city}</div>
+                                <div style="color: ${d.color}; font-size: 11px; margin-top: 2px;">${d.tier === 'online' ? '● Online now' : d.tier === 'recent' ? '● Recently active' : '○ Offline'}</div>
+                            </div>
+                        `)
+                        .width(container.clientWidth)
+                        .height(420)
+                        (container);
+
+                    // Point of view: tilted toward North America, no auto-rotate
+                    this._globe.pointOfView({ lat: 35, lng: -80, altitude: 2.2 }, 0);
+                    this._globe.controls().enableZoom = true;
+
+                    // Resize handler
+                    const ro = new ResizeObserver(() => {
+                        if (container.clientWidth > 0) this._globe.width(container.clientWidth);
+                    });
+                    ro.observe(container);
+                } else {
+                    // Just update data — globe stays in place, no flicker
+                    this._globe.pointsData(points);
+                }
+            },
+
+            _timeAgo(date) {
+                if (!date) return '';
+                const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+                if (mins < 1) return 'just now';
+                if (mins < 60) return mins + 'm ago';
+                const hrs = Math.floor(mins / 60);
+                if (hrs < 24) return hrs + 'h ago';
+                return Math.floor(hrs / 24) + 'd ago';
+            },
+            async banUser(user) {
+                if (!user.phone) return;
+                if (!confirm(`Ban phone ${user.phone}? They will not be able to sign up or log in.`)) return;
+                this.banningUser = user.id;
+                this.banResult = null;
+                try {
+                    const resp = await fetch('/api/admin/ban-phone', {
+                        method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ phone: user.phone, reason: 'Banned by admin' }),
+                    });
+                    if (resp.ok) {
+                        this.banResult = user.id;
+                        setTimeout(() => { this.banResult = null; }, 3000);
+                    } else {
+                        const data = await resp.json();
+                        alert('Ban failed: ' + (data.detail || 'Unknown error'));
+                    }
+                } catch (e) { alert('Error: ' + e.message); }
+                this.banningUser = null;
+            },
+            async createUserReservation() {
+                this.userRes.creating = true;
+                this.userRes.error = '';
+                this.userRes.success = '';
+                try {
+                    const dates = this.userRes.dates.split(',').map(d => d.trim()).filter(Boolean);
+                    if (!dates.length) { this.userRes.error = 'Enter at least one date'; this.userRes.creating = false; return; }
+                    const resp = await fetch('/api/admin/create-user-reservation', {
+                        method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            phone: this.userRes.phone,
+                            venue_id: parseInt(this.userRes.venue_id),
+                            venue_name: this.userRes.venue_name,
+                            dates: dates,
+                            party_size: this.userRes.party_size,
+                            mode: this.userRes.mode,
+                            time_preferences: [{ time: this.userRes.time }],
+                        }),
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        this.userRes.success = `Created ${data.reservations.length} reservation(s) for user ${data.user_id.substring(0, 8)}...`;
+                        this.userRes.phone = '';
+                        this.userRes.dates = '';
+                        setTimeout(() => { this.userRes.success = ''; }, 5000);
+                        this.loadAdminReservations();
+                    } else {
+                        this.userRes.error = data.detail || 'Failed to create reservation';
+                    }
+                } catch (e) { this.userRes.error = 'Error: ' + e.message; }
+                this.userRes.creating = false;
             },
             formatDate(dateStr) {
                 if (!dateStr) return '';

@@ -222,6 +222,19 @@ async def list_transactions(user_id: str, limit: int = 50) -> list[dict]:
     return resp.data
 
 
+async def get_profile_by_phone(phone: str) -> dict | None:
+    """Fetch a user profile by phone number."""
+    resp = (
+        await get_service_client()
+        .table("profiles")
+        .select("*")
+        .eq("phone", phone)
+        .limit(1)
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
 async def get_profile_by_referral_code(code: str) -> dict | None:
     """Fetch a user profile by referral code."""
     resp = (
@@ -505,7 +518,7 @@ async def update_curated_restaurant(venue_id: int, fields: dict) -> dict | None:
         "name", "cuisine", "neighborhood", "url_slug", "image_url",
         "slot_interval", "drop_days_ahead", "drop_hour", "drop_minute",
         "service_start", "service_end", "hot_start", "hot_end",
-        "sort_order", "is_active",
+        "sort_order", "is_active", "price_level",
     }
     data = {k: v for k, v in fields.items() if k in allowed}
     if not data:
@@ -977,6 +990,79 @@ async def has_active_reservation(user_id: str, venue_id: int, target_date: str) 
     return bool(resp.data)
 
 
+async def has_active_reservation_for_venue(user_id: str, venue_id: int) -> bool:
+    """Check if user has ANY active reservation for this venue (any date)."""
+    resp = (
+        await get_service_client()
+        .table("reservations")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("venue_id", venue_id)
+        .not_.in_("status", ["cancelled", "failed", "confirmed", "dry_run"])
+        .limit(1)
+        .execute()
+    )
+    return bool(resp.data)
+
+
+# ---------------------------------------------------------------------------
+# Phone ban helpers
+# ---------------------------------------------------------------------------
+
+async def is_phone_banned(phone: str) -> bool:
+    """Check if a phone number is banned."""
+    try:
+        resp = (
+            await get_service_client()
+            .table("banned_phones")
+            .select("id")
+            .eq("phone", phone)
+            .limit(1)
+            .execute()
+        )
+        return bool(resp.data)
+    except Exception:
+        return False  # table might not exist yet
+
+
+async def ban_phone(phone: str, reason: str = "") -> dict | None:
+    """Ban a phone number."""
+    resp = (
+        await get_service_client()
+        .table("banned_phones")
+        .upsert({"phone": phone, "reason": reason}, on_conflict="phone")
+        .execute()
+    )
+    return resp.data[0] if resp.data else None
+
+
+async def unban_phone(phone: str) -> bool:
+    """Remove a phone ban. Returns True if a row was deleted."""
+    resp = (
+        await get_service_client()
+        .table("banned_phones")
+        .delete()
+        .eq("phone", phone)
+        .execute()
+    )
+    return bool(resp.data)
+
+
+async def list_banned_phones() -> list[dict]:
+    """List all banned phone numbers."""
+    try:
+        resp = (
+            await get_service_client()
+            .table("banned_phones")
+            .select("*")
+            .order("banned_at", desc=True)
+            .execute()
+        )
+        return resp.data or []
+    except Exception:
+        return []
+
+
 async def cancel_group_members(group_id: str, except_id: str) -> list[str]:
     """Atomically cancel all group members except the winner. Returns cancelled IDs."""
     resp = (
@@ -1043,3 +1129,38 @@ async def get_recoverable_reservations() -> list[dict]:
         .execute()
     )
     return resp.data or []
+
+
+# ---------------------------------------------------------------------------
+# User location helpers
+# ---------------------------------------------------------------------------
+
+async def update_user_location(
+    user_id: str, lat: float, lng: float, city: str | None = None
+) -> None:
+    """Update user's last known location."""
+    from datetime import datetime, timezone
+
+    fields: dict = {
+        "last_latitude": lat,
+        "last_longitude": lng,
+        "last_seen_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if city:
+        fields["last_location_city"] = city
+    await upsert_profile(user_id, **fields)
+
+
+async def get_user_locations() -> list[dict]:
+    """Get all users that have location data."""
+    try:
+        resp = (
+            await get_service_client()
+            .table("profiles")
+            .select("id, phone, last_latitude, last_longitude, last_location_city, last_seen_at")
+            .not_.is_("last_latitude", "null")
+            .execute()
+        )
+        return resp.data or []
+    except Exception:
+        return []

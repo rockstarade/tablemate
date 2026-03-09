@@ -128,7 +128,7 @@ async def list_users():
     try:
         resp = (
             await svc.table("profiles")
-            .select("id, resy_email, stripe_customer_id, credits, gifts_remaining, referral_code, created_at, updated_at")
+            .select("*")
             .order("created_at", desc=True)
             .execute()
         )
@@ -136,6 +136,7 @@ async def list_users():
         for row in resp.data:
             users.append({
                 "id": row["id"],
+                "phone": row.get("phone"),
                 "resy_email": row.get("resy_email"),
                 "resy_linked": bool(row.get("resy_email")),
                 "stripe_linked": bool(row.get("stripe_customer_id")),
@@ -168,6 +169,159 @@ async def add_user_credits(user_id: str, body: dict):
     )
     logger.info("Admin added %d credits to user %s — balance now %d", amount, user_id, new_balance)
     return {"success": True, "credits_added": amount, "new_balance": new_balance}
+
+
+# ---------------------------------------------------------------------------
+# Phone bans
+# ---------------------------------------------------------------------------
+
+
+@router.post("/ban-phone", dependencies=[Depends(_require_admin)])
+async def ban_phone_endpoint(body: dict):
+    """Ban a phone number from signing up."""
+    phone = body.get("phone", "").strip()
+    reason = body.get("reason", "")
+    if not phone:
+        raise HTTPException(400, "Phone number required")
+    row = await db.ban_phone(phone, reason)
+    logger.info("Banned phone %s — reason: %s", phone, reason)
+    return {"success": True, "banned": row}
+
+
+@router.delete("/ban-phone/{phone}", dependencies=[Depends(_require_admin)])
+async def unban_phone_endpoint(phone: str):
+    """Remove a phone ban."""
+    removed = await db.unban_phone(phone)
+    return {"success": removed}
+
+
+@router.get("/banned-phones", dependencies=[Depends(_require_admin)])
+async def list_banned():
+    """List all banned phone numbers."""
+    phones = await db.list_banned_phones()
+    return {"phones": phones}
+
+
+# ---------------------------------------------------------------------------
+# User locations
+# ---------------------------------------------------------------------------
+
+
+@router.get("/user-locations", dependencies=[Depends(_require_admin)])
+async def user_locations():
+    """Get all users with location data for the admin map."""
+    raw = await db.get_user_locations()
+    locations = [
+        {
+            "id": r["id"],
+            "lat": r.get("last_latitude"),
+            "lng": r.get("last_longitude"),
+            "city": r.get("last_location_city", ""),
+            "phone": r.get("phone", ""),
+            "last_seen_at": str(r.get("last_seen_at", "")),
+        }
+        for r in raw
+    ]
+    return {"locations": locations}
+
+
+# ---------------------------------------------------------------------------
+# Create reservation for a user (by phone)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/create-user-reservation", dependencies=[Depends(_require_admin)])
+async def create_user_reservation(body: dict, request: Request):
+    """Create a reservation on behalf of a user (looked up by phone number)."""
+    from tablement.web.routes.reservations import (
+        _build_snipe_config,
+        _run_snipe,
+        _schedule_monitor,
+    )
+    from tablement.web.schemas import DropTimeIn, ReservationCreateRequest, TimePreferenceIn
+
+    phone = body.get("phone", "").strip()
+    if not phone:
+        raise HTTPException(400, "Phone number is required")
+
+    # Look up user by phone
+    profile = await db.get_profile_by_phone(phone)
+    if not profile:
+        raise HTTPException(404, f"No user found with phone {phone}")
+    if not profile.get("resy_email"):
+        raise HTTPException(400, "User has no linked Resy account")
+
+    user_id = profile["id"]
+    venue_id = body.get("venue_id")
+    venue_name = body.get("venue_name", "Unknown")
+    party_size = body.get("party_size", 2)
+    dates = body.get("dates", [])
+    mode = body.get("mode", "monitor")
+
+    if not venue_id:
+        raise HTTPException(400, "venue_id is required")
+    if not dates:
+        raise HTTPException(400, "At least one date is required")
+
+    time_prefs = [
+        TimePreferenceIn(time=tp["time"], seating_type=tp.get("seating_type"))
+        for tp in body.get("time_preferences", [{"time": "19:00"}])
+    ]
+
+    results = []
+    for date_str in dates:
+        drop_time = None
+        if mode == "snipe" and body.get("drop_time"):
+            dt = body["drop_time"]
+            drop_time = DropTimeIn(
+                hour=dt.get("hour", 10),
+                minute=dt.get("minute", 0),
+                second=dt.get("second", 0),
+                timezone=dt.get("timezone", "America/New_York"),
+                days_ahead=dt.get("days_ahead", 30),
+            )
+
+        req = ReservationCreateRequest(
+            venue_id=venue_id,
+            venue_name=venue_name,
+            party_size=party_size,
+            date=date_str,
+            mode=mode,
+            time_preferences=time_prefs,
+            drop_time=drop_time,
+        )
+
+        initial_status = "scheduled" if mode == "snipe" else "monitoring"
+        time_prefs_json = [tp.model_dump() for tp in req.time_preferences]
+        drop_time_json = req.drop_time.model_dump() if req.drop_time else None
+
+        row = await db.create_reservation(
+            user_id=user_id,
+            venue_id=req.venue_id,
+            venue_name=req.venue_name,
+            party_size=req.party_size,
+            target_date=req.date,
+            mode=req.mode,
+            status=initial_status,
+            time_preferences=time_prefs_json,
+            drop_time_config=drop_time_json,
+        )
+
+        reservation_id = row["id"]
+        config = _build_snipe_config(req)
+        job = request.app.state.jobs.create(reservation_id, user_id)
+
+        if mode == "snipe":
+            job.task = asyncio.create_task(
+                _run_snipe(request.app, reservation_id, user_id, config, profile, False, job)
+            )
+        else:
+            _schedule_monitor(request.app, reservation_id, user_id, req, profile)
+
+        results.append({"reservation_id": reservation_id, "date": date_str})
+
+    logger.info("Admin created %d reservations for user %s (phone: %s)", len(results), user_id[:8], phone[:6])
+    return {"success": True, "user_id": user_id, "reservations": results}
 
 
 # ---------------------------------------------------------------------------

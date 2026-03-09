@@ -457,6 +457,14 @@ async def create_batch_reservations(
         if has_unreleased and _drop_dt < datetime.now(_drop_dt.tzinfo):
             raise HTTPException(400, "Drop time has already passed for unreleased dates")
 
+    # Block if user already has active reservations for this venue
+    if await db.has_active_reservation_for_venue(user_id, body.venue_id):
+        raise HTTPException(
+            409,
+            "You already have active reservations for this restaurant. "
+            "Cancel them first before creating new ones.",
+        )
+
     # Generate group ID to link all reservations
     group_id = str(uuid.uuid4())
     time_prefs_json = [tp.model_dump() for tp in body.time_preferences]

@@ -63,6 +63,10 @@ async def send_otp(request: Request, body: OtpSendRequest):
     redacted = body.phone[:5] + "***" + body.phone[-2:] if len(body.phone) > 7 else "***"
     logger.info("Sending OTP to %s", redacted)
 
+    # Check if phone is banned
+    if await db.is_phone_banned(body.phone):
+        raise HTTPException(status_code=403, detail="This phone number is not allowed.")
+
     # VoIP check via Twilio Lookup (block Google Voice, TextNow, etc.)
     twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
     twilio_auth = os.environ.get("TWILIO_AUTH_TOKEN", "")
@@ -424,6 +428,23 @@ async def me(user_id: str = Depends(get_user_id)):
         referral_code=profile.get("referral_code"),
         gifts_remaining=profile.get("gifts_remaining", 0),
     )
+
+
+# ---------------------------------------------------------------------------
+# Location — capture user location for admin map
+# ---------------------------------------------------------------------------
+
+
+@router.post("/update-location")
+async def update_location(body: dict, user_id: str = Depends(get_user_id)):
+    """Store user's last known location (from browser geolocation)."""
+    lat = body.get("lat")
+    lng = body.get("lng")
+    if lat is None or lng is None:
+        raise HTTPException(400, "lat and lng required")
+    city = body.get("city")
+    await db.update_user_location(user_id, float(lat), float(lng), city)
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

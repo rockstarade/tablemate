@@ -33,11 +33,13 @@ OPENTABLE_VENUE_IDS: set[int] = {
     80005,  # San Sabino
     80006,  # Estela
     80007,  # Altro Paradiso
+    80008,  # The Pink Door (Seattle)
 }
 
 # venue_id → city slug (everything not listed defaults to "nyc")
 CITY_MAP: dict[int, str] = {
-    73777: "boston",  # Tonino
+    73777: "boston",   # Tonino
+    80008: "seattle",  # The Pink Door
 }
 
 logger = logging.getLogger(__name__)
@@ -80,6 +82,7 @@ async def list_curated():
             "known_slots": r.get("known_slots") or KNOWN_SLOTS.get(vid),
             "platform": platform,
             "city": city,
+            "price_level": r.get("price_level"),
         })
 
     return {"restaurants": restaurants}
