@@ -67,11 +67,11 @@
             --btn-hot-bg: #0369a1;
             --btn-hot-text: #fff;
             --btn-hot-hover: #075985;
-            --btn-bg: #f1f5f9;
-            --btn-text: #475569;
-            --btn-border: #e2e8f0;
-            --btn-hover-bg: #0369a1;
-            --btn-hover-text: #fff;
+            --btn-bg: #0369a1;
+            --btn-text: #ffffff;
+            --btn-border: #0369a1;
+            --btn-hover-bg: #f1f5f9;
+            --btn-hover-text: #0369a1;
             --card-shadow: 0 1px 3px rgba(0,0,0,0.06);
             --card-h-shadow: 0 10px 30px rgba(0,0,0,0.08);
             --card-h-border: rgba(3,105,161,0.15);
@@ -119,11 +119,11 @@
             --btn-hot-bg: rgba(245,158,11,0.1);
             --btn-hot-text: #fbbf24;
             --btn-hot-hover: #f59e0b;
-            --btn-bg: rgba(255,255,255,0.04);
-            --btn-text: #cbd5e1;
-            --btn-border: rgba(51,65,85,0.4);
-            --btn-hover-bg: #f59e0b;
-            --btn-hover-text: #0f172a;
+            --btn-bg: #f59e0b;
+            --btn-text: #0f172a;
+            --btn-border: #f59e0b;
+            --btn-hover-bg: rgba(255,255,255,0.06);
+            --btn-hover-text: #fbbf24;
             --card-shadow: none;
             --card-h-shadow: 0 12px 40px rgba(0,0,0,0.3);
             --card-h-border: rgba(251,191,36,0.06);
@@ -213,11 +213,11 @@
         .btn-book {
             transition: all 0.2s ease !important;
         }
-        /* Regular buttons: gray → blue on hover, text goes white */
+        /* Primary default → inverted on card hover */
         .restaurant-card:hover .btn-book {
             background: var(--btn-hover-bg) !important;
             color: var(--btn-hover-text) !important;
-            border-color: var(--btn-hover-bg) !important;
+            border-color: var(--btn-hover-text) !important;
         }
 
         /* ═══════ SKELETON SHIMMER ═══════ */
@@ -317,9 +317,9 @@
             transition: all 0.25s ease;
         }
         .btn-book:hover {
-            background: #fff !important;
-            color: var(--accent) !important;
-            border-color: var(--accent) !important;
+            background: var(--btn-hover-bg) !important;
+            color: var(--btn-hover-text) !important;
+            border-color: var(--btn-hover-text) !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 

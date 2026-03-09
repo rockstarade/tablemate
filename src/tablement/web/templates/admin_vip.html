@@ -102,7 +102,7 @@
             <!-- ==================== TAB 1: DASHBOARD ==================== -->
             <div x-show="activeTab === 'dashboard'" class="space-y-6">
                 <!-- Live Globe -->
-                <div class="relative rounded-xl overflow-hidden border border-slate-700/50" style="background: #070d1a;">
+                <div class="relative rounded-xl overflow-hidden border border-slate-700/50" style="background: #0f172a;">
                     <div class="absolute top-4 left-5 z-10 flex items-center gap-3">
                         <h2 class="text-sm font-semibold text-white/90 tracking-wide uppercase">Live View</h2>
                         <span class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400/80">
@@ -3120,11 +3120,16 @@
 
                 if (!this._globe) {
                     this._globe = Globe()
-                        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-dark.jpg')
+                        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
                         .backgroundImageUrl('')
                         .showAtmosphere(true)
-                        .atmosphereColor('#334155')
-                        .atmosphereAltitude(0.15)
+                        .atmosphereColor('#93c5fd')
+                        .atmosphereAltitude(0.18)
+                        .polygonsData([])
+                        .polygonCapColor(() => 'rgba(0,0,0,0)')
+                        .polygonSideColor(() => 'rgba(0,0,0,0)')
+                        .polygonStrokeColor(() => 'rgba(255,255,255,0.35)')
+                        .polygonAltitude(0.005)
                         .pointsData(points)
                         .pointLat('lat')
                         .pointLng('lng')
@@ -3146,6 +3151,24 @@
                     // Point of view: tilted toward North America, no auto-rotate
                     this._globe.pointOfView({ lat: 35, lng: -80, altitude: 2.2 }, 0);
                     this._globe.controls().enableZoom = true;
+
+                    // Load country + US state borders
+                    fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+                        .then(r => r.json())
+                        .then(world => {
+                            const topojson = window.topojsonClient || null;
+                            if (typeof topojson !== 'undefined' && topojson) {
+                                const countries = topojson.feature(world, world.objects.countries);
+                                this._globe.polygonsData(countries.features);
+                            } else {
+                                // Fallback: use topojson via inline conversion
+                                import('https://cdn.jsdelivr.net/npm/topojson-client@3/+esm').then(mod => {
+                                    const countries = mod.feature(world, world.objects.countries);
+                                    this._globe.polygonsData(countries.features);
+                                });
+                            }
+                        })
+                        .catch(() => {});
 
                     // Resize handler
                     const ro = new ResizeObserver(() => {
