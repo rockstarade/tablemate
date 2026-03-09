@@ -1595,6 +1595,8 @@ async def list_restaurants_admin(token: str = Depends(_require_admin)):
                 "neighborhood": r.get("neighborhood", ""),
                 "url_slug": r.get("url_slug", ""),
                 "image_url": r.get("image_url"),
+                "tagline": r.get("tagline", ""),
+                "price_level": r.get("price_level"),
                 "slot_interval": r.get("slot_interval", 15),
                 "drop_days_ahead": r.get("drop_days_ahead"),
                 "drop_hour": r.get("drop_hour"),

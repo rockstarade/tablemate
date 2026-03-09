@@ -69,12 +69,12 @@
             --logo-bg: #1A1917;
             --logo-text: #FDFCFA;
             --cal-today-ring: #1A1917;
-            --cal-available-bg: rgba(197,163,85,0.08);
-            --cal-available-border: rgba(197,163,85,0.25);
-            --cal-available-text: #8B7434;
-            --cal-upcoming-bg: rgba(197,163,85,0.06);
-            --cal-upcoming-border: rgba(197,163,85,0.15);
-            --cal-upcoming-text: #B08D3E;
+            --cal-available-bg: rgba(197,163,85,0.14);
+            --cal-available-border: rgba(197,163,85,0.4);
+            --cal-available-text: #7A6428;
+            --cal-upcoming-bg: rgba(26,25,23,0.03);
+            --cal-upcoming-border: rgba(26,25,23,0.08);
+            --cal-upcoming-text: #9E9789;
             --cal-selected-bg: #1A1917;
             --cal-selected-text: #FDFCFA;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
@@ -121,12 +121,12 @@
             --logo-bg: #D4B978;
             --logo-text: #0D0D0B;
             --cal-today-ring: #D4B978;
-            --cal-available-bg: rgba(197,163,85,0.1);
-            --cal-available-border: rgba(212,185,120,0.25);
+            --cal-available-bg: rgba(212,185,120,0.15);
+            --cal-available-border: rgba(212,185,120,0.4);
             --cal-available-text: #D4B978;
-            --cal-upcoming-bg: rgba(197,163,85,0.08);
-            --cal-upcoming-border: rgba(197,163,85,0.18);
-            --cal-upcoming-text: #D4B978;
+            --cal-upcoming-bg: rgba(250,248,245,0.04);
+            --cal-upcoming-border: rgba(250,248,245,0.08);
+            --cal-upcoming-text: #5A5650;
             --cal-selected-bg: #C5A355;
             --cal-selected-text: #0D0D0B;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
@@ -315,15 +315,15 @@
                     <div class="flex items-center gap-4 mt-4 pt-3" style="border-top: 1px solid var(--border-light);">
                         <div class="flex items-center gap-1.5">
                             <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Available now</span>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Released</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Unreleased</span>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Coming soon</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-selected-bg);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Your pick</span>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Selected</span>
                         </div>
                     </div>
                 </div>
@@ -760,7 +760,7 @@
                 const idx = this.selectedDates.indexOf(dateStr);
                 if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
                 if (this.isReleasedDate(dateStr)) {
-                    if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates for released slots'); return; }
+                    if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates — pick your best shots'); return; }
                 }
                 this.selectedDates.push(dateStr); this.selectedDates.sort();
                 this.fetchSlotClaims();

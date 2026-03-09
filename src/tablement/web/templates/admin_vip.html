@@ -1545,7 +1545,11 @@
                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-green-900 text-green-400 font-bold" x-text="r.cuisine"></span>
                                         <span class="text-[10px] text-slate-600" x-text="r.neighborhood"></span>
                                     </div>
-                                    <div class="text-[10px] text-slate-500 mt-0.5" x-text="(r.slot_interval || 15) + '-min slots'"></div>
+                                    <div class="text-[10px] text-slate-500 mt-0.5">
+                                        <span x-text="r.tagline || 'No tagline'" :class="r.tagline ? 'text-slate-400' : 'text-slate-600 italic'"></span>
+                                        <span class="text-slate-600 mx-1">·</span>
+                                        <span x-text="(r.slot_interval || 15) + '-min slots'"></span>
+                                    </div>
                                 </div>
                                 <div class="text-[10px] text-slate-600" x-text="'#' + r.venue_id"></div>
                                 <svg class="w-4 h-4 text-slate-500 transition-transform" :class="r._expanded && 'rotate-180'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -1568,6 +1572,10 @@
                                         <label class="text-[10px] text-slate-500 block mb-1">URL Slug</label>
                                         <input type="text" x-model="r.url_slug" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-brand-500">
                                     </div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-500 block mb-1">Tagline <span class="text-slate-600">(shown on cards)</span></label>
+                                    <input type="text" x-model="r.tagline" placeholder="Short description (~40 chars)" maxlength="60" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-500">
                                 </div>
                                 <div>
                                     <label class="text-[10px] text-slate-500 block mb-1">Image URL</label>
@@ -2964,8 +2972,8 @@
                 try {
                     const body = {
                         name: r.name, cuisine: r.cuisine, neighborhood: r.neighborhood,
-                        url_slug: r.url_slug, image_url: r.image_url || null,
-                        price_level: r.price_level || null,
+                        url_slug: r.url_slug, tagline: r.tagline || '',
+                        image_url: r.image_url || null, price_level: r.price_level || null,
                         slot_interval: r.slot_interval || 15,
                         drop_days_ahead: r.drop_days_ahead, drop_hour: r.drop_hour, drop_minute: r.drop_minute,
                         service_start: r.service_start, service_end: r.service_end,
