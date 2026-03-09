@@ -33,12 +33,13 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; overflow-x: hidden; }
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: #FDFCFA;
             min-height: 100vh;
             color: #2A2825;
+            overflow-x: hidden;
         }
         .font-serif { font-family: 'Playfair Display', Georgia, serif; }
 
@@ -237,7 +238,7 @@
 
     <!-- ═══ NAV ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-500"
-         :class="scrolled ? 'bg-cream-50/95 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : 'bg-transparent'">
+         :class="scrolled ? 'bg-cream-50/95 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : 'bg-stone-950'">
         <div class="max-w-6xl mx-auto px-6 flex items-center justify-between"
             :class="scrolled ? 'py-4' : 'py-6'">
             <a href="/" class="flex items-center gap-2">
@@ -274,8 +275,8 @@
 
     <main>
         <!-- ═══ HERO ═══ -->
-        <section class="hero-bg grain min-h-screen flex items-center relative">
-            <div class="max-w-7xl mx-auto px-6 lg:px-16 w-full relative z-10 py-32 sm:py-0">
+        <section class="hero-bg grain min-h-[85vh] sm:min-h-screen flex items-center relative">
+            <div class="max-w-7xl mx-auto px-6 lg:px-16 w-full relative z-10 py-24 sm:py-0">
                 <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
                     <!-- Left: text (left-aligned) -->
                     <div class="flex-1 lg:max-w-[560px]">
@@ -299,13 +300,13 @@
                         <!-- CTA -->
                         <div class="flex flex-row items-center gap-3 sm:gap-5 anim-4">
                             <button @click="openAuth()"
-                                class="group rounded-xl bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-bold transition-all shadow-xl shadow-gold-500/15 hover:shadow-gold-500/25 hover:scale-[1.02] active:scale-[0.98] px-6 py-3.5 text-[15px] sm:text-lg"
+                                class="group rounded-xl bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-bold transition-all shadow-xl shadow-gold-500/15 hover:shadow-gold-500/25 hover:scale-[1.02] active:scale-[0.98] px-7 py-3.5 text-[15px] sm:px-10 sm:py-4 sm:text-lg"
                                 style="letter-spacing: 0.01em;">
                                 Get Started
                                 <span class="inline-block ml-1 sm:ml-1.5 transition-transform group-hover:translate-x-1">&rarr;</span>
                             </button>
                             <a href="#how-it-works"
-                                class="rounded-xl border border-white/15 hover:border-gold-400/40 text-white/50 hover:text-white/80 font-medium transition-all hover:bg-white/[0.03] px-5 py-3.5 text-[15px] sm:text-lg whitespace-nowrap">
+                                class="rounded-xl border border-white/15 hover:border-gold-400/40 text-white/50 hover:text-white/80 font-medium transition-all hover:bg-white/[0.03] px-6 py-3.5 text-[15px] sm:px-9 sm:py-4 sm:text-lg whitespace-nowrap">
                                 How It Works
                             </a>
                         </div>
@@ -347,10 +348,14 @@
         </section>
 
         <!-- ═══ RESTAURANT COUNT + MARQUEE ═══ -->
-        <section class="pt-10 pb-8 bg-cream-50">
-            <p class="text-center text-[11px] sm:text-[15px] font-semibold tracking-[0.05em] sm:tracking-[0.08em] uppercase mb-6">
-                <span class="text-stone-400 sm:hidden">Access </span><span class="text-stone-400 hidden sm:inline">Access </span><span class="text-gold-500" x-text="restaurantCount">104</span><span class="text-gold-500">+</span><span class="text-stone-400 sm:hidden"> top NYC restaurants</span><span class="text-stone-400 hidden sm:inline"> exclusive restaurants in New York</span>
-            </p>
+        <section class="py-6 sm:py-8 bg-cream-50">
+            <div class="max-w-xl mx-auto px-6 mb-5">
+                <div class="rounded-xl border border-gold-300/20 bg-white/60 py-3 px-5 text-center" style="box-shadow: 0 2px 12px rgba(197,163,85,0.06);">
+                    <p class="text-[12px] sm:text-[15px] font-semibold tracking-[0.06em] sm:tracking-[0.08em] uppercase">
+                        <span class="text-stone-400 sm:hidden">Access </span><span class="text-stone-400 hidden sm:inline">Access </span><span class="text-gold-500 text-[14px] sm:text-[17px]" x-text="restaurantCount">104</span><span class="text-gold-500 text-[14px] sm:text-[17px]">+</span><span class="text-stone-400 sm:hidden"> top NYC restaurants</span><span class="text-stone-400 hidden sm:inline"> exclusive restaurants in New York</span>
+                    </p>
+                </div>
+            </div>
             <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
                 <div class="marquee-track text-stone-400 text-[13px] font-semibold tracking-[0.3em] uppercase whitespace-nowrap">
                     <span class="mx-6 sm:mx-8">Carbone</span><span class="text-gold-300/50 mx-2">&#9671;</span>
@@ -376,10 +381,12 @@
                     <span class="mx-6 sm:mx-8">Coqodaq</span><span class="text-gold-300/50 mx-2">&#9671;</span>
                 </div>
             </div>
+            <!-- Separator line -->
+            <div class="gold-line max-w-[100px] mx-auto mt-6"></div>
         </section>
 
         <!-- ═══ THE PROBLEM ═══ -->
-        <section class="py-14 sm:py-24 bg-cream-50">
+        <section class="py-10 sm:py-20 bg-cream-50">
             <div class="max-w-3xl mx-auto px-6 reveal">
                 <div class="text-center">
                     <p class="text-stone-400 text-[12px] font-semibold tracking-[0.3em] uppercase mb-5">Sound familiar?</p>
@@ -411,7 +418,7 @@
                             <span class="text-gold-400 text-sm sm:text-xl font-semibold tracking-wide">01</span>
                         </div>
                         <h3 class="text-xl sm:text-[26px] font-serif text-stone-900 mb-2 sm:mb-4">Connect Your Account</h3>
-                        <p class="text-stone-500 text-[15px] sm:text-[17px] leading-relaxed max-w-[300px] mx-auto">Link your Resy or OpenTable account. 30 seconds. Encrypted and secure.</p>
+                        <p class="text-stone-500 text-[15px] sm:text-[17px] leading-relaxed max-w-[300px] mx-auto">Link your Resy or OpenTable account. Encrypted and secure.</p>
                     </div>
                     <div class="reveal text-center" style="transition-delay: 0.12s;">
                         <div class="step-number w-14 h-14 sm:w-[88px] sm:h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-4 sm:mb-10 relative z-10">
@@ -425,7 +432,7 @@
                             <span class="text-gold-400 text-sm sm:text-xl font-semibold tracking-wide">03</span>
                         </div>
                         <h3 class="text-xl sm:text-[26px] font-serif text-stone-900 mb-2 sm:mb-4">Show Up Hungry</h3>
-                        <p class="text-stone-500 text-[15px] sm:text-[17px] leading-relaxed max-w-[300px] mx-auto">You'll get a text the moment it's confirmed. Just show up.</p>
+                        <p class="text-stone-500 text-[15px] sm:text-[17px] leading-relaxed max-w-[300px] mx-auto">You'll get a text the moment it's confirmed.</p>
                     </div>
                 </div>
             </div>
@@ -443,35 +450,43 @@
                         </h2>
                         <p class="text-stone-400 text-base leading-relaxed max-w-lg mx-auto">While you sleep, we're watching every drop, every cancellation, every opening.</p>
                     </div>
-                    <!-- Feature grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 max-w-3xl mx-auto">
-                        <div class="luxury-card rounded-2xl p-7 bg-white">
-                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
-                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <!-- Feature grid — icon beside text, bigger fonts -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 max-w-4xl mx-auto">
+                        <div class="luxury-card rounded-2xl p-6 sm:p-8 bg-white flex gap-4 sm:gap-5 items-start">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Faster Than Refreshing</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">When reservations drop, our system submits your booking within milliseconds. Before you could even load the page.</p>
+                            <div>
+                                <h3 class="text-lg sm:text-xl font-serif text-stone-900 mb-1.5">Faster Than Refreshing</h3>
+                                <p class="text-stone-500 text-[15px] sm:text-base leading-relaxed">When reservations drop, we submit your booking in milliseconds — before you could even load the page.</p>
+                            </div>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-white">
-                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
-                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <div class="luxury-card rounded-2xl p-6 sm:p-8 bg-white flex gap-4 sm:gap-5 items-start">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Watches for Cancellations</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">Someone cancels Carbone at 3 AM? We grab it and text you. You don't need to be awake.</p>
+                            <div>
+                                <h3 class="text-lg sm:text-xl font-serif text-stone-900 mb-1.5">Watches for Cancellations</h3>
+                                <p class="text-stone-500 text-[15px] sm:text-base leading-relaxed">Someone cancels Carbone at 3 AM? We grab it and text you. You don't need to be awake.</p>
+                            </div>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-white">
-                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
-                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <div class="luxury-card rounded-2xl p-6 sm:p-8 bg-white flex gap-4 sm:gap-5 items-start">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Your Account, Your Name</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">We book directly on your Resy or OpenTable account. No middlemen, no transfers. The reservation is yours.</p>
+                            <div>
+                                <h3 class="text-lg sm:text-xl font-serif text-stone-900 mb-1.5">Your Account, Your Name</h3>
+                                <p class="text-stone-500 text-[15px] sm:text-base leading-relaxed">We book directly on your Resy or OpenTable. No middlemen, no transfers. The reservation is yours.</p>
+                            </div>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-white">
-                            <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
-                                <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div class="luxury-card rounded-2xl p-6 sm:p-8 bg-white flex gap-4 sm:gap-5 items-start">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">You Only Pay When It Works</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">$12 per confirmed reservation. If we don't get you the table, you don't pay anything. No subscriptions, no monthly fees.</p>
+                            <div>
+                                <h3 class="text-lg sm:text-xl font-serif text-stone-900 mb-1.5">You Only Pay When It Works</h3>
+                                <p class="text-stone-500 text-[15px] sm:text-base leading-relaxed">$12 per reservation. No table, no charge. No subscriptions, no monthly fees.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -610,7 +625,7 @@
                              :class="faq.open ? 'border-gold-300/30 shadow-sm' : 'border-stone-200'">
                             <button @click="faq.open = !faq.open"
                                 class="w-full px-6 py-5 flex items-center justify-between text-left group">
-                                <span class="font-medium text-stone-800 text-[15px] pr-4" x-text="faq.q"></span>
+                                <span class="font-medium text-stone-800 text-base sm:text-[17px] pr-4" x-text="faq.q"></span>
                                 <svg class="w-4 h-4 flex-shrink-0 transition-transform duration-300 ml-4"
                                     :class="faq.open ? 'rotate-180 text-gold-500' : 'text-stone-300'"
                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -618,7 +633,7 @@
                                 </svg>
                             </button>
                             <div x-show="faq.open" x-collapse>
-                                <div class="px-6 pb-5 text-stone-500 text-[14px] leading-relaxed" x-text="faq.a"></div>
+                                <div class="px-6 pb-5 text-stone-500 text-[15px] sm:text-base leading-relaxed" x-text="faq.a"></div>
                             </div>
                         </div>
                     </template>
