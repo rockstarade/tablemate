@@ -6,7 +6,7 @@
     <title>tablepass — Your Table Is Waiting</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -232,31 +232,32 @@
 
     <!-- ═══ NAV ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-500"
-         :class="scrolled ? 'bg-cream-50/90 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : ''">
+         :class="scrolled ? 'bg-cream-50/95 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : 'bg-transparent'">
         <div class="max-w-6xl mx-auto px-6 flex items-center justify-between"
             :class="scrolled ? 'py-4' : 'py-6'">
             <a href="/" class="flex items-center gap-2">
-                <span class="text-[22px] font-serif font-medium tracking-[0.02em] transition-colors"
+                <span class="text-2xl font-medium tracking-[0.12em] transition-colors"
+                    style="font-family: 'Manrope', sans-serif;"
                     :class="scrolled ? 'text-stone-900' : 'text-white'">tablepass</span>
             </a>
             <div class="hidden md:flex items-center gap-10">
                 <a href="#how-it-works" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
-                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">How It Works</a>
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/50 hover:text-white/80'">How It Works</a>
                 <a href="#pricing" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
-                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">Pricing</a>
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/50 hover:text-white/80'">Pricing</a>
                 <a href="#restaurants" class="text-[13px] font-medium tracking-[0.12em] uppercase transition-colors"
-                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/40 hover:text-white/80'">Restaurants</a>
+                    :class="scrolled ? 'text-stone-400 hover:text-stone-800' : 'text-white/50 hover:text-white/80'">Restaurants</a>
             </div>
             <div class="flex items-center gap-5">
                 <a href="/admin" class="text-white/10 hover:text-white/25 text-xs transition-colors hidden sm:block"
                     :class="scrolled && '!text-stone-200 !hover:text-stone-400'">Admin</a>
                 <button @click="openAuth()"
-                    class="text-[13px] font-medium transition-colors"
+                    class="text-[14px] font-medium transition-colors"
                     :class="scrolled ? 'text-stone-500 hover:text-stone-800' : 'text-white/50 hover:text-white'">
                     Sign In
                 </button>
                 <button @click="openAuth()"
-                    class="px-6 py-2.5 rounded-lg text-[13px] font-semibold tracking-wide transition-all"
+                    class="px-6 py-2.5 rounded-lg text-[14px] font-semibold tracking-wide transition-all"
                     :class="scrolled
                         ? 'bg-stone-900 hover:bg-stone-800 text-cream-100'
                         : 'bg-white/10 hover:bg-white/15 text-white border border-white/10'">
@@ -276,7 +277,7 @@
                         <!-- Eyebrow -->
                         <div class="inline-flex items-center gap-3 mb-8 anim-1">
                             <span class="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold-400/40"></span>
-                            <span class="text-gold-400/70 text-[11px] font-semibold tracking-[0.3em] uppercase">The Fastest Restaurant Booking Technology</span>
+                            <span class="text-gold-400/70 text-[12px] font-semibold tracking-[0.3em] uppercase">The Fastest Restaurant Booking Technology</span>
                         </div>
 
                         <!-- Headline -->
@@ -286,37 +287,28 @@
                         </h1>
 
                         <!-- Subhead -->
-                        <p class="text-lg sm:text-xl text-white/35 max-w-lg mb-10 anim-3 leading-relaxed font-light">
+                        <p class="text-xl sm:text-[22px] text-white/35 max-w-lg mb-10 anim-3 leading-relaxed font-light">
                             Tell us the restaurant. We book it the instant it opens. You just show up.
                         </p>
 
                         <!-- CTA -->
                         <div class="flex flex-col sm:flex-row items-start gap-4 anim-4">
                             <button @click="openAuth()"
-                                class="group px-10 py-4 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10">
+                                class="group px-12 py-4.5 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[16px] transition-all shadow-lg shadow-gold-500/10">
                                 Get Started
                                 <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
                             </button>
                             <a href="#how-it-works"
-                                class="px-8 py-4 rounded-lg border border-white/10 hover:border-gold-400/30 text-white/40 hover:text-white/70 font-medium text-[15px] transition-all">
+                                class="px-10 py-4.5 rounded-lg border border-white/10 hover:border-gold-400/30 text-white/40 hover:text-white/70 font-medium text-[16px] transition-all">
                                 See How It Works
                             </a>
-                        </div>
-
-                        <!-- Price callout -->
-                        <div class="mt-10 anim-4">
-                            <div class="inline-flex items-center gap-3 px-5 py-2.5 rounded-full border border-white/8 bg-white/[0.03]">
-                                <span class="text-white font-semibold text-[15px] tracking-tight">$12</span>
-                                <span class="w-px h-3.5 bg-white/15"></span>
-                                <span class="text-white/35 text-[12px] font-medium tracking-wide">per successful reservation</span>
-                            </div>
                         </div>
                     </div>
 
                     <!-- Right: phone image + floating stats (desktop only) -->
                     <div class="hidden lg:flex flex-1 justify-center anim-3 relative">
                         <img src="/static/hero-phone.jpeg" alt="TablePass booking confirmation on iPhone"
-                            class="w-80 xl:w-96 rounded-3xl shadow-2xl border border-white/5"
+                            class="w-96 xl:w-[440px] rounded-3xl shadow-2xl border border-white/5"
                             style="box-shadow: 0 0 60px rgba(197,163,85,0.08), 0 25px 60px rgba(0,0,0,0.4);">
                         <!-- Floating stat cards -->
                         <div class="absolute -left-10 top-16 glass-dark rounded-2xl px-6 py-5 shadow-xl anim-4">
@@ -348,9 +340,11 @@
             </div>
         </section>
 
-        <!-- ═══ MARQUEE ═══ -->
-        <section class="py-8 border-b border-stone-200/60 bg-cream-50">
-            <p class="text-center text-stone-400 text-[12px] font-medium tracking-[0.15em] uppercase mb-5">Access <span x-text="restaurantCount">104</span>+ exclusive restaurants in New York</p>
+        <!-- ═══ RESTAURANT COUNT + MARQUEE ═══ -->
+        <section class="pt-10 pb-8 border-b border-stone-200/60 bg-cream-50">
+            <p class="text-center text-[15px] font-semibold tracking-[0.08em] uppercase mb-6">
+                <span class="text-stone-400">Access </span><span class="text-gold-500" x-text="restaurantCount">104</span><span class="text-gold-500">+</span><span class="text-stone-400"> exclusive restaurants in New York</span>
+            </p>
             <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
                 <div class="marquee-track text-stone-400 text-[13px] font-semibold tracking-[0.3em] uppercase whitespace-nowrap">
                     <span class="mx-6 sm:mx-8">Carbone</span><span class="text-gold-300/50 mx-2">&#9671;</span>
@@ -383,16 +377,16 @@
             <div class="max-w-3xl mx-auto px-6 reveal">
                 <div class="text-center">
                     <p class="text-stone-400 text-[12px] font-semibold tracking-[0.3em] uppercase mb-6">Sound familiar?</p>
-                    <h2 class="text-4xl sm:text-[2.85rem] font-serif text-stone-900 leading-[1.2] mb-8">
-                        You set an alarm for midnight.<br>
+                    <h2 class="text-4xl sm:text-[3rem] font-serif text-stone-900 leading-[1.2] mb-8">
+                        You set an alarm for 10am.<br>
                         You refresh the second reservations drop.<br>
                         <span class="italic text-stone-400">Gone in two seconds.</span>
                     </h2>
                     <div class="gold-line max-w-[80px] mx-auto mb-8"></div>
-                    <p class="text-stone-500 text-[18px] leading-relaxed max-w-xl mx-auto">
+                    <p class="text-stone-500 text-[19px] leading-relaxed max-w-xl mx-auto">
                         The hardest restaurants to book release tables at set times, and every seat is claimed before you can blink. It's not that you're too slow &mdash; it's that you're competing against systems built to be faster than any person.
                     </p>
-                    <p class="text-stone-800 text-[19px] leading-relaxed max-w-xl mx-auto mt-6 font-medium">
+                    <p class="text-stone-800 text-[20px] leading-relaxed max-w-xl mx-auto mt-6 font-medium">
                         So we built one that works for you.
                     </p>
                 </div>
@@ -400,9 +394,9 @@
         </section>
 
         <!-- ═══ HOW IT WORKS ═══ -->
-        <section id="how-it-works" class="py-32 sm:py-40 bg-white relative grain">
+        <section id="how-it-works" class="py-20 sm:py-28 bg-white relative grain">
             <div class="max-w-6xl mx-auto px-6 relative z-10">
-                <div class="text-center mb-24 reveal">
+                <div class="text-center mb-20 reveal">
                     <p class="text-gold-500 text-[12px] font-semibold tracking-[0.3em] uppercase mb-6">How It Works</p>
                     <h2 class="text-5xl sm:text-6xl font-serif text-stone-900 leading-tight">
                         Three steps. <span class="italic">That's it.</span>
@@ -417,22 +411,22 @@
                         <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
                             <span class="text-gold-400 text-xl font-semibold tracking-wide">01</span>
                         </div>
-                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Connect Your Account</h3>
-                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">Link your Resy or OpenTable account. Takes about 30 seconds. Encrypted and secure.</p>
+                        <h3 class="text-[26px] font-serif text-stone-900 mb-4">Connect Your Account</h3>
+                        <p class="text-stone-500 text-[17px] leading-relaxed max-w-[300px] mx-auto">Link your Resy or OpenTable account. Takes about 30 seconds. Encrypted and secure.</p>
                     </div>
                     <div class="reveal text-center" style="transition-delay: 0.12s;">
                         <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
                             <span class="text-gold-400 text-xl font-semibold tracking-wide">02</span>
                         </div>
-                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Choose Your Table</h3>
-                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">Select the restaurant, date, time, and party size. We handle the rest.</p>
+                        <h3 class="text-[26px] font-serif text-stone-900 mb-4">Choose Your Table</h3>
+                        <p class="text-stone-500 text-[17px] leading-relaxed max-w-[300px] mx-auto">Select the restaurant, date, time, and party size. We handle the rest.</p>
                     </div>
                     <div class="reveal text-center" style="transition-delay: 0.24s;">
                         <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
                             <span class="text-gold-400 text-xl font-semibold tracking-wide">03</span>
                         </div>
-                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Arrive &amp; Enjoy</h3>
-                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">You'll get a text the moment it's confirmed. All you do is show up.</p>
+                        <h3 class="text-[26px] font-serif text-stone-900 mb-4">Arrive &amp; Enjoy</h3>
+                        <p class="text-stone-500 text-[17px] leading-relaxed max-w-[300px] mx-auto">You'll get a text the moment it's confirmed. All you do is show up.</p>
                     </div>
                 </div>
             </div>
@@ -446,9 +440,9 @@
                     <div class="lg:w-[360px] lg:sticky lg:top-32 flex-shrink-0">
                         <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Why Tablepass</p>
                         <h2 class="text-4xl sm:text-[2.75rem] font-serif text-stone-900 leading-[1.15] mb-5">
-                            Not a hack.<br><span class="italic">A better system.</span>
+                            Built for the tables<br><span class="italic">you can't get.</span>
                         </h2>
-                        <p class="text-stone-400 text-base leading-relaxed">We built dedicated infrastructure for one purpose: getting you into the restaurants everyone else is trying to get into.</p>
+                        <p class="text-stone-400 text-base leading-relaxed">Purpose-built infrastructure that moves faster than any human. While you sleep, we're watching every drop, every cancellation, every opening.</p>
                     </div>
                     <!-- Right: feature grid -->
                     <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -497,7 +491,7 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-16">
                     <!-- Per booking -->
-                    <div class="reveal rounded-2xl border border-stone-200 bg-cream-50 p-10 text-center">
+                    <div class="reveal rounded-2xl border border-stone-200 bg-cream-50 p-10 text-center flex flex-col">
                         <h3 class="text-[11px] font-semibold text-stone-400 tracking-[0.2em] uppercase mb-6">Per Reservation</h3>
                         <div class="mb-2">
                             <span class="text-6xl font-bold text-stone-900 tracking-tight">$12</span>
@@ -524,38 +518,37 @@
                             </li>
                         </ul>
                         <button @click="openAuth()"
-                            class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all">
+                            class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all mt-auto">
                             Get Started
                         </button>
                     </div>
                     <!-- 5-pack -->
-                    <div class="reveal rounded-2xl bg-stone-950 p-10 text-center relative overflow-hidden" style="transition-delay: 0.1s;">
+                    <div class="reveal rounded-2xl bg-stone-950 p-10 text-center relative overflow-hidden flex flex-col" style="transition-delay: 0.1s;">
                         <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent"></div>
                         <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-[0.1em] uppercase" style="background: rgba(197,163,85,0.15); color: #D4B978;">Most Popular</div>
                         <h3 class="text-[11px] font-semibold text-white/35 tracking-[0.2em] uppercase mb-6">5 Pack</h3>
                         <div class="mb-2">
                             <span class="text-6xl font-bold text-white tracking-tight">$10</span>
-                            <span class="text-white/30 ml-1 text-sm">/ each</span>
                         </div>
-                        <p class="text-white/30 text-sm mb-8">$50 for 5 reservations</p>
+                        <p class="text-white/30 text-sm mb-8">per confirmed booking</p>
                         <ul class="text-white/45 text-[14px] space-y-4 mb-10 text-left">
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                <span class="text-white/60">Save $2 per reservation</span>
+                                <span class="text-white/60">Credits never expire</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Access newest restaurants the day they release</span>
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
                                 <span class="text-white/60">Everything in single &mdash; just cheaper</span>
-                            </li>
-                            <li class="flex items-center gap-3">
-                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
-                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                                </span>
-                                <span class="text-white/60">Credits never expire</span>
                             </li>
                         </ul>
                         <button @click="openAuth()"
@@ -587,7 +580,7 @@
                                 <img :src="r.image_url" :alt="r.name"
                                     class="w-full h-full object-cover transition-transform duration-700"
                                     @error="$event.target.style.display='none'">
-                                <div class="absolute inset-0 bg-gradient-to-t from-stone-950/60 via-transparent to-transparent"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-stone-950/20 to-stone-950/10"></div>
                                 <div class="absolute bottom-3 left-3 right-3">
                                     <h3 class="text-[15px] font-serif font-medium text-white leading-tight drop-shadow-md" x-text="r.name"></h3>
                                     <p class="text-white/50 text-[12px] mt-0.5" x-text="r.neighborhood"></p>
@@ -656,7 +649,7 @@
 
     <!-- ═══ FOOTER ═══ -->
     <footer class="bg-stone-950 py-12 text-center border-t border-white/5">
-        <span class="font-serif text-white/30 text-lg tracking-wide">tablepass</span>
+        <span class="text-white/30 text-lg font-medium tracking-[0.12em]" style="font-family: 'Manrope', sans-serif;">tablepass</span>
         <div class="flex items-center justify-center gap-4 mt-3">
             <a href="/terms" class="text-white/15 text-xs hover:text-white/30 transition-colors">Terms</a>
             <span class="text-white/10">|</span>
