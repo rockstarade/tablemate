@@ -51,6 +51,7 @@ class UserProfileResponse(BaseModel):
     stripe_linked: bool = False
     referral_code: str | None = None
     gifts_remaining: int = 0
+    referral_discount: bool = False
 
 
 # ---------------------------------------------------------------------------

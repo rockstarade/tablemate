@@ -73,7 +73,7 @@
             pointer-events: none;
         }
 
-        /* ═══ GRAIN TEXTURE (subtle luxury feel) ═══ */
+        /* ═══ GRAIN TEXTURE ═══ */
         .grain::before {
             content: '';
             position: absolute;
@@ -193,6 +193,24 @@
             50% { opacity: 0.5; }
         }
         .pulse-gold { animation: softPulse 2.5s ease-in-out infinite; }
+
+        /* ═══ COUNT-UP ANIMATION ═══ */
+        @keyframes countIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .count-in { animation: countIn 0.6s ease-out forwards; }
+
+        /* ═══ LIVE DOT ═══ */
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .live-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #4ade80;
+            animation: livePulse 2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="antialiased" x-data="landingApp()" x-init="init()">
@@ -251,64 +269,89 @@
     <main>
         <!-- ═══ HERO ═══ -->
         <section class="hero-bg grain min-h-screen flex items-center relative">
-            <div class="max-w-6xl mx-auto px-6 w-full relative z-10 pt-32 pb-24 sm:pt-0 sm:pb-0">
-                <div class="flex flex-col items-center text-center">
-                    <!-- Eyebrow -->
-                    <div class="inline-flex items-center gap-3 mb-10 anim-1">
-                        <span class="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold-400/40"></span>
-                        <span class="text-gold-400/70 text-[11px] font-semibold tracking-[0.3em] uppercase">New York's Finest Tables</span>
-                        <span class="w-8 h-[1px] bg-gradient-to-l from-transparent to-gold-400/40"></span>
+            <div class="max-w-7xl mx-auto px-6 lg:px-16 w-full relative z-10 py-32 sm:py-0">
+                <div class="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                    <!-- Left: text (left-aligned) -->
+                    <div class="flex-1 lg:max-w-[560px]">
+                        <!-- Eyebrow -->
+                        <div class="inline-flex items-center gap-3 mb-8 anim-1">
+                            <span class="w-8 h-[1px] bg-gradient-to-r from-transparent to-gold-400/40"></span>
+                            <span class="text-gold-400/70 text-[11px] font-semibold tracking-[0.3em] uppercase">New York's Finest Tables</span>
+                        </div>
+
+                        <!-- Headline -->
+                        <h1 class="text-5xl sm:text-6xl lg:text-[4.2rem] font-serif font-medium text-white leading-[1.08] mb-8 anim-2">
+                            The reservation you<br>couldn't get?
+                            <span class="italic gold-text">Consider it done.</span>
+                        </h1>
+
+                        <!-- Subhead -->
+                        <p class="text-lg sm:text-xl text-white/35 max-w-lg mb-10 anim-3 leading-relaxed font-light">
+                            Tell us the restaurant. We book it the instant it opens. You just show up.
+                        </p>
+
+                        <!-- CTA -->
+                        <div class="flex flex-col sm:flex-row items-start gap-4 anim-4">
+                            <button @click="openAuth()"
+                                class="group px-10 py-4 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10">
+                                Get Started
+                                <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
+                            </button>
+                            <a href="#how-it-works"
+                                class="px-8 py-4 rounded-lg border border-white/10 hover:border-gold-400/30 text-white/40 hover:text-white/70 font-medium text-[15px] transition-all">
+                                See How It Works
+                            </a>
+                        </div>
+
+                        <!-- Price callout -->
+                        <div class="flex items-center gap-6 mt-10 anim-4">
+                            <div>
+                                <p class="text-3xl font-serif font-medium text-white">$12</p>
+                                <p class="text-[11px] text-white/30 tracking-wider uppercase mt-0.5">Per successful reservation</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Headline -->
-                    <h1 class="text-5xl sm:text-6xl lg:text-[4.5rem] font-serif font-medium text-white leading-[1.08] mb-8 anim-2 max-w-4xl">
-                        The reservation you<br>couldn't get?
-                        <span class="italic gold-text">Consider it done.</span>
-                    </h1>
-
-                    <!-- Subhead -->
-                    <p class="text-lg sm:text-xl text-white/35 max-w-xl mb-12 anim-3 leading-relaxed font-light">
-                        We secure the city's most sought-after tables the instant they become available. Precision-timed. Effortless for you.
-                    </p>
-
-                    <!-- CTA -->
-                    <div class="flex flex-col sm:flex-row items-center gap-4 anim-4">
-                        <button @click="openAuth()"
-                            class="group px-10 py-4 rounded-lg bg-gradient-to-b from-gold-400 to-gold-500 hover:from-gold-300 hover:to-gold-400 text-stone-950 font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10">
-                            Reserve Your Access
-                            <span class="inline-block ml-1 transition-transform group-hover:translate-x-0.5">&rarr;</span>
-                        </button>
-                        <a href="#how-it-works"
-                            class="px-8 py-4 text-white/30 hover:text-white/60 font-medium text-[15px] transition-all">
-                            Learn More
-                        </a>
+                    <!-- Right: phone image + floating stats (desktop only) -->
+                    <div class="hidden lg:flex flex-1 justify-center anim-3 relative">
+                        <img src="/static/hero-phone.jpeg" alt="TablePass booking confirmation on iPhone"
+                            class="w-80 xl:w-96 rounded-3xl shadow-2xl border border-white/5"
+                            style="box-shadow: 0 0 60px rgba(197,163,85,0.08), 0 25px 60px rgba(0,0,0,0.4);">
+                        <!-- Floating stat cards -->
+                        <div class="absolute -left-10 top-16 glass-dark rounded-2xl px-5 py-4 shadow-xl anim-4">
+                            <p class="text-gold-400 text-3xl font-serif font-bold leading-none">500+</p>
+                            <p class="text-white/35 text-xs font-medium mt-1">Happy diners</p>
+                        </div>
+                        <div class="absolute -right-6 bottom-24 glass-dark rounded-2xl px-5 py-4 shadow-xl anim-4">
+                            <p class="text-gold-400 text-3xl font-serif font-bold leading-none">99.8%</p>
+                            <p class="text-white/35 text-xs font-medium mt-1">Success rate</p>
+                        </div>
                     </div>
 
-                    <!-- Trust row -->
-                    <div class="flex items-center gap-8 mt-16 anim-4">
-                        <div class="text-center">
-                            <p class="text-2xl font-serif text-white/90">500<span class="text-gold-400/60">+</span></p>
-                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Guests Served</p>
+                    <!-- Mobile stats (visible only on small screens) -->
+                    <div class="flex lg:hidden gap-4 mt-4 anim-4">
+                        <div class="glass-dark rounded-xl px-5 py-3">
+                            <p class="text-gold-400 text-2xl font-serif font-bold">500+</p>
+                            <p class="text-white/30 text-xs">Happy diners</p>
                         </div>
-                        <div class="w-px h-8 bg-white/8"></div>
-                        <div class="text-center">
-                            <p class="text-2xl font-serif text-white/90">99.8<span class="text-gold-400/60">%</span></p>
-                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Success Rate</p>
+                        <div class="glass-dark rounded-xl px-5 py-3">
+                            <p class="text-gold-400 text-2xl font-serif font-bold">99.8%</p>
+                            <p class="text-white/30 text-xs">Success rate</p>
                         </div>
-                        <div class="w-px h-8 bg-white/8"></div>
-                        <div class="text-center">
-                            <p class="text-2xl font-serif text-white/90" x-text="restaurantCount"><span class="text-gold-400/60">+</span></p>
-                            <p class="text-[11px] text-white/25 tracking-wider uppercase mt-1">Restaurants</p>
+                        <div class="glass-dark rounded-xl px-5 py-3">
+                            <p class="text-gold-400 text-2xl font-serif font-bold">24/7</p>
+                            <p class="text-white/30 text-xs">Monitoring</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ═══ MARQUEE (Transition) ═══ -->
-        <section class="py-10 border-b border-stone-200/60 bg-cream-50">
+        <!-- ═══ MARQUEE ═══ -->
+        <section class="py-8 border-b border-stone-200/60 bg-cream-50">
+            <p class="text-center text-stone-400 text-[12px] font-medium tracking-[0.15em] uppercase mb-5">Access <span x-text="restaurantCount">104</span>+ exclusive restaurants in New York</p>
             <div class="relative overflow-hidden" style="mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);">
-                <div class="marquee-track text-stone-300 text-[11px] font-semibold tracking-[0.35em] uppercase whitespace-nowrap">
+                <div class="marquee-track text-stone-400 text-[13px] font-semibold tracking-[0.3em] uppercase whitespace-nowrap">
                     <span class="mx-6 sm:mx-8">Carbone</span><span class="text-gold-300/50 mx-2">&#9671;</span>
                     <span class="mx-6 sm:mx-8">4 Charles</span><span class="text-gold-300/50 mx-2">&#9671;</span>
                     <span class="mx-6 sm:mx-8">Atomix</span><span class="text-gold-300/50 mx-2">&#9671;</span>
@@ -334,86 +377,107 @@
             </div>
         </section>
 
+        <!-- ═══ THE PROBLEM ═══ -->
+        <section class="py-24 sm:py-32 bg-cream-50">
+            <div class="max-w-3xl mx-auto px-6 reveal">
+                <div class="text-center">
+                    <p class="text-stone-400 text-[11px] font-semibold tracking-[0.3em] uppercase mb-6">Sound familiar?</p>
+                    <h2 class="text-3xl sm:text-[2.5rem] font-serif text-stone-900 leading-[1.2] mb-8">
+                        You set an alarm for midnight.<br>
+                        You refresh the second reservations drop.<br>
+                        <span class="italic text-stone-400">Gone in two seconds.</span>
+                    </h2>
+                    <div class="gold-line max-w-[80px] mx-auto mb-8"></div>
+                    <p class="text-stone-500 text-[17px] leading-relaxed max-w-xl mx-auto">
+                        The hardest restaurants to book release tables at set times, and every seat is claimed before you can blink. It's not that you're too slow &mdash; it's that you're competing against systems built to be faster than any person.
+                    </p>
+                    <p class="text-stone-800 text-[17px] leading-relaxed max-w-xl mx-auto mt-6 font-medium">
+                        So we built one that works for you.
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <!-- ═══ HOW IT WORKS ═══ -->
-        <section id="how-it-works" class="py-28 sm:py-36 bg-cream-50">
-            <div class="max-w-5xl mx-auto px-6">
-                <div class="text-center mb-20 reveal">
-                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">The Experience</p>
-                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight">
-                        Effortless from<br><span class="italic">start to table</span>
+        <section id="how-it-works" class="py-32 sm:py-40 bg-white relative grain">
+            <div class="max-w-6xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-24 reveal">
+                    <p class="text-gold-500 text-[12px] font-semibold tracking-[0.3em] uppercase mb-6">How It Works</p>
+                    <h2 class="text-5xl sm:text-6xl font-serif text-stone-900 leading-tight">
+                        Three steps. <span class="italic">That's it.</span>
                     </h2>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-10 relative">
                     <!-- Connector line -->
-                    <div class="hidden md:block absolute top-[36px] left-[calc(16.67%+36px)] right-[calc(16.67%+36px)] h-[1px]"
+                    <div class="hidden md:block absolute top-[44px] left-[calc(16.67%+44px)] right-[calc(16.67%+44px)] h-[1px]"
                         style="background: linear-gradient(90deg, rgba(197,163,85,0.15), rgba(197,163,85,0.08));"></div>
 
                     <div class="reveal text-center">
-                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
-                            <span class="text-gold-400 font-serif text-xl italic">01</span>
+                        <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
+                            <span class="text-gold-400 font-serif text-2xl italic">01</span>
                         </div>
-                        <h3 class="text-xl font-serif text-stone-900 mb-3">Connect Your Account</h3>
-                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">Link your Resy account in seconds. Encrypted, secure, entirely yours.</p>
+                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Connect Your Account</h3>
+                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">Link your Resy or OpenTable account. Takes about 30 seconds. Encrypted and secure.</p>
                     </div>
                     <div class="reveal text-center" style="transition-delay: 0.12s;">
-                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
-                            <span class="text-gold-400 font-serif text-xl italic">02</span>
+                        <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
+                            <span class="text-gold-400 font-serif text-2xl italic">02</span>
                         </div>
-                        <h3 class="text-xl font-serif text-stone-900 mb-3">Choose Your Table</h3>
-                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">Select the restaurant, date, time, and party size. We handle the rest.</p>
+                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Choose Your Table</h3>
+                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">Select the restaurant, date, time, and party size. We handle the rest.</p>
                     </div>
                     <div class="reveal text-center" style="transition-delay: 0.24s;">
-                        <div class="step-number w-[72px] h-[72px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-8 relative z-10">
-                            <span class="text-gold-400 font-serif text-xl italic">03</span>
+                        <div class="step-number w-[88px] h-[88px] rounded-full bg-stone-950 flex items-center justify-center mx-auto mb-10 relative z-10">
+                            <span class="text-gold-400 font-serif text-2xl italic">03</span>
                         </div>
-                        <h3 class="text-xl font-serif text-stone-900 mb-3">Arrive &amp; Enjoy</h3>
-                        <p class="text-stone-500 text-[15px] leading-relaxed max-w-[260px] mx-auto">You'll get a text the moment it's confirmed. All you do is show up.</p>
+                        <h3 class="text-2xl font-serif text-stone-900 mb-4">Arrive &amp; Enjoy</h3>
+                        <p class="text-stone-500 text-[16px] leading-relaxed max-w-[280px] mx-auto">You'll get a text the moment it's confirmed. All you do is show up.</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- ═══ WHY TABLEPASS ═══ -->
-        <section class="py-28 sm:py-36 bg-white relative grain">
-            <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <section class="py-28 sm:py-36 bg-cream-50">
+            <div class="max-w-6xl mx-auto px-6">
                 <div class="flex flex-col lg:flex-row gap-16 lg:gap-24 reveal">
                     <!-- Left -->
                     <div class="lg:w-[360px] lg:sticky lg:top-32 flex-shrink-0">
                         <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Why Tablepass</p>
                         <h2 class="text-4xl sm:text-[2.75rem] font-serif text-stone-900 leading-[1.15] mb-5">
-                            Precision-built for<br><span class="italic">impossible tables</span>
+                            Not a hack.<br><span class="italic">A better system.</span>
                         </h2>
-                        <p class="text-stone-400 text-base leading-relaxed">We don't just refresh a page. We've engineered infrastructure that operates at machine speed — so you don't have to compete.</p>
+                        <p class="text-stone-400 text-base leading-relaxed">We built dedicated infrastructure for one purpose: getting you into the restaurants everyone else is trying to get into.</p>
                     </div>
                     <!-- Right: feature grid -->
                     <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                        <div class="luxury-card rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
                                 <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Sub-Second Booking</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">Our servers sit adjacent to Resy's infrastructure. We submit before anyone can tap refresh.</p>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Faster Than Refreshing</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">When reservations drop, our system submits your booking within milliseconds. Before you could even load the page.</p>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                        <div class="luxury-card rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
                                 <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">24/7 Cancellation Watch</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">Someone cancels Carbone at 3 AM? We secure it before they close the app.</p>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Watches for Cancellations</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">Someone cancels Carbone at 3 AM? We grab it and text you. You don't need to be awake.</p>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                        <div class="luxury-card rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
                                 <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Encrypted &amp; Private</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">Bank-grade encryption. We never store passwords. Your account is always yours.</p>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">Your Account, Your Name</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">We book directly on your Resy or OpenTable account. No middlemen, no transfers. The reservation is yours.</p>
                         </div>
-                        <div class="luxury-card rounded-2xl p-7 bg-cream-50">
+                        <div class="luxury-card rounded-2xl p-7 bg-white">
                             <div class="w-10 h-10 rounded-xl bg-stone-950 flex items-center justify-center mb-6">
                                 <svg class="w-4.5 h-4.5 text-gold-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
-                            <h3 class="text-lg font-serif text-stone-900 mb-2">Pay Only on Success</h3>
-                            <p class="text-stone-500 text-[14px] leading-relaxed">No subscriptions. No setup fees. You're charged only when we confirm your table.</p>
+                            <h3 class="text-lg font-serif text-stone-900 mb-2">You Only Pay When It Works</h3>
+                            <p class="text-stone-500 text-[14px] leading-relaxed">$12 per confirmed reservation. If we don't get you the table, you don't pay anything. No subscriptions, no monthly fees.</p>
                         </div>
                     </div>
                 </div>
@@ -421,40 +485,41 @@
         </section>
 
         <!-- ═══ PRICING ═══ -->
-        <section id="pricing" class="py-28 sm:py-36 bg-cream-100/50">
-            <div class="max-w-4xl mx-auto px-6">
+        <section id="pricing" class="py-28 sm:py-36 bg-white relative grain">
+            <div class="max-w-4xl mx-auto px-6 relative z-10">
                 <div class="text-center mb-18 reveal">
-                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Investment</p>
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Pricing</p>
                     <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight mb-4">
-                        Transparent, <span class="italic">simple</span>
+                        Simple. <span class="italic">No surprises.</span>
                     </h2>
-                    <p class="text-stone-400 text-lg">No subscriptions. No hidden fees. Just confirmed tables.</p>
+                    <p class="text-stone-400 text-lg max-w-md mx-auto">Pay when we confirm your table. That's the whole model.</p>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-16">
                     <!-- Per booking -->
-                    <div class="reveal rounded-2xl border border-stone-200 bg-white p-10 text-center">
+                    <div class="reveal rounded-2xl border border-stone-200 bg-cream-50 p-10 text-center">
                         <h3 class="text-[11px] font-semibold text-stone-400 tracking-[0.2em] uppercase mb-6">Per Reservation</h3>
-                        <div class="mb-8">
+                        <div class="mb-2">
                             <span class="text-6xl font-serif text-stone-900">$12</span>
                         </div>
+                        <p class="text-stone-400 text-sm mb-8">per confirmed booking</p>
                         <ul class="text-stone-500 text-[14px] space-y-4 mb-10 text-left">
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                Charged only on confirmed bookings
+                                Charged only if we get the table
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                Drop sniping + cancellation monitoring
+                                Drop booking + cancellation alerts
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                Instant SMS confirmation
+                                SMS confirmation instantly
                             </li>
                         </ul>
                         <button @click="openAuth()"
@@ -465,24 +530,25 @@
                     <!-- 5-pack -->
                     <div class="reveal rounded-2xl bg-stone-950 p-10 text-center relative overflow-hidden" style="transition-delay: 0.1s;">
                         <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent"></div>
-                        <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-[0.1em] uppercase" style="background: rgba(197,163,85,0.15); color: #D4B978;">Best Value</div>
+                        <div class="absolute top-4 right-4 px-2.5 py-1 rounded-md text-[10px] font-bold tracking-[0.1em] uppercase" style="background: rgba(197,163,85,0.15); color: #D4B978;">Most Popular</div>
                         <h3 class="text-[11px] font-semibold text-white/35 tracking-[0.2em] uppercase mb-6">5 Pack</h3>
-                        <div class="mb-8">
+                        <div class="mb-2">
                             <span class="text-6xl font-serif text-white">$10</span>
                             <span class="text-white/30 ml-1 text-sm">/ each</span>
                         </div>
+                        <p class="text-white/30 text-sm mb-8">$50 for 5 reservations</p>
                         <ul class="text-white/45 text-[14px] space-y-4 mb-10 text-left">
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                <span class="text-white/60">Save $2 per booking</span>
+                                <span class="text-white/60">Save $2 per reservation</span>
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
                                     <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                 </span>
-                                <span class="text-white/60">Everything in Per Reservation</span>
+                                <span class="text-white/60">Everything in single &mdash; just cheaper</span>
                             </li>
                             <li class="flex items-center gap-3">
                                 <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
@@ -498,22 +564,24 @@
                         </button>
                     </div>
                 </div>
+                <!-- Reassurance -->
+                <p class="text-center text-stone-400 text-sm mt-10 reveal">No subscription. No monthly fees. No charge if we don't book your table.</p>
             </div>
         </section>
 
         <!-- ═══ RESTAURANTS ═══ -->
-        <section id="restaurants" class="py-28 sm:py-36 bg-white">
+        <section id="restaurants" class="py-28 sm:py-36 bg-cream-50">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-16 reveal">
-                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">The Collection</p>
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Restaurants</p>
                     <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight mb-4">
-                        Tables worth <span class="italic">every effort</span>
+                        The tables <span class="italic">everyone</span> wants
                     </h2>
-                    <p class="text-stone-400 text-base">Michelin stars. James Beard winners. The names everyone's after.</p>
+                    <p class="text-stone-400 text-base">Michelin stars. James Beard winners. The places your friends can't believe you got into.</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 reveal">
                     <template x-for="r in featuredRestaurants" :key="r.venue_id">
-                        <div class="rest-card rounded-xl overflow-hidden bg-cream-50 border border-stone-100 cursor-default">
+                        <div class="rest-card rounded-xl overflow-hidden bg-white border border-stone-100 cursor-default">
                             <div class="relative h-40 sm:h-48 overflow-hidden">
                                 <img :src="r.image_url" :alt="r.name"
                                     class="w-full h-full object-cover transition-transform duration-700"
@@ -530,22 +598,22 @@
                 <div class="text-center mt-14 reveal">
                     <button @click="openAuth()"
                         class="px-8 py-3.5 rounded-xl bg-stone-900 text-cream-100 hover:bg-stone-800 font-semibold text-sm transition-all tracking-wide">
-                        View All Restaurants &rarr;
+                        View All <span x-text="restaurantCount">104</span> Restaurants &rarr;
                     </button>
                 </div>
             </div>
         </section>
 
         <!-- ═══ FAQ ═══ -->
-        <section id="faq" class="py-28 sm:py-36 bg-cream-100/50">
+        <section id="faq" class="py-28 sm:py-36 bg-white">
             <div class="max-w-3xl mx-auto px-6">
                 <div class="text-center mb-16 reveal">
-                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Questions</p>
-                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight">Frequently asked</h2>
+                    <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">FAQ</p>
+                    <h2 class="text-4xl sm:text-5xl font-serif text-stone-900 leading-tight">Common questions</h2>
                 </div>
                 <div class="space-y-3 reveal">
                     <template x-for="(faq, i) in faqs" :key="i">
-                        <div class="rounded-xl border bg-white overflow-hidden transition-all"
+                        <div class="rounded-xl border bg-cream-50 overflow-hidden transition-all"
                              :class="faq.open ? 'border-gold-300/30 shadow-sm' : 'border-stone-200'">
                             <button @click="faq.open = !faq.open"
                                 class="w-full px-6 py-5 flex items-center justify-between text-left group">
@@ -574,13 +642,13 @@
                 <h2 class="text-4xl sm:text-5xl font-serif text-white leading-tight mb-6">
                     Stop refreshing.<br><span class="italic gold-text">Start dining.</span>
                 </h2>
-                <p class="text-white/30 text-lg mb-12 max-w-md mx-auto">Join New Yorkers who never miss a reservation again.</p>
+                <p class="text-white/30 text-lg mb-12 max-w-md mx-auto">The next time your friends ask how you got in, you can just smile.</p>
                 <button @click="openAuth()"
                     class="px-10 py-4 rounded-lg font-semibold text-[15px] transition-all shadow-lg shadow-gold-500/10"
                     style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
-                    Reserve Your Access &rarr;
+                    Get Started &rarr;
                 </button>
-                <p class="text-white/15 text-xs mt-6 tracking-wide">Only $12 per confirmed reservation. No subscription.</p>
+                <p class="text-white/15 text-xs mt-6 tracking-wide">$12 per confirmed reservation. Only charged when we get the table.</p>
             </div>
         </section>
     </main>
@@ -593,7 +661,7 @@
             <span class="text-white/10">|</span>
             <a href="/privacy" class="text-white/15 text-xs hover:text-white/30 transition-colors">Privacy</a>
         </div>
-        <p class="text-white/10 text-xs mt-4">NYC's finest reservations, automated.</p>
+        <p class="text-white/10 text-xs mt-4">&copy; 2025 tablepass</p>
     </footer>
 
     <!-- ═══ AUTH MODAL ═══ -->
@@ -731,12 +799,12 @@
             },
 
             faqs: [
-                { q: 'How does tablepass actually book my reservation?', a: 'When a restaurant releases new reservations (usually at a specific time each day), our system submits your booking request within milliseconds. We connect to your Resy account and book on your behalf faster than any human could.', open: false },
-                { q: 'Do I need a Resy account?', a: 'Yes. tablepass books through Resy and OpenTable, so you need an active account on the relevant platform. After signing up, you\'ll link your credentials securely.', open: false },
-                { q: 'What if the reservation doesn\'t go through?', a: 'You\'re only charged when we successfully confirm a reservation. If we can\'t book it, you pay nothing. We also monitor for cancellations, so we keep trying even after the initial drop.', open: false },
-                { q: 'Which restaurants do you support?', a: 'We support NYC\'s most competitive restaurants on Resy and OpenTable, including Carbone, Torrisi, Don Angie, 4 Charles Prime Rib, Atomix, and over 100 more. We\'re adding new restaurants regularly.', open: false },
-                { q: 'Can I cancel after a reservation is booked?', a: 'Once we book a reservation, it\'s yours on Resy. You can cancel directly through Resy following the restaurant\'s cancellation policy. The tablepass fee is non-refundable once the booking is confirmed.', open: false },
-                { q: 'Is my account information safe?', a: 'Absolutely. We use encrypted connections and never store your password in plain text. Your credentials are used solely to make bookings on your behalf — nothing more.', open: false },
+                { q: 'How does this actually work?', a: 'Restaurants release reservations at specific times (usually midnight or 9 AM). Our system monitors these drops and submits your booking within milliseconds of them going live. We also watch for cancellations 24/7 and grab those too. The reservation goes directly into your Resy or OpenTable account.', open: false },
+                { q: 'Do I need a Resy or OpenTable account?', a: 'Yes. We book directly on your account, so the reservation shows up under your name. You link your credentials once (encrypted and secure), and we handle the rest.', open: false },
+                { q: 'What if you can\'t get the reservation?', a: 'You don\'t pay. We only charge $12 (or $10 with the 5-pack) when we successfully confirm a table. If we can\'t book it, it costs you nothing.', open: false },
+                { q: 'Which restaurants do you cover?', a: 'Over 100 of the hardest-to-book restaurants in NYC on both Resy and OpenTable. Carbone, Torrisi, Don Angie, 4 Charles, Atomix, and many more. We add new restaurants regularly.', open: false },
+                { q: 'Can I cancel a reservation after it\'s booked?', a: 'Yes. Since the reservation is on your Resy or OpenTable account, you cancel it the same way you normally would, following the restaurant\'s cancellation policy. The tablepass fee is non-refundable once confirmed.', open: false },
+                { q: 'Is my account information safe?', a: 'Yes. We use encrypted connections and never store your password in plain text. Your credentials are used solely to submit reservations on your behalf.', open: false },
             ],
 
             async init() {

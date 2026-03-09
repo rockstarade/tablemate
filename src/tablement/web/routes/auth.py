@@ -167,26 +167,24 @@ async def verify_otp(request: Request, body: OtpVerifyRequest):
                 if referrer and referrer["id"] != user_id:
                     referrer_gifts = referrer.get("gifts_remaining", 0)
                     if referrer_gifts > 0:
-                        # Deduct a gift from referrer
+                        # Deduct a referral slot from referrer
                         await db.decrement_gifts(referrer["id"])
-                        # Give new user 1 free credit
-                        await db.add_credits(user_id, 1)
-                        # Track who referred whom
-                        await db.upsert_profile(user_id, referred_by=referrer["id"])
+                        # Enable 50% off first reservation for new user
+                        await db.upsert_profile(user_id, referred_by=referrer["id"], referral_discount=True)
                         # Audit trail
                         await db.create_transaction(
                             user_id=user_id,
-                            type="gift_received",
+                            type="referral_received",
                             amount_cents=0,
-                            credits_delta=1,
-                            description=f"Referral gift from {ref_code}",
+                            credits_delta=0,
+                            description=f"50% off first reservation from {ref_code}",
                         )
                         await db.create_transaction(
                             user_id=referrer["id"],
-                            type="gift_sent",
+                            type="referral_sent",
                             amount_cents=0,
                             credits_delta=0,
-                            description=f"Gift sent to new user (code {ref_code})",
+                            description=f"Referral discount sent to new user (code {ref_code})",
                         )
                         logger.info(
                             "Referral redeemed: %s used code %s — referrer %s gifts now %d",
@@ -427,6 +425,7 @@ async def me(user_id: str = Depends(get_user_id)):
         stripe_linked=bool(profile.get("stripe_customer_id")),
         referral_code=profile.get("referral_code"),
         gifts_remaining=profile.get("gifts_remaining", 0),
+        referral_discount=bool(profile.get("referral_discount", False)),
     )
 
 

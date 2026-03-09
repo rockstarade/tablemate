@@ -1435,16 +1435,16 @@
                     <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
                 </div>
                 <div>
-                    <h2 class="text-lg font-bold" style="color: var(--c1);">Gift a Reservation</h2>
-                    <p class="text-sm" style="color: var(--c3);">Share with friends</p>
+                    <h2 class="text-lg font-bold" style="color: var(--c1);">Refer a Friend</h2>
+                    <p class="text-sm" style="color: var(--c3);">They get 50% off</p>
                 </div>
             </div>
             <p class="text-sm mb-6" style="color: var(--c2);">
                 <template x-if="giftsRemaining > 0">
-                    <span>You have <span class="font-bold" style="color: var(--accent);" x-text="giftsRemaining + ' free reservation' + (giftsRemaining !== 1 ? 's' : '')"></span> to give to friends. They get a free booking when they sign up with your code.</span>
+                    <span>You have <span class="font-bold" style="color: var(--accent);" x-text="giftsRemaining + ' referral' + (giftsRemaining !== 1 ? 's' : '')"></span> to share. Friends get 50% off their first reservation when they sign up with your code.</span>
                 </template>
                 <template x-if="giftsRemaining === 0">
-                    <span style="color: var(--c3);">You've used all your gifts. Thanks for spreading the word!</span>
+                    <span style="color: var(--c3);">You've used all your referrals. Thanks for spreading the word!</span>
                 </template>
             </p>
             <div class="flex items-center gap-3 rounded-xl p-4 mb-3" style="background: var(--bg-input); border: 1px solid var(--border);">
@@ -1455,6 +1455,14 @@
                 </button>
             </div>
             <p class="text-xs" style="color: var(--c4);">Or share: <span style="color: var(--c2);">tablepass.nyc/r/<span x-text="referralCode"></span></span></p>
+            <template x-if="referralDiscount">
+                <div class="flex items-center gap-2 mt-4 px-4 py-3 rounded-xl"
+                     style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                    <span class="text-sm font-medium" style="color: var(--accent);">
+                        50% off your next reservation
+                    </span>
+                </div>
+            </template>
         </div>
     </div>
 
@@ -1710,6 +1718,7 @@
             referralCode: '',
             referralCopied: false,
             giftsRemaining: 0,
+            referralDiscount: false,
 
             // Theme
             theme: localStorage.getItem('resr_theme') || 'dark',
@@ -1880,6 +1889,7 @@
                             this.referralCode = data.referral_code;
                         }
                         this.giftsRemaining = data.gifts_remaining || 0;
+                        this.referralDiscount = data.referral_discount || false;
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
             },

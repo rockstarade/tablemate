@@ -291,8 +291,9 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
 
     Priority:
     1. If user has credits > 0 → deduct 1, no Stripe charge
-    2. If user has no credits → charge $12 to saved card
-    3. If no card on file → log warning (reservation already confirmed)
+    2. If user has referral_discount → charge $6 (50% off), disable flag
+    3. No credits or discount → charge $12 to saved card
+    4. No card on file → log warning (reservation already confirmed)
 
     Returns dict with charge details for logging.
     """
@@ -313,7 +314,17 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
         )
         return {"method": "credit", "remaining": credits_remaining}
 
-    # No credits — charge card
+    # Check for referral discount (50% off first reservation)
+    profile = await db.get_profile(user_id)
+    has_referral_discount = (profile or {}).get("referral_discount", False)
+
+    # Determine charge amount
+    if has_referral_discount:
+        charge_amount = SINGLE_RESERVATION_CENTS // 2  # $6 (50% off)
+    else:
+        charge_amount = SINGLE_RESERVATION_CENTS  # $12 (full price)
+
+    # Need Stripe to charge card
     stripe_key = os.environ.get("STRIPE_SECRET_KEY", "")
     if not stripe_key:
         logger.warning("No STRIPE_SECRET_KEY — skipping charge for %s", reservation_id)
@@ -321,7 +332,6 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
 
     stripe.api_key = stripe_key
 
-    profile = await db.get_profile(user_id)
     customer_id = (profile or {}).get("stripe_customer_id")
     pm = await db.get_default_payment_method(user_id)
 
@@ -334,39 +344,54 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
             user_id=user_id,
             reservation_id=reservation_id,
             type="charge",
-            amount_cents=SINGLE_RESERVATION_CENTS,
+            amount_cents=charge_amount,
             credits_delta=0,
             description="Reservation charge UNPAID — no card on file",
         )
         return {"method": "unpaid", "reason": "no_card"}
 
     try:
+        discount_label = " (50% referral discount)" if has_referral_discount else ""
         payment_intent = stripe.PaymentIntent.create(
-            amount=SINGLE_RESERVATION_CENTS,
+            amount=charge_amount,
             currency="usd",
             customer=customer_id,
             payment_method=pm["stripe_payment_method_id"],
             off_session=True,
             confirm=True,
-            description=f"TablePass — Reservation {reservation_id[:8]}",
+            description=f"TablePass — Reservation {reservation_id[:8]}{discount_label}",
             metadata={
                 "tablement_user_id": user_id,
                 "reservation_id": reservation_id,
+                "referral_discount": str(has_referral_discount),
             },
         )
 
         if payment_intent.status == "succeeded":
+            # Disable referral discount after successful use
+            if has_referral_discount:
+                await db.upsert_profile(user_id, referral_discount=False)
+
+            charge_desc = f"Reservation charge — ${charge_amount / 100:.0f}"
+            if has_referral_discount:
+                charge_desc += " (50% referral discount)"
+            tx_type = "referral_discount" if has_referral_discount else "charge"
+
             await db.create_transaction(
                 user_id=user_id,
                 reservation_id=reservation_id,
-                type="charge",
-                amount_cents=SINGLE_RESERVATION_CENTS,
+                type=tx_type,
+                amount_cents=charge_amount,
                 credits_delta=0,
                 stripe_payment_intent_id=payment_intent.id,
-                description="Reservation charge — $12",
+                description=charge_desc,
             )
-            logger.info("Charged $12 to user %s for reservation %s", user_id, reservation_id)
-            return {"method": "card", "amount": SINGLE_RESERVATION_CENTS}
+            logger.info(
+                "Charged $%d to user %s for reservation %s%s",
+                charge_amount // 100, user_id, reservation_id,
+                " (referral discount)" if has_referral_discount else "",
+            )
+            return {"method": "referral_discount" if has_referral_discount else "card", "amount": charge_amount}
         else:
             logger.warning(
                 "Payment intent %s status=%s for reservation %s",
@@ -380,7 +405,7 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
             user_id=user_id,
             reservation_id=reservation_id,
             type="charge",
-            amount_cents=SINGLE_RESERVATION_CENTS,
+            amount_cents=charge_amount,
             credits_delta=0,
             description=f"Reservation charge FAILED — {e.user_message}",
         )
