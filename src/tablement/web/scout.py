@@ -640,6 +640,9 @@ class ScoutOrchestrator:
                     timeout = compensated_drop + timedelta(minutes=timeout_minutes)
                     poll_count = 0
                     party_size = settings.get("default_party_size", DEFAULT_PARTY_SIZE)
+                    # Track drop observations per target_date (0→N transition)
+                    _drop_observed: set[str] = set()
+                    _poll_start_mono = time.monotonic()
 
                     try:
                         while self._now_et() < timeout and self._running:
@@ -668,6 +671,39 @@ class ScoutOrchestrator:
                                         key, venue_id, target_date,
                                         len(slots or []), slot_data, now_et,
                                     )
+
+                                    # Record drop observation (first 0→N transition)
+                                    if slot_data and target_date not in _drop_observed:
+                                        _drop_observed.add(target_date)
+                                        actual_drop = now_et
+                                        offset_ms = (actual_drop - compensated_drop).total_seconds() * 1000
+                                        slot_types = list({s.get("type", "") for s in slot_data if s.get("type")})
+                                        slot_times = sorted(s["time"] for s in slot_data if s.get("time"))
+                                        avg_interval = ((time.monotonic() - _poll_start_mono) * 1000) / max(poll_count, 1)
+                                        observation = {
+                                            "venue_id": venue_id,
+                                            "venue_name": venue_name,
+                                            "target_date": target_date,
+                                            "expected_drop_at": compensated_drop.isoformat(),
+                                            "actual_drop_at": actual_drop.isoformat(),
+                                            "offset_ms": round(offset_ms, 1),
+                                            "slots_found": len(slot_data),
+                                            "slot_types": slot_types,
+                                            "first_slot_time": slot_times[0] if slot_times else None,
+                                            "last_slot_time": slot_times[-1] if slot_times else None,
+                                            "poll_attempt": poll_count,
+                                            "poll_interval_ms": round(avg_interval, 1),
+                                            "resy_clock_offset_ms": round(resy_offset * 1000, 1),
+                                            "source": "scout",
+                                        }
+                                        try:
+                                            await db.insert_drop_observation(observation)
+                                            logger.info(
+                                                "Drop scout %s: DROP DETECTED — offset: %.1fms, %d slots for %s",
+                                                venue_name, offset_ms, len(slot_data), target_date,
+                                            )
+                                        except Exception as obs_err:
+                                            logger.warning("Drop observation insert failed: %s", obs_err)
 
                                     # Broadcast drop to subscribed snipes
                                     if slot_data and venue_id in self._drop_events:
@@ -744,6 +780,9 @@ class ScoutOrchestrator:
                     timeout = drop_time + timedelta(minutes=timeout_minutes)
                     poll_count = 0
                     party_size = settings.get("default_party_size", DEFAULT_PARTY_SIZE)
+                    # Track drop observations per target_date (0→N transition)
+                    _late_drop_observed: set[str] = set()
+                    _late_poll_start_mono = time.monotonic()
 
                     scout_user_id = f"scout-{venue_id}-drop-late"
                     client = ResyApiClient(scout=True, user_id=scout_user_id, local_address=local_ip)
@@ -774,6 +813,39 @@ class ScoutOrchestrator:
                                         key, venue_id, target_date,
                                         len(slots or []), slot_data, now_et,
                                     )
+
+                                    # Record drop observation (first 0→N transition)
+                                    if slot_data and target_date not in _late_drop_observed:
+                                        _late_drop_observed.add(target_date)
+                                        actual_drop = now_et
+                                        offset_ms = (actual_drop - drop_time).total_seconds() * 1000
+                                        slot_types = list({s.get("type", "") for s in slot_data if s.get("type")})
+                                        slot_times = sorted(s["time"] for s in slot_data if s.get("time"))
+                                        avg_interval = ((time.monotonic() - _late_poll_start_mono) * 1000) / max(poll_count, 1)
+                                        observation = {
+                                            "venue_id": venue_id,
+                                            "venue_name": venue_name,
+                                            "target_date": target_date,
+                                            "expected_drop_at": drop_time.isoformat(),
+                                            "actual_drop_at": actual_drop.isoformat(),
+                                            "offset_ms": round(offset_ms, 1),
+                                            "slots_found": len(slot_data),
+                                            "slot_types": slot_types,
+                                            "first_slot_time": slot_times[0] if slot_times else None,
+                                            "last_slot_time": slot_times[-1] if slot_times else None,
+                                            "poll_attempt": poll_count,
+                                            "poll_interval_ms": round(avg_interval, 1),
+                                            "resy_clock_offset_ms": 0.0,  # no calibration on late start
+                                            "source": "scout_late",
+                                        }
+                                        try:
+                                            await db.insert_drop_observation(observation)
+                                            logger.info(
+                                                "Drop scout %s (late): DROP DETECTED — offset: %.1fms, %d slots for %s",
+                                                venue_name, offset_ms, len(slot_data), target_date,
+                                            )
+                                        except Exception as obs_err:
+                                            logger.warning("Drop observation insert failed (late): %s", obs_err)
 
                                     # Broadcast drop to subscribed snipes
                                     if slot_data and venue_id in self._drop_events:

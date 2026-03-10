@@ -1503,6 +1503,11 @@ async def _cancellation_snipe_loop(
     rest_config = CANCEL_REST_HOT if poll_tier == "hot" else CANCEL_REST_WARM
     burst_duration = random.uniform(*burst_config)
 
+    # Consecutive failure tracking — stop monitor after sustained errors
+    _consecutive_failures = 0
+    _MAX_CONSECUTIVE_FAILURES = 100  # ~5-15 min of back-to-back failures
+    _last_successful_poll = time_module.monotonic()
+
     try:
         while True:
             # ---- 1. Check stop conditions ----
@@ -1574,6 +1579,10 @@ async def _cancellation_snipe_loop(
                     slots = await scout.find_slots(
                         config.venue_id, day_str, config.party_size, fast=True,
                     )
+
+                # Successful poll — reset failure counter
+                _consecutive_failures = 0
+                _last_successful_poll = time_module.monotonic()
 
                 # Update attempt count (non-blocking)
                 asyncio.create_task(db.update_reservation(reservation_id, attempts=attempt))
@@ -1650,10 +1659,29 @@ async def _cancellation_snipe_loop(
 
                                 await asyncio.sleep(random.uniform(0.1, 0.5))
 
-                                result = await booker.dual_book(
-                                    book_token=book_token,
-                                    payment_method_id=pm.id,
-                                )
+                                try:
+                                    result = await booker.dual_book(
+                                        book_token=book_token,
+                                        payment_method_id=pm.id,
+                                    )
+                                except httpx.HTTPStatusError as book_http_err:
+                                    if book_http_err.response.status_code == 404:
+                                        logger.warning(
+                                            "Cancel snipe %s: book 404 — re-fetching details for fresh token",
+                                            reservation_id,
+                                        )
+                                        fresh_token = await booker.get_details_fast(
+                                            config_id=selected.config.token,
+                                            day=day_str,
+                                            party_size=config.party_size,
+                                        )
+                                        await asyncio.sleep(random.uniform(0.05, 0.2))
+                                        result = await booker.dual_book(
+                                            book_token=fresh_token,
+                                            payment_method_id=pm.id,
+                                        )
+                                    else:
+                                        raise
                         finally:
                             ip_pool.release(book_ip_key)
 
@@ -1736,16 +1764,33 @@ async def _cancellation_snipe_loop(
                         break
 
             except httpx.HTTPStatusError as e:
+                _consecutive_failures += 1
                 if e.response.status_code == 429:
                     cancel_backoff = min(max(cancel_backoff * 2, 1.0), 30.0)
-                    logger.warning("Cancel snipe %s: 429 rate limited — backing off %.1fs", reservation_id, cancel_backoff)
+                    logger.warning("Cancel snipe %s: 429 rate limited — backing off %.1fs (failures: %d)", reservation_id, cancel_backoff, _consecutive_failures)
                     await asyncio.sleep(cancel_backoff)
                 else:
-                    logger.warning("Cancel snipe %s poll %d: HTTP %d", reservation_id, attempt, e.response.status_code)
+                    logger.warning("Cancel snipe %s poll %d: HTTP %d (failures: %d)", reservation_id, attempt, e.response.status_code, _consecutive_failures)
                     cancel_backoff = 0.0
             except Exception as e:
-                logger.warning("Cancel snipe %s poll %d failed: %s", reservation_id, attempt, e)
+                _consecutive_failures += 1
+                logger.warning("Cancel snipe %s poll %d failed: %s (failures: %d)", reservation_id, attempt, e, _consecutive_failures)
                 cancel_backoff = 0.0
+
+            # ---- Check consecutive failure limit ----
+            if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                minutes_since_success = (time_module.monotonic() - _last_successful_poll) / 60
+                error_msg = (
+                    f"Stopped after {_consecutive_failures} consecutive failures "
+                    f"({minutes_since_success:.0f}m since last successful poll)"
+                )
+                logger.warning("Cancel snipe %s: %s", reservation_id, error_msg)
+                await db.update_reservation(
+                    reservation_id, status="failed", error=error_msg,
+                )
+                await _cleanup_claims(reservation_id, "failed")
+                job.broadcast("snipe_result", {"success": False, "error": error_msg})
+                break
 
             # ---- 6. Check if burst exceeded → rest period ----
             elapsed_burst = time_module.monotonic() - burst_start
@@ -2188,6 +2233,53 @@ async def _snipe_loop(
                         attempts=attempt,
                         elapsed_seconds=time_module.monotonic() - start,
                     ))
+                except httpx.HTTPStatusError as book_http_err:
+                    status = book_http_err.response.status_code
+                    logger.warning(
+                        "Book HTTP %d for slot %s: %s",
+                        status, booked_slot.date.start, book_http_err,
+                    )
+                    # 404 = stale book_token. Re-fetch details for a fresh token and retry once.
+                    if status == 404:
+                        logger.info(
+                            "Book 404 — re-fetching details for slot %s (token may have expired)",
+                            booked_slot.date.start,
+                        )
+                        try:
+                            fresh_token = await client.get_details_fast(
+                                config_id=booked_slot.config.token,
+                                day=day_str,
+                                party_size=config.party_size,
+                            )
+                            if fresh_token:
+                                logger.info(
+                                    "RETRY BOOKING with fresh token: slot=%s book_token=%s",
+                                    booked_slot.date.start, fresh_token[:20],
+                                )
+                                retry_result = await client.dual_book(
+                                    book_token=fresh_token,
+                                    payment_method_id=payment_id,
+                                )
+                                logger.info(
+                                    "RETRY BOOKING SUCCESS: slot=%s path=%s resy_token=%s",
+                                    booked_slot.date.start,
+                                    retry_result.booking_path or "unknown",
+                                    retry_result.resy_token[:20] if retry_result.resy_token else "?",
+                                )
+                                return _stamp_intel(SnipeResult(
+                                    success=True,
+                                    resy_token=retry_result.resy_token,
+                                    booking_path=retry_result.booking_path,
+                                    slot=booked_slot,
+                                    attempts=attempt,
+                                    elapsed_seconds=time_module.monotonic() - start,
+                                ))
+                        except Exception as retry_err:
+                            logger.warning(
+                                "Retry with fresh token also failed for %s: %s",
+                                booked_slot.date.start, retry_err,
+                            )
+                    continue
                 except Exception as book_err:
                     logger.warning(
                         "Book failed for slot %s: %s, trying next...",

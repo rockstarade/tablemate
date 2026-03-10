@@ -76,15 +76,9 @@ async def lifespan(app: FastAPI):
         logger.warning("APScheduler not installed — scheduled jobs disabled")
         app.state.scheduler = None
 
-    # Start Drop Intelligence collector
-    try:
-        from tablement.web.drop_intel import drop_intel_collector
-        await drop_intel_collector.start(app)
-        app.state.drop_intel = drop_intel_collector
-        logger.info("Drop Intelligence collector started")
-    except Exception as e:
-        logger.warning("Drop Intelligence collector failed to start: %s", e)
-        app.state.drop_intel = None
+    # Drop Intelligence collector removed — scouts now handle drop observation recording.
+    # Historical data in drop_observations table is preserved.
+    app.state.drop_intel = None
 
     # Start Scout orchestrator (continuous restaurant monitoring)
     try:
@@ -111,10 +105,6 @@ async def lifespan(app: FastAPI):
     app.state.jobs.cancel_all()
     if app.state.scheduler:
         app.state.scheduler.shutdown(wait=False)
-
-    # Stop Drop Intelligence collector
-    if getattr(app.state, "drop_intel", None):
-        await app.state.drop_intel.stop()
 
     # Stop Scout orchestrator
     if getattr(app.state, "scout", None):
