@@ -1292,7 +1292,7 @@ async def _run_snipe(
                         "keeping original result): %s", verify_err,
                     )
 
-            # Update DB with result
+            # Update DB with result — retry without booking_path if column missing
             is_dry_run_success = dry_run and result.success
             update_fields = {
                 "status": "dry_run" if is_dry_run_success else ("confirmed" if result.success else "failed"),
@@ -1305,7 +1305,15 @@ async def _run_snipe(
                 update_fields["error"] = result.error
             if result.booking_path:
                 update_fields["booking_path"] = result.booking_path
-            await db.update_reservation(reservation_id, **update_fields)
+            try:
+                await db.update_reservation(reservation_id, **update_fields)
+            except Exception as db_err:
+                logger.warning("DB update with booking_path failed (%s), retrying without", db_err)
+                update_fields.pop("booking_path", None)
+                try:
+                    await db.update_reservation(reservation_id, **update_fields)
+                except Exception as db_err2:
+                    logger.error("DB update FAILED completely for %s: %s", reservation_id, db_err2)
 
             # Clean up slot claims on terminal state
             await _cleanup_claims(reservation_id, update_fields["status"])
@@ -1657,14 +1665,38 @@ async def _cancellation_snipe_loop(
                         )
 
                         # SUCCESS — update DB and cancel group
-                        await db.update_reservation(
-                            reservation_id,
-                            status="confirmed",
-                            resy_token=result.resy_token,
-                            booking_path=result.booking_path,
-                            attempts=attempt,
-                        )
-                        await _cleanup_claims(reservation_id, "confirmed")
+                        # Wrap DB update so a missing column never blocks
+                        # post-booking steps (notify, cancel group, charge).
+                        try:
+                            await db.update_reservation(
+                                reservation_id,
+                                status="confirmed",
+                                resy_token=result.resy_token,
+                                booking_path=result.booking_path,
+                                attempts=attempt,
+                            )
+                        except Exception as db_err:
+                            logger.warning(
+                                "Cancel snipe %s: DB update with booking_path failed (%s), retrying without",
+                                reservation_id, db_err,
+                            )
+                            try:
+                                await db.update_reservation(
+                                    reservation_id,
+                                    status="confirmed",
+                                    resy_token=result.resy_token,
+                                    attempts=attempt,
+                                )
+                            except Exception as db_err2:
+                                logger.error(
+                                    "Cancel snipe %s: DB update FAILED completely: %s",
+                                    reservation_id, db_err2,
+                                )
+
+                        try:
+                            await _cleanup_claims(reservation_id, "confirmed")
+                        except Exception:
+                            pass
 
                         job.broadcast("snipe_result", {
                             "success": True,
@@ -1689,7 +1721,10 @@ async def _cancellation_snipe_loop(
 
                         # Auto-cancel all other reservations in the group
                         if group_id:
-                            await _cancel_group_members(app, group_id, reservation_id)
+                            try:
+                                await _cancel_group_members(app, group_id, reservation_id)
+                            except Exception as grp_err:
+                                logger.error("Cancel group failed: %s", grp_err)
 
                         # Capture Stripe payment
                         snipe_result = SnipeResult(
