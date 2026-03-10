@@ -133,52 +133,18 @@ CANCEL_SLOWDOWN_EXTRA = (3, 8)      # add 3-8s to whatever tier interval
 
 
 async def _ensure_scout_for_venue(app, venue_id: int, venue_name: str = "") -> None:
-    """Auto-start a drop scout when 1+ snipes target the same venue.
+    """Auto-start a drop scout when snipes target a venue.
 
-    Even a single snipe benefits from a shared scout — it centralizes polling
-    into one stream per venue, saving EIP slots and reducing duplicate requests.
-    With multiple snipes, the scout broadcasts to all subscribers.
+    DISABLED: Lead snipe sharing replaces the need for a separate scout.
+    When multiple users snipe the same restaurant+date, the lead snipe
+    (position 0 in the SnipeQueue) polls find_slots and broadcasts to
+    followers. No extra EC2 IP needed for a scout process.
 
-    Also a no-op if a scout is already running (e.g. manually started from admin).
+    Scouts can still be started manually from the admin panel for
+    long-running monitoring use cases.
     """
-    scout = getattr(app.state, "scout", None)
-    if not scout:
-        return
-
-    # Check if scout already running — no-op
-    from tablement.web.scout import _task_key
-    key = _task_key(venue_id, "drop")
-    if key in scout._tasks and not scout._tasks[key].done():
-        logger.debug("Scout already running for venue %d", venue_id)
-        return
-
-    # Auto-start if 1+ active snipes for this venue
-    active_count = await db.count_active_snipes_for_venue(venue_id)
-    if active_count < 1:
-        logger.debug("No snipes for venue %d — no scout needed", venue_id)
-        return
-
-    # Look up curated restaurant for drop time config
-    curated = await db.get_curated_restaurant(venue_id)
-    config = {}
-    if curated:
-        venue_name = venue_name or curated.get("name", "")
-        if curated.get("drop_hour") is not None:
-            config["drop_hour"] = curated["drop_hour"]
-        if curated.get("drop_minute") is not None:
-            config["drop_minute"] = curated["drop_minute"]
-        if curated.get("drop_days_ahead"):
-            config["days_ahead"] = curated["drop_days_ahead"]
-    else:
-        config["drop_hour"] = 9
-        config["drop_minute"] = 0
-
-    try:
-        await scout.start_scout(venue_id, venue_name, campaign_type="drop", auto=True, **config)
-        logger.info("Auto-started drop scout for %s (%d) — %d snipes targeting this venue",
-                     venue_name or venue_id, venue_id, active_count)
-    except Exception as e:
-        logger.warning("Failed to auto-start scout for venue %d: %s", venue_id, e)
+    # Lead snipe sharing handles multi-user coordination — no auto-scout needed
+    return
 
 
 async def _maybe_stop_scout_for_venue(app, venue_id: int) -> None:
