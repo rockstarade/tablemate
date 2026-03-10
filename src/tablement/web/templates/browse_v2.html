@@ -1859,8 +1859,10 @@
             applyTheme() {
                 if (this.theme === 'dark') {
                     document.documentElement.classList.add('dark');
+                    document.body.style.background = '#0D0D0B';
                 } else {
                     document.documentElement.classList.remove('dark');
+                    document.body.style.background = '#FDFCFA';
                 }
                 localStorage.setItem('resr_theme', this.theme);
             },
