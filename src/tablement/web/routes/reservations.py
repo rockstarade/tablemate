@@ -1931,6 +1931,35 @@ async def _snipe_loop(
     drop_detected_at = None  # When slots first appeared
     backoff_seconds = 0.0  # Per-user 429 backoff
 
+    # --- LEAD SNIPE SHARING ---
+    # When multiple users snipe the same restaurant+date, only the lead
+    # (position 0, whoever created their reservation first) polls find_slots.
+    # Followers wait for the lead to broadcast the slot list, then skip
+    # straight to selection + booking. Saves EC2 IP exposure and API calls.
+    # On retry (booking failed), followers poll on their own — shared data
+    # is stale by then.
+    _shared_slots: list | None = None
+    if snipe_queue and reservation_id:
+        if not snipe_queue.is_lead(config.venue_id, day_str, reservation_id):
+            pos = snipe_queue.get_position(config.venue_id, day_str, reservation_id)
+            logger.info(
+                "Snipe %s: follower (position %d), waiting for lead to find slots",
+                reservation_id, pos + 1,
+            )
+            drop_event = snipe_queue.get_drop_event(config.venue_id, day_str)
+            try:
+                await asyncio.wait_for(drop_event.wait(), timeout=2.0)
+                _shared_slots = snipe_queue.get_shared_slots(config.venue_id, day_str)
+                logger.info(
+                    "Snipe %s: received %d slots from lead snipe",
+                    reservation_id, len(_shared_slots) if _shared_slots else 0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    "Snipe %s: lead didn't broadcast within 2s — falling back to own polling",
+                    reservation_id,
+                )
+
     while True:
         attempt += 1
         t0 = time_module.monotonic()
@@ -1948,12 +1977,24 @@ async def _snipe_loop(
             )
 
         try:
-            # Step 1: Find slots — coalesced to deduplicate when multiple snipes
-            # target the same venue. Uses direct client (19ms) for pre-drop polling.
-            slots = await _coalesced_find_slots(
-                client, config.venue_id, day_str, config.party_size,
-                fast=True, direct=pre_drop_poll,
-            )
+            # Step 1: Find slots
+            if _shared_slots is not None:
+                # First iteration: use slots broadcast by the lead snipe.
+                # No find_slots call needed — the lead already polled.
+                slots = _shared_slots
+                _shared_slots = None  # Clear so retries poll normally
+                logger.info(
+                    "Snipe %s: using %d shared slots from lead (skipping find_slots)",
+                    reservation_id, len(slots),
+                )
+            else:
+                # Normal polling: either we're the lead, or it's a retry
+                # after a failed booking attempt with shared data.
+                # Coalesced to deduplicate when multiple snipes poll simultaneously.
+                slots = await _coalesced_find_slots(
+                    client, config.venue_id, day_str, config.party_size,
+                    fast=True, direct=pre_drop_poll,
+                )
 
             # RECORD EVERY POLL — this is just a list.append(), ~0ms overhead
             if intel_buffer is not None:
@@ -2007,6 +2048,13 @@ async def _snipe_loop(
             if _multi_token_count > 0:
                 logger.info("*** MULTI-TOKEN DETECTED: %d time+type combos have multiple tokens ***",
                             _multi_token_count)
+
+            # --- LEAD BROADCASTS TO FOLLOWERS ---
+            # If we're the lead (position 0), share the slot list so followers
+            # skip their own find_slots call and jump straight to booking.
+            if snipe_queue and reservation_id:
+                if snipe_queue.is_lead(config.venue_id, day_str, reservation_id):
+                    snipe_queue.broadcast_slots(config.venue_id, day_str, slots)
 
             # Step 2: Select top matching slots for parallel booking
             top_matches = selector.select_top(

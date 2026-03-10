@@ -152,6 +152,10 @@ class SnipeQueue:
         self._queues: dict[tuple[int, str], list[dict]] = {}
         # (venue_id, target_date) → sorted list of entries
 
+        # Lead snipe sharing: lead polls find_slots, followers wait for broadcast
+        self._drop_events: dict[tuple[int, str], asyncio.Event] = {}
+        self._drop_slots: dict[tuple[int, str], list] = {}
+
     def register(
         self,
         venue_id: int,
@@ -193,6 +197,50 @@ class SnipeQueue:
         """Number of snipes competing for this venue+date."""
         return len(self._queues.get((venue_id, target_date), []))
 
+    def is_lead(
+        self, venue_id: int, target_date: str, reservation_id: str,
+    ) -> bool:
+        """True if this snipe is position 0 (first to fire)."""
+        return self.get_position(venue_id, target_date, reservation_id) == 0
+
+    def get_drop_event(
+        self, venue_id: int, target_date: str,
+    ) -> asyncio.Event:
+        """Get or create the shared drop event for this venue+date.
+
+        Followers wait on this event. The lead sets it when slots appear.
+        """
+        key = (venue_id, target_date)
+        if key not in self._drop_events:
+            self._drop_events[key] = asyncio.Event()
+        return self._drop_events[key]
+
+    def broadcast_slots(
+        self, venue_id: int, target_date: str, slots: list,
+    ) -> None:
+        """Lead found slots — store them and wake all followers.
+
+        Called by the lead snipe inside _snipe_loop the moment find_slots
+        returns non-empty. Followers read the shared slots via
+        get_shared_slots() and skip straight to selection + booking.
+        """
+        key = (venue_id, target_date)
+        self._drop_slots[key] = slots
+        event = self._drop_events.get(key)
+        if event:
+            event.set()
+        logger.info(
+            "Lead broadcast %d slots for venue %d on %s to %d followers",
+            len(slots), venue_id, target_date,
+            max(self.queue_size(venue_id, target_date) - 1, 0),
+        )
+
+    def get_shared_slots(
+        self, venue_id: int, target_date: str,
+    ) -> list:
+        """Read the slot list broadcast by the lead snipe."""
+        return self._drop_slots.get((venue_id, target_date), [])
+
     def unregister(
         self, venue_id: int, target_date: str, reservation_id: str,
     ) -> None:
@@ -204,6 +252,8 @@ class SnipeQueue:
         ]
         if not self._queues.get(key):
             self._queues.pop(key, None)
+            self._drop_events.pop(key, None)
+            self._drop_slots.pop(key, None)
 
     def get_all_queues(self) -> list[dict]:
         """Return all active queues for admin dashboard."""
