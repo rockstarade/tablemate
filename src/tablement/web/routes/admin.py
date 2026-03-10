@@ -1244,7 +1244,7 @@ async def check_conflicts(body: dict):
     venue_id = body.get("venue_id")
     target_date = body.get("target_date")
     preferred_time = body.get("preferred_time")  # HH:MM
-    window_minutes = body.get("window_minutes", 30)
+    window_minutes = body.get("window_minutes", 0)
 
     if not venue_id or not target_date:
         raise HTTPException(400, "venue_id and target_date required")
@@ -1260,8 +1260,8 @@ async def check_conflicts(body: dict):
         for claim in claims:
             claim_h, claim_m = map(int, claim["preferred_time"].split(":"))
             claim_minutes = claim_h * 60 + claim_m
-            # Check if windows overlap
-            claim_window = claim.get("window_minutes", 30)
+            # Exact time match only (no fuzzy window)
+            claim_window = claim.get("window_minutes", 0)
             max_window = max(window_minutes, claim_window)
             if abs(pref_minutes - claim_minutes) <= max_window:
                 conflicts.append(claim)
@@ -1294,7 +1294,7 @@ async def create_claim(body: dict):
         target_date=target_date,
         preferred_time=preferred_time,
         seating_type=body.get("seating_type", ""),
-        window_minutes=body.get("window_minutes", 30),
+        window_minutes=body.get("window_minutes", 0),
         reservation_id=body.get("reservation_id"),
     )
     return {"created": True, "claim": claim}

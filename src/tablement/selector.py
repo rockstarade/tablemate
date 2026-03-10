@@ -16,7 +16,7 @@ class SlotSelector:
     First match wins (highest priority preference takes precedence).
     """
 
-    def __init__(self, window_minutes: int = 30) -> None:
+    def __init__(self, window_minutes: int = 0) -> None:
         self.window_minutes = window_minutes
 
     def select(

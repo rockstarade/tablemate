@@ -354,10 +354,17 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
-                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick as many as you'd like &mdash; more options = better odds</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick up to 3 times &mdash; more options = better odds</p>
                             </div>
-                            <div x-show="selectedTimes.length > 0" class="px-2.5 py-1 rounded-full text-xs font-bold" style="background: var(--accent-soft); color: var(--accent);">
-                                <span x-text="selectedTimes.length"></span> time<span x-show="selectedTimes.length > 1">s</span>
+                            <div class="flex items-center gap-1.5">
+                                <template x-for="i in 3" :key="i">
+                                    <span class="w-2 h-2 rounded-full transition-all duration-200"
+                                        :style="i <= selectedTimes.length
+                                            ? 'background: var(--accent); box-shadow: 0 0 4px var(--accent-soft);'
+                                            : 'background: var(--border); opacity: 0.5;'"></span>
+                                </template>
+                                <span x-show="selectedTimes.length > 0" class="text-xs font-bold ml-1" style="color: var(--accent);"
+                                    x-text="selectedTimes.length + '/3'"></span>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -404,7 +411,7 @@
                             class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
                             style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
                             <span class="text-xs mt-0.5">&#x1F4A1;</span>
-                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting multiple times increases your chances of securing a table.</p>
+                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting up to 3 times increases your chances of securing a table.</p>
                         </div>
                     </div>
                 </template>
@@ -800,7 +807,9 @@
 
             timeStyles(tp) {
                 const sel = this.selectedTimes.includes(tp.time);
+                const maxed = this.selectedTimes.length >= 3 && !sel;
                 if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
+                if (maxed) return `background: var(--bg-input); color: var(--c4); border: 1px solid var(--border); opacity: 0.4; cursor: default;`;
                 if (tp.isHot) return `background: var(--amber-soft); color: var(--c1); border: 1px solid var(--amber-border);`;
                 return `background: var(--bg-input); color: var(--c2); border: 1px solid var(--border);`;
             },
@@ -811,6 +820,8 @@
                     this.claimWarning = null;
                     return;
                 }
+                // Max 3 time slots
+                if (this.selectedTimes.length >= 3) return;
                 // Check if slot is claimed by other users
                 if (this.slotClaims[timeStr] > 0) {
                     this.showClaimWarning(timeStr);
@@ -858,11 +869,13 @@
                 this.claimWarning = { time: timeStr, alternatives, count: this.slotClaims[timeStr] };
             },
             selectAlternative(timeStr) {
+                if (this.selectedTimes.length >= 3) return;
                 this.selectedTimes.push(timeStr);
                 this.selectedTimes.sort();
                 this.claimWarning = null;
             },
             forceSelectClaimed() {
+                if (this.selectedTimes.length >= 3) return;
                 if (this.claimWarning) {
                     this.selectedTimes.push(this.claimWarning.time);
                     this.selectedTimes.sort();

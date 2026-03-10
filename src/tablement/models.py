@@ -53,7 +53,7 @@ class SnipeConfig(BaseModel):
     time_preferences: list[TimePreference]
     drop_time: DropTime
     retry: RetryConfig = RetryConfig()
-    window_minutes: int = 30  # ±N minutes around preferred time
+    window_minutes: int = 0  # Exact time matching (no fuzzy window)
 
 
 # --- API Response Models ---

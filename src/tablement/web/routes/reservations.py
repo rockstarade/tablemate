@@ -366,6 +366,9 @@ async def create_reservation(
         if count >= 5:
             raise HTTPException(429, "Maximum 5 active cancellation monitors allowed")
 
+    if len(body.time_preferences) > 3:
+        raise HTTPException(400, "Maximum 3 time preferences allowed")
+
     # Build time_preferences and drop_time as JSON for DB
     time_prefs_json = [tp.model_dump() for tp in body.time_preferences]
     drop_time_json = body.drop_time.model_dump() if body.drop_time else None
@@ -434,6 +437,8 @@ async def create_batch_reservations(
 
     if not body.time_preferences:
         raise HTTPException(400, "At least one time preference is required")
+    if len(body.time_preferences) > 3:
+        raise HTTPException(400, "Maximum 3 time preferences allowed")
 
     # Validate: if any dates are unreleased (snipe mode), drop time must be in the future
     if body.drop_time:
