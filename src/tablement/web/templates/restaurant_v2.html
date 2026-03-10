@@ -522,7 +522,7 @@
     </main>
 
     <!-- ═══ FIXED BOTTOM CTA ═══ -->
-    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-4 pb-safe" style="background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
+    <div class="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl p-5 pb-safe" style="background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);" x-show="canSubmit" x-transition>
         <div class="max-w-2xl mx-auto">
 
             <!-- Email prompt (shows when user clicks "Get This Table" without saved email) -->
@@ -546,8 +546,8 @@
                             Book
                         </button>
                     </div>
-                    <button @click="skipEmail()" class="w-full text-center mt-2">
-                        <span class="text-[11px] font-medium" style="color: var(--c4);">Skip &mdash; don't notify me</span>
+                    <button @click="skipEmail()" class="w-full text-center mt-3 py-1.5">
+                        <span class="text-xs font-medium" style="color: var(--c4);">Skip &mdash; don't notify me</span>
                     </button>
                 </div>
             </template>

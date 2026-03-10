@@ -2238,7 +2238,7 @@
                         const r = this.reservations.find(r => r.id === id);
                         if (r) { r.status = 'cancelled'; r._live = false; }
                         if (this.eventSources[id]) { this.eventSources[id].close(); delete this.eventSources[id]; }
-                        this.showToast('Reservation cancelled', '&#10003;');
+                        this.showToast('Reservation cancelled', '✓');
                     }
                 } catch (e) { console.error('Cancel failed:', e); }
             },
@@ -2375,7 +2375,7 @@
                         res.status = 'confirmed';
                         res._liveMessage = '';
                         res.elapsed_seconds = data.elapsed_seconds || res.elapsed_seconds;
-                        this.showToast("You're in! Reservation confirmed.", '&#127881;');
+                        this.showToast("You're in! Reservation confirmed.", '🎉');
                     } else {
                         res.status = data.dry_run ? 'dry_run' : 'failed';
                         res.error = data.error;
@@ -2448,7 +2448,7 @@
                 if (!this.editNameValue.trim()) return;
                 this.userName = this.editNameValue.trim();
                 this.editingName = false;
-                this.showToast('Name updated', '&#10003;');
+                this.showToast('Name updated', '✓');
                 // Note: persists client-side only for now
             },
 
@@ -2582,7 +2582,7 @@
                     } else {
                         this.resyLinked = true;
                         this.showResyLink = false;
-                        this.showToast('Resy account linked!', '&#10003;');
+                        this.showToast('Resy account linked!', '✓');
                         if (this.pendingVenueId) {
                             const vid = this.pendingVenueId; this.pendingVenueId = null;
                             setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
@@ -2609,7 +2609,7 @@
                     if (!resp.ok) throw new Error(data.detail || 'Email verification failed');
                     this.resyLinked = true;
                     this.showResyLink = false;
-                    this.showToast('Resy account linked!', '&#10003;');
+                    this.showToast('Resy account linked!', '✓');
                     if (this.pendingVenueId) {
                         const vid = this.pendingVenueId; this.pendingVenueId = null;
                         setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
@@ -2630,7 +2630,7 @@
                     if (!resp.ok) throw new Error(data.detail || 'Failed to link Resy');
                     this.resyLinked = true;
                     this.showResyLink = false;
-                    this.showToast('Resy account linked!', '&#10003;');
+                    this.showToast('Resy account linked!', '✓');
                     if (this.pendingVenueId) {
                         const vid = this.pendingVenueId; this.pendingVenueId = null;
                         setTimeout(() => { window.location.href = `/restaurant/${vid}`; }, 800);
@@ -2659,7 +2659,7 @@
             },
 
             // ── Toast ──
-            showToast(message, icon = '&#10003;') {
+            showToast(message, icon = '✓') {
                 this.toast = { show: true, message, icon, exiting: false };
                 setTimeout(() => {
                     this.toast.exiting = true;
