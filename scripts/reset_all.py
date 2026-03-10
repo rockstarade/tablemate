@@ -1,4 +1,6 @@
-"""One-shot cleanup: cancel reservations, deactivate scouts, clear Resy creds, clear claims.
+"""Nuclear reset: delete ALL user data — profiles, reservations, claims, scouts, payments.
+
+Users will need to re-verify phone and re-link Resy on next visit.
 
 Run on server with:
     cd ~/tablement && .venv/bin/python scripts/reset_all.py
@@ -20,61 +22,77 @@ async def main():
     await init_supabase()
     svc = get_service_client()
 
-    # 1) Cancel all active reservations
-    print("=== Cancelling all active reservations ===")
-    resp = (
-        await svc.table("reservations")
-        .select("id,status,venue_name")
-        .in_("status", ["pending", "scheduled", "monitoring", "sniping"])
-        .execute()
-    )
-    print(f"  Found {len(resp.data)} active reservations")
+    # 1) Delete ALL reservations (not just active — everything)
+    print("=== Deleting ALL reservations ===")
+    resp = await svc.table("reservations").select("id,venue_name,status").execute()
+    print(f"  Found {len(resp.data)} reservations")
+    for r in resp.data:
+        print(f"  - {r.get('venue_name', '?')} ({r.get('status', '?')})")
     if resp.data:
         await (
             svc.table("reservations")
-            .update({"status": "cancelled", "error": "Admin reset"})
-            .in_("status", ["pending", "scheduled", "monitoring", "sniping"])
-            .execute()
-        )
-        for r in resp.data:
-            vname = r.get("venue_name", "?")
-            status = r.get("status", "?")
-            print(f"  - {vname} ({status}) -> cancelled")
-
-    # 2) Deactivate all scout campaigns
-    print("\n=== Deactivating all scout campaigns ===")
-    resp = await svc.table("scout_campaigns").select("*").execute()
-    print(f"  Found {len(resp.data)} campaigns")
-    if resp.data:
-        await (
-            svc.table("scout_campaigns")
-            .update({"active": False})
+            .delete()
             .neq("id", "00000000-0000-0000-0000-000000000000")
             .execute()
         )
-        for c in resp.data:
-            vname = c.get("venue_name", "?")
-            ctype = c.get("type", "?")
-            active = c.get("active", "?")
-            print(f"  - {vname} ({ctype}, was active={active}) -> deactivated")
+        print("  -> All deleted")
 
-    # 3) Clear all active slot claims
-    print("\n=== Cancelling all active slot claims ===")
-    resp = (
-        await svc.table("slot_claims").select("id").eq("status", "active").execute()
-    )
-    print(f"  Found {len(resp.data)} active claims")
+    # 2) Delete ALL slot claims
+    print("\n=== Deleting ALL slot claims ===")
+    resp = await svc.table("slot_claims").select("id").execute()
+    print(f"  Found {len(resp.data)} claims")
     if resp.data:
         await (
             svc.table("slot_claims")
-            .update({"status": "cancelled"})
-            .eq("status", "active")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
             .execute()
         )
-        print("  -> All cancelled")
+        print("  -> All deleted")
 
-    # 4) Clear Resy credentials from ALL profiles
-    print("\n=== Clearing Resy credentials from all profiles ===")
+    # 3) Delete ALL scout campaigns
+    print("\n=== Deleting ALL scout campaigns ===")
+    resp = await svc.table("scout_campaigns").select("id,venue_name,type").execute()
+    print(f"  Found {len(resp.data)} campaigns")
+    for c in resp.data:
+        print(f"  - {c.get('venue_name', '?')} ({c.get('type', '?')})")
+    if resp.data:
+        await (
+            svc.table("scout_campaigns")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
+        )
+        print("  -> All deleted")
+
+    # 4) Delete ALL payment methods
+    print("\n=== Deleting ALL payment methods ===")
+    resp = await svc.table("payment_methods").select("id").execute()
+    print(f"  Found {len(resp.data)} payment methods")
+    if resp.data:
+        await (
+            svc.table("payment_methods")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
+        )
+        print("  -> All deleted")
+
+    # 5) Delete ALL transactions
+    print("\n=== Deleting ALL transactions ===")
+    resp = await svc.table("transactions").select("id").execute()
+    print(f"  Found {len(resp.data)} transactions")
+    if resp.data:
+        await (
+            svc.table("transactions")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
+        )
+        print("  -> All deleted")
+
+    # 6) Delete ALL profiles
+    print("\n=== Deleting ALL profiles ===")
     resp = await svc.table("profiles").select("id,resy_email,credits").execute()
     print(f"  Found {len(resp.data)} profiles")
     for p in resp.data:
@@ -82,26 +100,38 @@ async def main():
         credits = p.get("credits", 0)
         pid = p["id"][:8]
         print(f"  - {pid}... (resy={email}, credits={credits})")
-
-    await (
-        svc.table("profiles")
-        .update(
-            {
-                "resy_email": None,
-                "resy_password_encrypted": None,
-                "resy_auth_token": None,
-                "resy_phone": None,
-                "resy_token_expires_at": None,
-            }
+    if resp.data:
+        await (
+            svc.table("profiles")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
         )
-        .neq("id", "00000000-0000-0000-0000-000000000000")
-        .execute()
-    )
-    print("  -> All Resy credentials cleared")
+        print("  -> All deleted")
+
+    # 7) Delete scout auxiliary data
+    print("\n=== Cleaning scout auxiliary tables ===")
+    for table_name in ["scout_events", "scout_snapshots", "scout_slot_sightings", "scout_errors"]:
+        try:
+            resp = await svc.table(table_name).select("id", count="exact").execute()
+            count = resp.count if resp.count is not None else len(resp.data)
+            if count > 0:
+                await (
+                    svc.table(table_name)
+                    .delete()
+                    .neq("id", "00000000-0000-0000-0000-000000000000")
+                    .execute()
+                )
+                print(f"  {table_name}: {count} rows deleted")
+            else:
+                print(f"  {table_name}: empty")
+        except Exception as e:
+            print(f"  {table_name}: skipped ({e})")
 
     print("\n" + "=" * 50)
-    print("DONE. All data wiped clean.")
-    print("Users will need to re-link Resy email + password on next visit.")
+    print("NUCLEAR RESET COMPLETE.")
+    print("All profiles, reservations, campaigns, claims, payments deleted.")
+    print("Users will need to re-verify phone number and re-link Resy.")
 
 
 if __name__ == "__main__":
