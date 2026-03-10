@@ -72,7 +72,10 @@ async def _cleanup_claims(reservation_id: str, terminal_status: str) -> None:
 
 
 # Pre-drop polling: start hammering find_slots() this many seconds BEFORE drop
-PRE_DROP_POLL_SECONDS = 2.0
+# Randomized per-snipe so competing users enter the polling window at slightly
+# different times, reducing correlation with other bots.
+PRE_DROP_POLL_MIN_SECONDS = 0.8
+PRE_DROP_POLL_MAX_SECONDS = 1.2
 # Polling interval range (jittered to avoid detection)
 PRE_DROP_POLL_MIN_MS = 40   # ~25 req/s at fastest
 PRE_DROP_POLL_MAX_MS = 60   # ~17 req/s at slowest, avg ~20 req/s
@@ -1091,8 +1094,12 @@ async def _run_snipe(
             except Exception as e:
                 logger.warning("Imperva pre-warm / latency check failed (non-critical): %s", e)
 
-            # Continue pinging until pre-drop polling window (randomized 6-11s intervals)
-            poll_entry = drop_dt - timedelta(seconds=PRE_DROP_POLL_SECONDS)
+            # Continue pinging until pre-drop polling window
+            # Randomized 0.8-1.2s before drop (server offset already baked into drop_dt)
+            pre_drop_seconds = random.uniform(PRE_DROP_POLL_MIN_SECONDS, PRE_DROP_POLL_MAX_SECONDS)
+            poll_entry = drop_dt - timedelta(seconds=pre_drop_seconds)
+            logger.info("Snipe %s: pre-drop polling starts %.0fms before drop",
+                        reservation_id, pre_drop_seconds * 1000)
             next_ping_interval = random.uniform(PING_INTERVAL_MIN_SECONDS, PING_INTERVAL_MAX_SECONDS)
             while True:
                 now = datetime.now(drop_dt.tzinfo)
@@ -1172,7 +1179,7 @@ async def _run_snipe(
                 # Start hammering find_slots() before drop. Jittered intervals
                 # (20-40ms) to avoid pattern detection. Slots will return empty
                 # until the exact moment Resy releases them.
-                _set_phase(SnipePhase.SNIPING, f"Pre-drop polling (T-{PRE_DROP_POLL_SECONDS}s)...")
+                _set_phase(SnipePhase.SNIPING, f"Pre-drop polling (T-{pre_drop_seconds:.1f}s)...")
                 # Non-blocking: status update is informational, don't block the snipe loop
                 asyncio.create_task(db.update_reservation(reservation_id, status="sniping"))
 
