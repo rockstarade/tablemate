@@ -22,8 +22,21 @@ async def main():
     await init_supabase()
     svc = get_service_client()
 
-    # 1) Delete ALL reservations (not just active — everything)
-    print("=== Deleting ALL reservations ===")
+    # 1) Delete ALL slot claims FIRST (FK references reservations)
+    print("=== Deleting ALL slot claims ===")
+    resp = await svc.table("slot_claims").select("id").execute()
+    print(f"  Found {len(resp.data)} claims")
+    if resp.data:
+        await (
+            svc.table("slot_claims")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
+        )
+        print("  -> All deleted")
+
+    # 2) Delete ALL reservations
+    print("\n=== Deleting ALL reservations ===")
     resp = await svc.table("reservations").select("id,venue_name,status").execute()
     print(f"  Found {len(resp.data)} reservations")
     for r in resp.data:
@@ -31,19 +44,6 @@ async def main():
     if resp.data:
         await (
             svc.table("reservations")
-            .delete()
-            .neq("id", "00000000-0000-0000-0000-000000000000")
-            .execute()
-        )
-        print("  -> All deleted")
-
-    # 2) Delete ALL slot claims
-    print("\n=== Deleting ALL slot claims ===")
-    resp = await svc.table("slot_claims").select("id").execute()
-    print(f"  Found {len(resp.data)} claims")
-    if resp.data:
-        await (
-            svc.table("slot_claims")
             .delete()
             .neq("id", "00000000-0000-0000-0000-000000000000")
             .execute()
@@ -65,26 +65,26 @@ async def main():
         )
         print("  -> All deleted")
 
-    # 4) Delete ALL payment methods
-    print("\n=== Deleting ALL payment methods ===")
-    resp = await svc.table("payment_methods").select("id").execute()
-    print(f"  Found {len(resp.data)} payment methods")
-    if resp.data:
-        await (
-            svc.table("payment_methods")
-            .delete()
-            .neq("id", "00000000-0000-0000-0000-000000000000")
-            .execute()
-        )
-        print("  -> All deleted")
-
-    # 5) Delete ALL transactions
+    # 4) Delete ALL transactions (before payment_methods and profiles)
     print("\n=== Deleting ALL transactions ===")
     resp = await svc.table("transactions").select("id").execute()
     print(f"  Found {len(resp.data)} transactions")
     if resp.data:
         await (
             svc.table("transactions")
+            .delete()
+            .neq("id", "00000000-0000-0000-0000-000000000000")
+            .execute()
+        )
+        print("  -> All deleted")
+
+    # 5) Delete ALL payment methods
+    print("\n=== Deleting ALL payment methods ===")
+    resp = await svc.table("payment_methods").select("id").execute()
+    print(f"  Found {len(resp.data)} payment methods")
+    if resp.data:
+        await (
+            svc.table("payment_methods")
             .delete()
             .neq("id", "00000000-0000-0000-0000-000000000000")
             .execute()
