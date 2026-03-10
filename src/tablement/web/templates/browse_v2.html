@@ -766,10 +766,15 @@
             </section>
 
             <!-- ═══════════════ OUTSIDE OF NEW YORK ═══════════════ -->
-            <section x-show="outsideNYCRestaurants.length > 0" id="outside-nyc" class="mb-12">
-                <div class="flex items-center gap-3 mb-6">
-                    <svg class="w-6 h-6" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <h2 class="text-lg font-serif font-medium" style="color: var(--c1);">Outside of New York</h2>
+            <section x-show="outsideNYCRestaurants.length > 0" id="outside-nyc" class="mb-12 mt-14">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                        <svg class="w-5 h-5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-serif font-semibold" style="color: var(--c1);">Outside of New York</h2>
+                        <p class="text-xs mt-0.5" style="color: var(--c3);">Expanding to more cities</p>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     <template x-for="(r, idx) in outsideNYCRestaurants" :key="r.venue_id">
@@ -1114,14 +1119,62 @@
                     <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <p class="text-base font-semibold" style="color: var(--c1);">tablepass Member</p>
-                                <p class="text-sm" style="color: var(--status-confirmed);">Active</p>
+                                <p class="text-base font-semibold" style="color: var(--c1);"
+                                    x-text="plan === 'pro' ? 'Pro Plan' : plan === 'vip' ? 'VIP Plan' : plan === 'beta' ? 'Beta Access' : plan === 'single' ? 'Pay Per Use' : 'Free'"></p>
+                                <p class="text-sm" :style="['pro','vip','beta'].includes(plan) ? 'color: var(--status-confirmed);' : 'color: var(--c3);'"
+                                    x-text="['pro','vip'].includes(plan) ? planBookingsUsed + ' of ' + planBookingsIncluded + ' bookings used' : plan === 'beta' ? 'Free access' : '$15 per booking'"></p>
                             </div>
                             <div class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
-                                style="background: var(--status-confirmed-bg); color: var(--status-confirmed);">
-                                Pro
+                                :style="['pro','vip','beta'].includes(plan) ? 'background: var(--status-confirmed-bg); color: var(--status-confirmed);' : 'background: var(--accent-bg); color: var(--accent);'"
+                                x-text="plan === 'free' ? 'Free' : plan.toUpperCase()">
                             </div>
                         </div>
+
+                        <!-- Plan period info for subscribers -->
+                        <template x-if="['pro','vip'].includes(plan) && planPeriodEnd">
+                            <div class="mb-3">
+                                <p class="text-xs" style="color: var(--c4);">
+                                    Renews <span x-text="new Date(planPeriodEnd).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})"></span>
+                                    &mdash; <span x-text="plan === 'pro' ? '$29/mo' : '$59/mo'"></span>
+                                </p>
+                            </div>
+                        </template>
+
+                        <!-- Upgrade/Subscribe buttons for free/single users -->
+                        <template x-if="!['pro','vip','beta'].includes(plan)">
+                            <div class="flex gap-2 mb-3">
+                                <button @click="subscribeToPlan('pro')" :disabled="subscribing"
+                                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                                    style="background: var(--accent); color: #fff;">
+                                    <span x-show="!subscribing">Pro $29/mo</span>
+                                    <span x-show="subscribing">...</span>
+                                </button>
+                                <button @click="subscribeToPlan('vip')" :disabled="subscribing"
+                                    class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+                                    style="color: var(--accent); border: 1px solid var(--accent-border); background: var(--accent-bg);">
+                                    <span x-show="!subscribing">VIP $59/mo</span>
+                                    <span x-show="subscribing">...</span>
+                                </button>
+                            </div>
+                        </template>
+
+                        <!-- Change plan / Cancel for subscribers -->
+                        <template x-if="['pro','vip'].includes(plan)">
+                            <div class="flex gap-2 mb-3">
+                                <button @click="subscribeToPlan(plan === 'pro' ? 'vip' : 'pro')" :disabled="subscribing"
+                                    class="flex-1 py-2 rounded-lg text-xs font-medium transition-all"
+                                    style="color: var(--c2); border: 1px solid var(--border);"
+                                    x-text="plan === 'pro' ? 'Upgrade to VIP' : 'Switch to Pro'">
+                                </button>
+                                <button @click="cancelSubscription()" :disabled="subscribing"
+                                    class="py-2 px-3 rounded-lg text-xs transition-colors"
+                                    style="color: var(--c4);"
+                                    onmouseover="this.style.color='var(--status-failed)';" onmouseout="this.style.color='var(--c4)';">
+                                    Cancel
+                                </button>
+                            </div>
+                        </template>
+
                         <div class="flex gap-3">
                             <div class="flex-1 p-3 rounded-lg text-center" style="background: var(--bg-card); border: 1px solid var(--border-subtle);">
                                 <p class="text-xl font-bold" style="color: var(--c1);" x-text="reservations.filter(r => r.status === 'confirmed').length">0</p>
@@ -1266,7 +1319,7 @@
                                 <button @click="buyCredits('single')" :disabled="!cardBrand || buyingCredits"
                                     class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
                                     :style="cardBrand ? 'color: var(--c1); border: 1px solid var(--border);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
-                                    1 for $12
+                                    1 for $15
                                 </button>
                                 <button @click="buyCredits('five_pack')" :disabled="!cardBrand || buyingCredits"
                                     class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
@@ -1274,7 +1327,8 @@
                                     5 for $50
                                 </button>
                             </div>
-                            <p class="text-xs mt-2" style="color: var(--c4);">No credits? $12 charged per successful booking.</p>
+                            <p class="text-xs mt-2" style="color: var(--c4);"
+                                x-text="['pro','vip'].includes(plan) ? 'Credits applied before overage charges.' : plan === 'beta' ? 'Beta access — bookings are free.' : 'No credits? $15 charged per successful booking.'"></p>
                         </div>
                     </div>
                 </div>
@@ -1686,6 +1740,11 @@
             token: localStorage.getItem('tablement_token'),
             resyLinked: false,
             otLinked: false,
+            plan: 'free',
+            planBookingsUsed: 0,
+            planBookingsIncluded: 0,
+            planPeriodEnd: null,
+            subscribing: false,
 
             // UI
             sidebarOpen: false,
@@ -1799,6 +1858,18 @@
                     window.history.replaceState({}, '', '/browse');
                 }
 
+                // Handle plan selection from landing page
+                const selectedPlan = params.get('plan') || localStorage.getItem('tablement_selected_plan');
+                if (selectedPlan && !['beta', 'single'].includes(selectedPlan)) {
+                    localStorage.removeItem('tablement_selected_plan');
+                    window.history.replaceState({}, '', '/browse');
+                    // Store for later — subscription happens after card is set up on restaurant page
+                    this._pendingPlan = selectedPlan;
+                } else {
+                    localStorage.removeItem('tablement_selected_plan');
+                    if (selectedPlan) window.history.replaceState({}, '', '/browse');
+                }
+
                 // Proactive token refresh — keep session alive
                 this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
 
@@ -1894,6 +1965,12 @@
                         }
                         this.giftsRemaining = data.gifts_remaining || 0;
                         this.referralDiscount = data.referral_discount || false;
+                        this.plan = data.plan || 'free';
+                        this.planBookingsUsed = data.plan_bookings_used || 0;
+                        this.planPeriodEnd = data.plan_period_end || null;
+                        if (this.plan === 'pro') this.planBookingsIncluded = 4;
+                        else if (this.plan === 'vip') this.planBookingsIncluded = 10;
+                        else this.planBookingsIncluded = 0;
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
             },
@@ -2031,7 +2108,7 @@
                     this.showToast('Add a card first', '⚠️');
                     return;
                 }
-                const label = pkg === 'five_pack' ? '5 credits for $50' : '1 credit for $12';
+                const label = pkg === 'five_pack' ? '5 credits for $50' : '1 credit for $15';
                 if (!confirm('Purchase ' + label + '?')) return;
                 this.buyingCredits = true;
                 try {
@@ -2051,6 +2128,53 @@
                     this.showToast(e.message, '❌');
                 } finally {
                     this.buyingCredits = false;
+                }
+            },
+
+            async subscribeToPlan(planName) {
+                if (!this.cardBrand) {
+                    this.showToast('Add a card first to subscribe', '⚠️');
+                    return;
+                }
+                const label = planName === 'pro' ? 'Pro ($29/mo)' : 'VIP ($59/mo)';
+                // If already on a plan, it's a change
+                const isChange = ['pro', 'vip'].includes(this.plan);
+                const action = isChange ? 'Switch to' : 'Subscribe to';
+                if (!confirm(action + ' ' + label + '?')) return;
+                this.subscribing = true;
+                try {
+                    const endpoint = isChange ? '/api/payments/change-plan' : '/api/payments/subscribe';
+                    const resp = await this.authFetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plan: planName }),
+                    });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Subscription failed');
+                    this.plan = planName;
+                    this.planBookingsUsed = 0;
+                    this.planBookingsIncluded = planName === 'pro' ? 4 : 10;
+                    if (data.period_end) this.planPeriodEnd = data.period_end;
+                    this.showToast(label + ' activated!', '✓');
+                } catch (e) {
+                    this.showToast(e.message, '❌');
+                } finally {
+                    this.subscribing = false;
+                }
+            },
+
+            async cancelSubscription() {
+                if (!confirm('Cancel your subscription? You\'ll keep access until the end of the billing period.')) return;
+                this.subscribing = true;
+                try {
+                    const resp = await this.authFetch('/api/payments/cancel-subscription', { method: 'POST' });
+                    const data = await resp.json();
+                    if (!resp.ok) throw new Error(data.detail || 'Cancel failed');
+                    this.showToast('Subscription will cancel at period end', '✓');
+                } catch (e) {
+                    this.showToast(e.message, '❌');
+                } finally {
+                    this.subscribing = false;
                 }
             },
 

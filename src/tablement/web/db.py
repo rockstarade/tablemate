@@ -1203,6 +1203,56 @@ async def update_user_location(
     await upsert_profile(user_id, **fields)
 
 
+async def get_user_plan(user_id: str) -> dict:
+    """Return the user's subscription plan info.
+
+    Returns dict with keys: plan, stripe_subscription_id, plan_bookings_used,
+    plan_period_start, plan_period_end
+    """
+    profile = await get_profile(user_id)
+    if not profile:
+        return {"plan": "free", "plan_bookings_used": 0}
+    return {
+        "plan": profile.get("plan", "free"),
+        "stripe_subscription_id": profile.get("stripe_subscription_id"),
+        "plan_bookings_used": profile.get("plan_bookings_used", 0),
+        "plan_period_start": profile.get("plan_period_start"),
+        "plan_period_end": profile.get("plan_period_end"),
+    }
+
+
+async def set_user_plan(
+    user_id: str,
+    plan: str,
+    stripe_subscription_id: str | None = None,
+    plan_period_start: str | None = None,
+    plan_period_end: str | None = None,
+) -> dict:
+    """Set the user's subscription plan."""
+    fields: dict = {"plan": plan}
+    if stripe_subscription_id is not None:
+        fields["stripe_subscription_id"] = stripe_subscription_id
+    if plan_period_start is not None:
+        fields["plan_period_start"] = plan_period_start
+    if plan_period_end is not None:
+        fields["plan_period_end"] = plan_period_end
+    return await upsert_profile(user_id, **fields)
+
+
+async def increment_plan_bookings(user_id: str) -> int:
+    """Increment plan_bookings_used by 1. Returns new count."""
+    profile = await get_profile(user_id)
+    current = (profile or {}).get("plan_bookings_used", 0)
+    new_count = current + 1
+    await upsert_profile(user_id, plan_bookings_used=new_count)
+    return new_count
+
+
+async def reset_plan_bookings(user_id: str) -> None:
+    """Reset plan_bookings_used to 0 (called on subscription renewal)."""
+    await upsert_profile(user_id, plan_bookings_used=0)
+
+
 async def get_user_locations() -> list[dict]:
     """Get all users that have location data."""
     try:

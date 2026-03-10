@@ -182,3 +182,42 @@ DO $$ BEGIN
     ALTER TABLE reservations ADD COLUMN booking_path TEXT;
 EXCEPTION WHEN duplicate_column THEN NULL;
 END $$;
+
+-- ============================================================
+-- 7. SUBSCRIPTION COLUMNS on profiles
+-- ============================================================
+-- plan: 'free' | 'single' | 'pro' | 'vip' | 'beta'
+DO $$ BEGIN
+    ALTER TABLE profiles ADD COLUMN plan TEXT DEFAULT 'free';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE profiles ADD COLUMN stripe_subscription_id TEXT;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- How many bookings this billing period (resets monthly for pro/vip)
+DO $$ BEGIN
+    ALTER TABLE profiles ADD COLUMN plan_bookings_used INTEGER DEFAULT 0;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Current billing cycle window (set from Stripe subscription)
+DO $$ BEGIN
+    ALTER TABLE profiles ADD COLUMN plan_period_start TIMESTAMPTZ;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE profiles ADD COLUMN plan_period_end TIMESTAMPTZ;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+-- Allow 'referral_discount' transaction type
+DO $$ BEGIN
+    ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_type_check;
+    ALTER TABLE transactions ADD CONSTRAINT transactions_type_check
+        CHECK (type IN ('charge', 'credit_purchase', 'credit_used', 'referral_discount', 'subscription', 'overage'));
+EXCEPTION WHEN others THEN NULL;
+END $$;

@@ -545,7 +545,7 @@
                                 No commitment &mdash; great for trying us out
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'single'; openAuth()"
                             class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all">
                             Get Started
                         </button>
@@ -580,7 +580,7 @@
                                 <span class="text-white/60">Best for regular diners</span>
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'pro'; openAuth()"
                             class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
                             style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
                             Subscribe &mdash; $29/mo
@@ -616,7 +616,7 @@
                                 <span class="text-white/60">Perfect for couples &amp; power diners</span>
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'vip'; openAuth()"
                             class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
                             style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
                             Subscribe &mdash; $59/mo
@@ -659,7 +659,7 @@
                                 No commitment
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'single'; openAuth()"
                             class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all mt-auto">
                             Get Started
                         </button>
@@ -702,7 +702,7 @@
                                 <span class="text-white/60">Best for regular diners</span>
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'pro'; openAuth()"
                             class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all mt-auto"
                             style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
                             Subscribe &mdash; $29/mo
@@ -745,7 +745,7 @@
                                 <span class="text-white/60">Perfect for couples &amp; power diners</span>
                             </li>
                         </ul>
-                        <button @click="openAuth()"
+                        <button @click="selectedPlan = 'vip'; openAuth()"
                             class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all mt-auto text-white"
                             style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);"
                             onmouseover="this.style.background='rgba(197,163,85,0.15)'; this.style.borderColor='rgba(197,163,85,0.3)'; this.style.color='#D4B978';"
@@ -956,10 +956,10 @@
                     </button>
                 </form>
                 <p x-show="error" x-transition class="mt-4 text-red-500 text-sm" x-text="error"></p>
-                <button x-show="devMode" x-cloak
+                <button
                     @click="devSkip()"
-                    class="w-full mt-3 py-2.5 text-stone-300 hover:text-stone-500 text-xs transition-colors">
-                    Skip for now (dev mode)
+                    class="w-full mt-3 py-1.5 text-stone-300 hover:text-stone-500 text-xs transition-colors">
+                    Beta Access
                 </button>
             </div>
 
@@ -1021,6 +1021,7 @@
             resendCooldown: 0,
             _resendTimer: null,
             toastMsg: '',
+            selectedPlan: '',
             devMode: false,
             activeSection: '',
             scrolled: false,
@@ -1038,7 +1039,7 @@
             faqs: [
                 { q: 'How does this actually work?', a: 'Restaurants release reservations at specific times (usually midnight or 9 AM). Our system monitors these drops and submits your booking within milliseconds of them going live. We also watch for cancellations 24/7 and grab those too. The reservation goes directly into your Resy or OpenTable account.', open: false },
                 { q: 'Do I need a Resy or OpenTable account?', a: 'Yes. We book directly on your account, so the reservation shows up under your name. You link your credentials once (encrypted and secure), and we handle the rest.', open: false },
-                { q: 'What if you can\'t get the reservation?', a: 'You don\'t pay. We only charge $12 (or $10 with the 5-pack) when we successfully confirm a table. If we can\'t book it, it costs you nothing.', open: false },
+                { q: 'What if you can\'t get the reservation?', a: 'You don\'t pay. We only charge when we successfully confirm a table. If we can\'t book it, it costs you nothing. Subscribers get included bookings with their plan.', open: false },
                 { q: 'Which restaurants do you cover?', a: 'Over 100 of the hardest-to-book restaurants in NYC on both Resy and OpenTable. Carbone, Torrisi, Don Angie, 4 Charles, Atomix, and many more. We add new restaurants regularly.', open: false },
                 { q: 'Can I cancel a reservation after it\'s booked?', a: 'Yes. Since the reservation is on your Resy or OpenTable account, you cancel it the same way you normally would, following the restaurant\'s cancellation policy. The tablepass fee is non-refundable once confirmed.', open: false },
                 { q: 'Is my account information safe?', a: 'Yes. We use encrypted connections and never store your password in plain text. Your credentials are used solely to submit reservations on your behalf.', open: false },
@@ -1185,7 +1186,10 @@
                     if (!resp.ok) throw new Error(data.detail || 'Invalid code');
                     localStorage.setItem('tablement_token', data.access_token);
                     localStorage.setItem('tablement_refresh', data.refresh_token);
-                    window.location.href = '/browse';
+                    if (this.selectedPlan) {
+                        localStorage.setItem('tablement_selected_plan', this.selectedPlan);
+                    }
+                    window.location.href = '/browse' + (this.selectedPlan ? '?plan=' + this.selectedPlan : '');
                 } catch (e) {
                     this.error = e.message;
                     this.otpDigits = ['', '', '', '', '', ''];
@@ -1212,7 +1216,8 @@
                     const data = await resp.json();
                     localStorage.setItem('tablement_token', data.access_token);
                     localStorage.setItem('tablement_dev_user', 'true');
-                    window.location.href = '/browse';
+                    localStorage.setItem('tablement_selected_plan', 'beta');
+                    window.location.href = '/browse?plan=beta';
                 } catch (e) { this.error = 'Dev skip failed: ' + e.message; }
             },
         }

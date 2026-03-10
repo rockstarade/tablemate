@@ -52,6 +52,9 @@ class UserProfileResponse(BaseModel):
     referral_code: str | None = None
     gifts_remaining: int = 0
     referral_discount: bool = False
+    plan: str = "free"
+    plan_bookings_used: int = 0
+    plan_period_end: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +248,29 @@ class TransactionOut(BaseModel):
 
 class TransactionListResponse(BaseModel):
     transactions: list[TransactionOut]
+
+
+class SubscribeRequest(BaseModel):
+    plan: str  # "pro" or "vip"
+
+
+class SubscriptionResponse(BaseModel):
+    plan: str
+    status: str
+    stripe_subscription_id: str | None = None
+    current_period_start: str | None = None
+    current_period_end: str | None = None
+    bookings_used: int = 0
+    bookings_included: int = 0
+
+
+class PlanInfoResponse(BaseModel):
+    plan: str
+    bookings_used: int = 0
+    bookings_included: int = 0
+    credits: int = 0
+    stripe_subscription_id: str | None = None
+    period_end: str | None = None
 
 
 # ---------------------------------------------------------------------------

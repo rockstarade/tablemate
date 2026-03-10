@@ -427,6 +427,7 @@ async def me(user_id: str = Depends(get_user_id)):
             resy_linked=False,
             resy_email=None,
             stripe_linked=False,
+            plan="beta",
         )
 
     profile = await db.get_profile(user_id)
@@ -443,6 +444,9 @@ async def me(user_id: str = Depends(get_user_id)):
         referral_code=profile.get("referral_code"),
         gifts_remaining=profile.get("gifts_remaining", 0),
         referral_discount=bool(profile.get("referral_discount", False)),
+        plan=profile.get("plan", "free"),
+        plan_bookings_used=profile.get("plan_bookings_used", 0),
+        plan_period_end=profile.get("plan_period_end"),
     )
 
 
