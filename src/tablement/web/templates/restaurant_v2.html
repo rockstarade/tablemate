@@ -44,8 +44,8 @@
             --c3: #7A7468;
             --c4: #9E9789;
             --c5: #C8C3BB;
-            --border: rgba(212,185,120,0.12);
-            --border-light: rgba(212,185,120,0.12);
+            --border: rgba(0,0,0,0.08);
+            --border-light: rgba(0,0,0,0.05);
             --accent: #C5A355;
             --accent-soft: rgba(197,163,85,0.06);
             --accent-bg: rgba(197,163,85,0.06);
@@ -61,13 +61,13 @@
             --red-bg: rgba(199,80,80,0.08);
             --red-soft: rgba(199,80,80,0.08);
             --red-border: rgba(199,80,80,0.12);
-            --btn-bg: #1A1917;
-            --btn-text: #FDFCFA;
-            --btn-hover: #2A2825;
+            --btn-bg: #B08D3E;
+            --btn-text: #ffffff;
+            --btn-hover: #917030;
             --skeleton-a: #F5F0EA;
             --skeleton-b: #E8E0D4;
-            --logo-bg: #1A1917;
-            --logo-text: #FDFCFA;
+            --logo-bg: #B08D3E;
+            --logo-text: #ffffff;
             --cal-today-ring: #1A1917;
             --cal-available-bg: rgba(197,163,85,0.14);
             --cal-available-border: rgba(197,163,85,0.4);
@@ -75,21 +75,21 @@
             --cal-upcoming-bg: rgba(16,185,129,0.08);
             --cal-upcoming-border: rgba(16,185,129,0.25);
             --cal-upcoming-text: #047857;
-            --cal-selected-bg: #1A1917;
-            --cal-selected-text: #FDFCFA;
-            --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
-            --shadow-lg: 0 4px 20px rgba(0,0,0,0.06);
+            --cal-selected-bg: #B08D3E;
+            --cal-selected-text: #ffffff;
+            --shadow-card: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
             --bg-overlay: rgba(0,0,0,0.4);
-            --btn-hot-bg: #C5A355;
-            --btn-hot-text: #FDFCFA;
+            --btn-hot-bg: #B08D3E;
+            --btn-hot-text: #ffffff;
             --search-focus: rgba(197,163,85,0.3);
         }
         .dark {
-            --bg: #0D0D0B;
-            --bg2: rgba(26,25,23,0.5);
-            --bg-raised: #1A1917;
-            --bg-card: #1A1917;
-            --bg-input: #2A2825;
+            --bg: #0C0C0C;
+            --bg2: rgba(22,22,22,0.5);
+            --bg-raised: #161616;
+            --bg-card: #161616;
+            --bg-input: #1E1E1E;
             --bg-hover: rgba(255,255,255,0.04);
             --c1: #FAF8F5;
             --c2: #C8C3BB;
@@ -223,29 +223,32 @@
             <div>
 
                 <!-- ═══ RESTAURANT HERO ═══ -->
-                <div class="relative rounded-2xl overflow-hidden mb-6 anim-in" style="aspect-ratio: 16/5;">
-                    <div class="absolute inset-0 img-placeholder">
-                        <img :src="restaurant.image_url" :alt="restaurant.name"
-                            class="w-full h-full object-cover" @error="$event.target.style.display='none'">
-                    </div>
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight" x-text="restaurant.name"></h1>
-                        <div class="flex items-center gap-2 mt-1.5">
-                            <span class="text-sm text-white/80 font-medium" x-text="restaurant.cuisine"></span>
-                            <span class="w-1 h-1 rounded-full bg-white/30"></span>
-                            <span class="text-sm text-white/60" x-text="restaurant.neighborhood"></span>
+                <div class="rounded-2xl overflow-hidden mb-6 anim-in" style="border: 1px solid var(--border);">
+                    <div class="relative" style="aspect-ratio: 16/5;">
+                        <div class="absolute inset-0 img-placeholder">
+                            <img :src="restaurant.image_url" :alt="restaurant.name"
+                                class="w-full h-full object-cover" @error="$event.target.style.display='none'">
                         </div>
-                        <div class="flex items-center gap-2 mt-2" x-show="restaurant.price_level">
-                            <span class="text-xs text-white/60 font-semibold" x-text="'$'.repeat(restaurant.price_level || 0)"></span>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                            <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight" x-text="restaurant.name"></h1>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-sm text-white/80 font-medium" x-text="restaurant.cuisine"></span>
+                                <span class="w-1 h-1 rounded-full bg-white/30"></span>
+                                <span class="text-sm text-white/60" x-text="restaurant.neighborhood"></span>
+                                <template x-if="restaurant.price_level">
+                                    <span class="flex items-center gap-2">
+                                        <span class="w-1 h-1 rounded-full bg-white/30"></span>
+                                        <span class="text-sm text-white/60 font-medium" x-text="'$'.repeat(restaurant.price_level || 0)"></span>
+                                    </span>
+                                </template>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- ═══ RESTAURANT DESCRIPTION ═══ -->
-                <div x-show="restaurant.tagline" class="rounded-xl px-4 py-3 mb-4 anim-in flex items-center gap-3" style="background: var(--bg-input); border: 1px solid var(--border);">
-                    <svg class="w-4 h-4 flex-shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs leading-relaxed" style="color: var(--c3);" x-text="restaurant.tagline"></p>
+                    <!-- Description bar merged into hero card -->
+                    <div x-show="restaurant.tagline" class="px-5 py-3" style="background: var(--bg-card); border-top: 1px solid var(--border);">
+                        <p class="text-xs leading-relaxed" style="color: var(--c3);" x-text="restaurant.tagline"></p>
+                    </div>
                 </div>
 
                 <!-- ═══ PROGRESS STEPS ═══ -->
@@ -297,18 +300,20 @@
                         </button>
                     </div>
                     <!-- Legend (above calendar) -->
-                    <div class="flex items-center justify-end gap-3 mb-2">
-                        <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
-                            <span class="text-[9px] font-medium" style="color: var(--c4);">Released</span>
+                    <div class="flex flex-col items-end gap-1 mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1">
+                                <div class="w-2 h-2 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
+                                <span class="text-[9px] font-medium" style="color: var(--c4);">Released</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <div class="w-2 h-2 rounded-sm" style="background: var(--cal-selected-bg);"></div>
+                                <span class="text-[9px] font-medium" style="color: var(--c4);">Selected</span>
+                            </div>
                         </div>
                         <div class="flex items-center gap-1">
                             <div class="w-2 h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
                             <span class="text-[9px] font-medium" style="color: var(--c4);">Not yet released</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-selected-bg);"></div>
-                            <span class="text-[9px] font-medium" style="color: var(--c4);">Selected</span>
                         </div>
                     </div>
 

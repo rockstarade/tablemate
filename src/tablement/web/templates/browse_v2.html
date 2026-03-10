@@ -44,47 +44,47 @@
             --c2: #3D3A35;
             --c3: #7A7468;
             --c4: #9E9789;
-            --border: rgba(212,185,120,0.12);
-            --border-subtle: rgba(212,185,120,0.06);
+            --border: rgba(0,0,0,0.08);
+            --border-subtle: rgba(0,0,0,0.04);
             --nav: #7A7468;
             --nav-hover: #1A1917;
-            --nav-active: #C5A355;
-            --nav-active-bg: rgba(197,163,85,0.06);
-            --accent: #C5A355;
-            --accent-bg: rgba(197,163,85,0.06);
-            --accent-border: rgba(197,163,85,0.15);
-            --hot: #C5A355;
-            --hot-bg: rgba(197,163,85,0.06);
-            --hot-border: rgba(197,163,85,0.15);
-            --btn-hot-bg: #1A1917;
-            --btn-hot-text: #FDFCFA;
-            --btn-hot-hover: #2A2825;
-            --btn-bg: #1A1917;
-            --btn-text: #FDFCFA;
-            --btn-border: #1A1917;
-            --btn-hover-bg: rgba(197,163,85,0.08);
-            --btn-hover-text: #C5A355;
-            --card-shadow: 0 1px 3px rgba(0,0,0,0.04);
-            --card-h-shadow: 0 10px 30px rgba(197,163,85,0.08);
-            --card-h-border: rgba(197,163,85,0.2);
-            --signout-h: #ef4444;
-            --search-focus: rgba(197,163,85,0.3);
-            --skeleton-a: rgba(212,185,120,0.06);
-            --skeleton-b: rgba(212,185,120,0.12);
-            --logo-from: #C5A355;
-            --logo-to: #B08D3E;
+            --nav-active: #B08D3E;
+            --nav-active-bg: rgba(176,141,62,0.08);
+            --accent: #B08D3E;
+            --accent-bg: rgba(176,141,62,0.08);
+            --accent-border: rgba(176,141,62,0.2);
+            --hot: #B08D3E;
+            --hot-bg: rgba(176,141,62,0.08);
+            --hot-border: rgba(176,141,62,0.2);
+            --btn-hot-bg: #B08D3E;
+            --btn-hot-text: #ffffff;
+            --btn-hot-hover: #C5A355;
+            --btn-bg: #B08D3E;
+            --btn-text: #ffffff;
+            --btn-border: #B08D3E;
+            --btn-hover-bg: rgba(176,141,62,0.1);
+            --btn-hover-text: #917030;
+            --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+            --card-h-shadow: 0 12px 32px rgba(0,0,0,0.1);
+            --card-h-border: rgba(176,141,62,0.25);
+            --signout-h: #dc2626;
+            --search-focus: rgba(176,141,62,0.3);
+            --skeleton-a: rgba(0,0,0,0.04);
+            --skeleton-b: rgba(0,0,0,0.08);
+            --logo-from: #B08D3E;
+            --logo-to: #917030;
             --logo-text: #fff;
-            --status-active: #C5A355;
-            --status-active-bg: rgba(197,163,85,0.08);
-            --status-confirmed: #10b981;
-            --status-confirmed-bg: rgba(16,185,129,0.08);
-            --status-failed: #ef4444;
-            --status-failed-bg: rgba(239,68,68,0.08);
-            --status-sniping: #D4B978;
-            --status-sniping-bg: rgba(212,185,120,0.08);
-            --res-bank-bg: rgba(197,163,85,0.05);
-            --res-bank-border: rgba(197,163,85,0.12);
-            --res-bank-text: #C5A355;
+            --status-active: #B08D3E;
+            --status-active-bg: rgba(176,141,62,0.1);
+            --status-confirmed: #059669;
+            --status-confirmed-bg: rgba(5,150,105,0.1);
+            --status-failed: #dc2626;
+            --status-failed-bg: rgba(220,38,38,0.08);
+            --status-sniping: #B08D3E;
+            --status-sniping-bg: rgba(176,141,62,0.1);
+            --res-bank-bg: rgba(176,141,62,0.06);
+            --res-bank-border: rgba(176,141,62,0.15);
+            --res-bank-text: #917030;
         }
         .dark {
             --bg: #0D0D0B;
@@ -148,7 +148,7 @@
 
         /* ═══════ LAYOUT BACKGROUNDS ═══════ */
         .sidebar-bg {
-            background: #ffffff;
+            background: #FAFAF9;
             border-right: 1px solid var(--border);
             transition: background 0.3s ease;
         }
@@ -157,7 +157,7 @@
             backdrop-filter: blur(24px);
         }
         .topbar-bg {
-            background: rgba(253,252,250,0.88);
+            background: rgba(253,252,250,0.92);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
             transition: background 0.3s ease;
@@ -166,7 +166,7 @@
             background: rgba(13,13,11,0.82);
         }
         .mobile-nav-bg {
-            background: rgba(255,255,255,0.95);
+            background: rgba(253,252,250,0.95);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border-top: 1px solid var(--border);
         }
@@ -267,12 +267,18 @@
 
         /* ═══════ MISC ═══════ */
         .img-placeholder {
-            background: linear-gradient(135deg, #1A1917 0%, #2A2825 100%);
+            background: linear-gradient(135deg, #F0EFEC 0%, #E0DDD8 100%);
             display: flex; align-items: center; justify-content: center;
         }
+        .dark .img-placeholder {
+            background: linear-gradient(135deg, #1A1917 0%, #2A2825 100%);
+        }
         .img-placeholder .initials {
-            font-size: 1.75rem; font-weight: 800; color: rgba(255,255,255,0.12);
+            font-size: 1.75rem; font-weight: 800; color: rgba(0,0,0,0.08);
             letter-spacing: 0.05em; text-transform: uppercase; pointer-events: none;
+        }
+        .dark .img-placeholder .initials {
+            color: rgba(255,255,255,0.12);
         }
 
         ::-webkit-scrollbar { width: 5px; }
@@ -582,7 +588,7 @@
 
             <!-- Page heading -->
             <div class="mb-8 fade-in">
-                <h1 class="text-2xl sm:text-3xl font-serif font-medium" style="color: var(--c1);">Where do you want to eat?</h1>
+                <h1 class="text-3xl sm:text-4xl font-serif font-medium" style="color: var(--c1);">Where do you want to eat?</h1>
                 <p class="text-sm mt-1" style="color: var(--c3);">NYC's most coveted tables, secured for you.</p>
             </div>
 
@@ -608,7 +614,7 @@
             <!-- ═══ WHAT'S HOT ═══ -->
             <section x-show="!loading && hotRestaurants.length > 0" x-cloak class="mb-12 fade-in">
                 <div class="flex items-center gap-3 mb-5">
-                    <h2 class="text-xl font-serif font-bold tracking-tight" style="color: var(--c1);">What's hot right now</h2>
+                    <h2 class="text-2xl font-serif font-bold" style="color: var(--c1); letter-spacing: -0.01em;">What's hot right now</h2>
                     <span class="text-base">&#x1F525;</span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
@@ -767,12 +773,19 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     <template x-for="(r, idx) in outsideNYCRestaurants" :key="r.venue_id">
-                        <div class="restaurant-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer"
-                            style="background: var(--card-bg); border: 1px solid var(--card-border);"
+                        <div class="restaurant-card group rounded-2xl overflow-hidden cursor-pointer stagger-item"
+                            :style="'animation-delay: ' + (idx * 0.04) + 's; border: 1px solid var(--border); background: var(--bg-card);'"
                             @click="goToRestaurant(r)">
-                            <div class="relative h-52 sm:h-60 overflow-hidden">
-                                <img :src="r.image_url" :alt="r.name" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy">
-                                <!-- City badge handled by parent -->
+                            <div class="relative h-52 sm:h-60 overflow-hidden img-placeholder">
+                                <span class="initials" x-text="r.name ? r.name.split(' ').map(w => w[0]).join('').slice(0,3) : ''"></span>
+                                <img :src="r.image_url" :alt="r.name" loading="lazy"
+                                    class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                                    @error="$event.target.style.display='none'">
+                                <!-- City badge -->
+                                <div x-show="r.city && r.city !== 'nyc'" class="absolute top-3 left-3">
+                                    <span class="px-2 py-0.5 rounded-md backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider" style="background: rgba(197,163,85,0.8);"
+                                        x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></span>
+                                </div>
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-sm mb-1" style="color: var(--c1);" x-text="r.name"></h3>
