@@ -3,257 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service — tablepass</title>
-    <meta name="description" content="Terms of Service for tablepass, the automated NYC restaurant reservation booking service.">
-    <link rel="canonical" href="https://tablepass.nyc/terms">
+    <title>Terms &amp; Conditions — tablepass</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                     colors: {
-                        brand: {
-                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a',
-                            300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b',
-                            600: '#d97706', 700: '#b45309',
-                        },
-                        accent: {
-                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
-                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
-                            600: '#4f46e5', 700: '#4338ca',
-                        },
+                        cream: { 50: '#FDFCFA', 100: '#FAF8F5' },
+                        stone: { 50: '#F9F8F6', 100: '#F0EFEC', 200: '#E0DDD8', 300: '#C8C3BB', 400: '#9E9789', 500: '#7A7468', 600: '#5C5850', 700: '#3D3A35', 800: '#2A2825', 900: '#1A1917', 950: '#0D0D0B' },
+                        gold: { 400: '#C5A355', 500: '#B08D3E' },
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #06080f;
-            min-height: 100vh;
-        }
-        .legal-prose h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-top: 2.5rem;
-            margin-bottom: 0.75rem;
-        }
-        .legal-prose h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #e2e8f0;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .legal-prose p, .legal-prose li {
-            color: #94a3b8;
-            line-height: 1.75;
-            margin-bottom: 0.75rem;
-        }
-        .legal-prose ul {
-            list-style: disc;
-            padding-left: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .legal-prose a {
-            color: #fbbf24;
-            text-decoration: underline;
-            text-underline-offset: 2px;
-        }
-        .legal-prose a:hover {
-            color: #f59e0b;
-        }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #FDFCFA; color: #2A2825; }
+        .legal-body h2 { font-size: 1.25rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 0.75rem; color: #1A1917; }
+        .legal-body h3 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2A2825; }
+        .legal-body p { margin-bottom: 1rem; line-height: 1.75; color: #5C5850; font-size: 0.9375rem; }
+        .legal-body ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .legal-body ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .legal-body li { margin-bottom: 0.5rem; line-height: 1.75; color: #5C5850; font-size: 0.9375rem; }
     </style>
 </head>
-<body class="text-slate-300 antialiased">
-
-    <!-- Nav -->
-    <nav class="sticky top-0 z-50 border-b border-slate-800/40 bg-[#06080f]/80 backdrop-blur-xl">
-        <div class="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-                <span class="font-medium text-slate-200 text-sm" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.1em;">tablepass</span>
-            </a>
-            <a href="/" class="text-sm text-slate-500 hover:text-slate-300 transition-colors">&larr; Back to home</a>
+<body>
+    <nav class="bg-cream-50 border-b border-stone-200/60 shadow-sm">
+        <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="text-xl font-medium tracking-[0.12em] text-stone-900" style="font-family: 'Manrope', sans-serif;">tablepass</a>
+            <a href="/" class="text-sm text-stone-400 hover:text-stone-700 transition-colors">&larr; Back</a>
         </div>
     </nav>
 
-    <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 py-16">
-        <div class="mb-10">
-            <h1 class="text-3xl font-extrabold text-white mb-2">Terms of Service</h1>
-            <p class="text-slate-500 text-sm">Effective date: March 1, 2026</p>
-        </div>
+    <main class="max-w-3xl mx-auto px-6 py-12 sm:py-16">
+        <h1 class="text-3xl sm:text-4xl font-bold text-stone-900 mb-2">Terms &amp; Conditions</h1>
+        <p class="text-sm text-stone-400 mb-10">Last updated: March 9, 2026</p>
 
-        <div class="legal-prose">
-            <p>
-                Welcome to TablePass ("we," "us," "our"), operated at tablepass.nyc. These Terms of Service ("Terms") govern your use of our website, platform, and reservation booking services. By creating an account or using TablePass, you agree to these Terms. If you don't agree, please don't use the service.
-            </p>
+        <div class="legal-body">
+            <p>Welcome to <strong>tablepass</strong>. By accessing or using our website and service at <strong>tablepass.io</strong>, you agree to be bound by these Terms &amp; Conditions. If you do not agree, please do not use our service.</p>
 
-            <h2>1. What TablePass Does</h2>
-            <p>
-                TablePass is a reservation booking service that helps you secure restaurant reservations in New York City through the Resy platform. You provide us with your preferences, and we attempt to book reservations on your behalf using your linked Resy account credentials.
-            </p>
-            <p>
-                While we have a 98% booking success rate, <strong>we cannot guarantee that every reservation request will be successful</strong> — restaurant availability is ultimately determined by the restaurants and Resy, not by us. That said, you're never charged for unsuccessful bookings. If we don't book it, you don't pay.
-            </p>
-
-            <h2>2. Eligibility</h2>
-            <p>
-                You must be at least 18 years old and have a valid Resy account to use TablePass. By using the service, you represent that:
-            </p>
+            <h2>1. Service Description</h2>
+            <p><strong>tablepass</strong> is an automated restaurant reservation booking service. We monitor reservation platforms (Resy and OpenTable) on your behalf and attempt to secure reservations at your preferred restaurants, dates, and times. Our service includes:</p>
             <ul>
-                <li>You are at least 18 years of age.</li>
-                <li>You have a valid, active Resy account in good standing.</li>
-                <li>The information you provide to us is accurate and current.</li>
-                <li>You have the right to authorize us to act on your behalf on Resy.</li>
+                <li><strong>Drop sniping</strong> &mdash; automatically booking the instant new reservations are released</li>
+                <li><strong>Cancellation monitoring</strong> &mdash; watching for cancelled reservations 24/7 and booking them for you</li>
+                <li><strong>SMS notifications</strong> &mdash; real-time updates about your booking status</li>
             </ul>
 
-            <h2>3. Your Account</h2>
-            <p>
-                To use TablePass, you'll sign up with your phone number and verify it via a one-time code. You'll also link your Resy account so we can book on your behalf. You are responsible for:
-            </p>
+            <h2>2. Account &amp; Eligibility</h2>
+            <p>To use tablepass, you must:</p>
             <ul>
-                <li>Keeping your account credentials secure.</li>
-                <li>All activity that occurs under your account.</li>
-                <li>Ensuring your linked Resy account remains active and in good standing.</li>
-                <li>Providing accurate and truthful information.</li>
+                <li>Be at least 18 years of age</li>
+                <li>Have a valid phone number capable of receiving SMS messages</li>
+                <li>Have an active Resy and/or OpenTable account</li>
+                <li>Provide accurate and truthful information</li>
             </ul>
-            <p>
-                If we suspect any unauthorized or fraudulent use, we may suspend or terminate your account without notice.
-            </p>
+            <p>You are responsible for maintaining the security of your account and all activity that occurs under it.</p>
 
-            <h2>4. How Booking Works & No Guarantees</h2>
-            <p>
-                When you submit a reservation request through TablePass, we use your linked Resy credentials to attempt to secure the reservation. Here's what you should know:
-            </p>
+            <h2>3. Pricing &amp; Payment</h2>
             <ul>
-                <li><strong>No guarantee of success.</strong> Reservations are subject to availability on Resy. We cannot control or predict whether a table will be available.</li>
-                <li><strong>No guarantee of timing.</strong> We attempt bookings based on your preferences, but we cannot guarantee exact timing of when a booking attempt will be made.</li>
-                <li><strong>Third-party dependency.</strong> Our service relies on Resy's platform. Changes to Resy's systems, policies, or availability may affect our ability to book reservations. We are not responsible for any issues caused by Resy or the restaurants themselves.</li>
-                <li><strong>Restaurant policies apply.</strong> Once a reservation is booked, you are subject to the restaurant's own cancellation, no-show, and other policies. TablePass is not a party to your reservation.</li>
+                <li><strong>Per Reservation:</strong> $12 per confirmed booking</li>
+                <li><strong>5 Pack:</strong> $50 for 5 reservation credits ($10 each) &mdash; credits never expire</li>
             </ul>
+            <p>You are only charged when we successfully confirm a reservation on your behalf. If we are unable to secure a table, you are not charged. All fees are non-refundable once a reservation is confirmed, as the booking has been completed on your restaurant platform account.</p>
 
-            <h2>5. Pricing & Payment</h2>
-            <p>
-                TablePass charges a fee per successful reservation. Our current pricing is:
-            </p>
-            <ul>
-                <li><strong>$12 per reservation</strong> — pay as you go, charged only on confirmed bookings.</li>
-                <li><strong>5-Pack: $10 per reservation ($50 total)</strong> — buy five booking credits at a discounted rate. Credits never expire.</li>
-            </ul>
-            <p>
-                You are only charged when we successfully book a reservation on your behalf. No booking, no charge.
-            </p>
-            <p>
-                We reserve the right to change our pricing at any time. If we do, we'll let you know before any new charges apply. Continued use of the service after a pricing change constitutes acceptance of the new pricing.
-            </p>
-            <p>
-                All fees are non-refundable once a reservation has been successfully booked, regardless of whether you ultimately use the reservation.
-            </p>
+            <h2>4. How It Works</h2>
+            <ol>
+                <li>You select a restaurant, date(s), preferred times, and party size</li>
+                <li>You link your Resy or OpenTable account credentials (encrypted and stored securely)</li>
+                <li>Our system monitors for availability and books on your behalf the instant a matching slot becomes available</li>
+                <li>You receive an SMS confirmation when your reservation is secured</li>
+                <li>The reservation appears directly in your Resy or OpenTable account under your name</li>
+            </ol>
 
-            <h2>6. Your Responsibilities</h2>
-            <p>You agree that you will:</p>
+            <h2>5. Credentials &amp; Authorization</h2>
+            <p>By linking your Resy or OpenTable account, you authorize tablepass to act as your agent and submit reservation requests using your credentials. Your password is encrypted at rest and transmitted only to the relevant platform&rsquo;s API. We do not use your credentials for any purpose other than booking reservations on your behalf.</p>
+
+            <h2>6. No Guarantee of Availability</h2>
+            <p>While we achieve a high success rate, we cannot guarantee that any specific reservation will be secured. Restaurant availability depends on factors outside our control, including platform timing, competition from other users, and restaurant policies. You will not be charged for unsuccessful booking attempts.</p>
+
+            <h2>7. Cancellations &amp; Modifications</h2>
+            <p>Reservations booked through tablepass are held under your personal Resy or OpenTable account. You may cancel or modify them directly through those platforms, subject to each restaurant&rsquo;s cancellation policy. The tablepass service fee is non-refundable once a reservation is confirmed.</p>
+
+            <h2>8. SMS Terms &amp; Conditions</h2>
+            <p>By creating a tablepass account, you consent to receive SMS messages from tablepass. Below are the required disclosures:</p>
             <ul>
-                <li>Use TablePass only for personal, non-commercial purposes.</li>
-                <li>Not use the service to engage in any activity that violates Resy's terms of service.</li>
-                <li>Not attempt to reverse-engineer, scrape, or interfere with our platform.</li>
-                <li>Not create multiple accounts or use the service in a way that could be considered abusive.</li>
-                <li>Honor reservations booked through the service (show up or cancel according to restaurant policy).</li>
-                <li>Not resell or transfer reservations obtained through TablePass.</li>
+                <li><strong>Program name:</strong> tablepass Reservation Alerts</li>
+                <li><strong>Description:</strong> Transactional SMS messages related to your restaurant reservation bookings, including booking confirmations, status updates, snipe results, and account notifications</li>
+                <li><strong>Message frequency:</strong> Message frequency varies based on your booking activity. You will typically receive 1&ndash;5 messages per active reservation request. You will not receive marketing or promotional messages.</li>
+                <li><strong>Message and data rates:</strong> Message and data rates may apply depending on your mobile carrier and plan. Check with your carrier for details.</li>
+                <li><strong>Opt-out:</strong> You can opt out of SMS messages at any time by texting <strong>STOP</strong> to any message you receive from us. You will receive a one-time confirmation that you have been unsubscribed. Note: opting out of SMS may affect your ability to receive timely booking confirmations.</li>
+                <li><strong>Help:</strong> For help with SMS messaging, text <strong>HELP</strong> to any message from us, or contact us at <strong>support@tablepass.io</strong></li>
+                <li><strong>Supported carriers:</strong> Major US carriers are supported including AT&amp;T, Verizon, T-Mobile, Sprint, and others. Carrier support is not guaranteed.</li>
             </ul>
 
-            <h2>7. Account Termination</h2>
-            <p>
-                We can suspend or terminate your account at any time, for any reason, with or without notice. This includes (but is not limited to) situations where:
-            </p>
+            <h2>9. Prohibited Use</h2>
+            <p>You agree not to:</p>
             <ul>
-                <li>You violate these Terms.</li>
-                <li>Your Resy account is suspended or terminated.</li>
-                <li>We detect abusive, fraudulent, or suspicious behavior.</li>
-                <li>We decide to discontinue the service (or any part of it).</li>
-            </ul>
-            <p>
-                You can also delete your account at any time by contacting us. Upon termination, your stored credentials will be deleted.
-            </p>
-
-            <h2>8. Limitation of Liability</h2>
-            <p>
-                To the maximum extent permitted by law:
-            </p>
-            <ul>
-                <li><strong>TablePass is provided "as is" and "as available"</strong> without warranties of any kind, whether express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement.</li>
-                <li>We do not warrant that the service will be uninterrupted, error-free, or secure.</li>
-                <li><strong>In no event shall TablePass, its founders, employees, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages</strong>, including but not limited to loss of profits, data, use, or other intangible losses, arising out of or related to your use of the service.</li>
-                <li>Our total aggregate liability for any claims arising from your use of TablePass shall not exceed the total amount you have paid to us in the twelve (12) months preceding the claim.</li>
-                <li>We are not liable for any actions taken by Resy, restaurants, or any other third parties.</li>
+                <li>Use the service for any unlawful purpose</li>
+                <li>Provide false or misleading information</li>
+                <li>Attempt to reverse-engineer, hack, or exploit the service</li>
+                <li>Use the service to scalp or resell reservations</li>
+                <li>Create multiple accounts to circumvent usage limits</li>
+                <li>Interfere with the operation of the service or other users&rsquo; access</li>
             </ul>
 
-            <h2>9. Indemnification</h2>
-            <p>
-                You agree to indemnify and hold harmless TablePass and its team from any claims, damages, losses, or expenses (including reasonable legal fees) arising out of your use of the service, your violation of these Terms, or your violation of any third party's rights.
-            </p>
+            <h2>10. Intellectual Property</h2>
+            <p>All content, design, and technology comprising the tablepass service are owned by or licensed to us. You may not copy, modify, or distribute any part of our service without written permission.</p>
 
-            <h2>10. Dispute Resolution & Arbitration</h2>
-            <p>
-                We'd prefer to resolve any disputes informally. If you have a concern, please reach out to us first at <a href="mailto:hello@tablepass.nyc">hello@tablepass.nyc</a> and we'll do our best to sort it out.
-            </p>
-            <p>
-                If we can't resolve a dispute informally, you and TablePass agree to resolve any claims relating to these Terms or the service through <strong>binding individual arbitration</strong> administered by the American Arbitration Association ("AAA") under its Consumer Arbitration Rules. Arbitration will take place in New York, New York, or at another mutually agreed location.
-            </p>
-            <p>
-                <strong>You agree to waive your right to participate in a class action lawsuit or class-wide arbitration.</strong> All claims must be brought in the parties' individual capacity, not as a plaintiff or class member in any purported class or representative proceeding.
-            </p>
-            <p>
-                The arbitrator's decision will be final and binding, and judgment on the award may be entered in any court with jurisdiction.
-            </p>
+            <h2>11. Limitation of Liability</h2>
+            <p>To the maximum extent permitted by law, tablepass and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising out of or related to your use of the service. Our total liability for any claim shall not exceed the amount you paid to tablepass in the 12 months preceding the claim.</p>
 
-            <h2>11. Governing Law</h2>
-            <p>
-                These Terms are governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law principles.
-            </p>
+            <h2>12. Disclaimer of Warranties</h2>
+            <p>The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or that any specific reservation will be obtained.</p>
 
-            <h2>12. Changes to These Terms</h2>
-            <p>
-                We may update these Terms from time to time. When we make changes, we'll update the "Effective date" at the top of this page. Your continued use of TablePass after changes are posted constitutes your acceptance of the revised Terms.
-            </p>
-            <p>
-                For significant changes, we'll make reasonable efforts to notify you (such as through the app or via your registered phone number).
-            </p>
+            <h2>13. Indemnification</h2>
+            <p>You agree to indemnify and hold harmless tablepass and its operators from any claims, losses, damages, or expenses (including legal fees) arising from your use of the service or violation of these terms.</p>
 
-            <h2>13. Miscellaneous</h2>
-            <ul>
-                <li><strong>Entire Agreement.</strong> These Terms, together with our <a href="/privacy">Privacy Policy</a>, constitute the entire agreement between you and TablePass.</li>
-                <li><strong>Severability.</strong> If any provision of these Terms is found to be unenforceable, the remaining provisions will remain in effect.</li>
-                <li><strong>No Waiver.</strong> Our failure to enforce any right or provision of these Terms will not be considered a waiver of that right or provision.</li>
-                <li><strong>Assignment.</strong> We may assign or transfer these Terms and our rights hereunder without restriction. You may not assign these Terms without our prior written consent.</li>
-            </ul>
+            <h2>14. Termination</h2>
+            <p>We may suspend or terminate your account at our discretion if we believe you have violated these terms, engaged in fraudulent activity, or are using the service in a manner that could harm us or other users. You may close your account at any time by contacting us.</p>
 
-            <h2>14. Contact</h2>
-            <p>
-                Questions? Reach out to us at <a href="mailto:hello@tablepass.nyc">hello@tablepass.nyc</a>.
-            </p>
+            <h2>15. Governing Law</h2>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law principles.</p>
+
+            <h2>16. Changes to These Terms</h2>
+            <p>We may update these Terms from time to time. Material changes will be communicated via SMS or a notice on our website. Your continued use of the service after changes constitutes acceptance of the updated terms.</p>
+
+            <h2>17. Contact Us</h2>
+            <p>If you have questions about these Terms &amp; Conditions, contact us at:</p>
+            <p><strong>Email:</strong> support@tablepass.io</p>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="border-t border-slate-800/30 py-10 text-center text-slate-600 text-sm">
-        <div class="flex items-center justify-center gap-2.5 mb-3">
-            <span class="font-medium text-slate-500" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.1em;">tablepass</span>
+    <footer class="bg-stone-950 py-10 text-center">
+        <span class="text-white/30 text-lg font-medium tracking-[0.12em]" style="font-family: 'Manrope', sans-serif;">tablepass</span>
+        <div class="flex items-center justify-center gap-4 mt-3">
+            <a href="/terms" class="text-white/15 text-xs hover:text-white/30 transition-colors">Terms</a>
+            <span class="text-white/10">|</span>
+            <a href="/privacy" class="text-white/15 text-xs hover:text-white/30 transition-colors">Privacy</a>
         </div>
-        <div class="flex items-center justify-center gap-4 mb-3">
-            <a href="/terms" class="text-slate-500 hover:text-brand-400 transition-colors">Terms</a>
-            <span class="text-slate-700">|</span>
-            <a href="/privacy" class="text-slate-500 hover:text-brand-400 transition-colors">Privacy</a>
-        </div>
-        <p>NYC restaurant reservations, automated.</p>
+        <p class="text-white/10 text-xs mt-4">&copy; 2026 tablepass</p>
     </footer>
-
 </body>
 </html>
