@@ -243,7 +243,16 @@ async def link_resy(
 @router.post("/resy-send-otp")
 @limiter.limit("5/minute")
 async def resy_send_otp(request: Request, body: dict, user_id: str = Depends(get_user_id)):
-    """Send an OTP code to the user's phone via Resy's auth API."""
+    """DISABLED — Phone OTP cannot store password, which the sniper requires.
+    Users must link via email+password instead.
+    Re-enable when/if the sniper supports token-based auth.
+    """
+    raise HTTPException(
+        400,
+        "Phone OTP linking is temporarily disabled. "
+        "Please use Email + Password to link your Resy account."
+    )
+    # ── Original implementation (kept for future reference) ──
     phone = body.get("phone", "").strip()
     if not phone:
         raise HTTPException(400, "Phone number is required")
@@ -279,11 +288,13 @@ async def resy_send_otp(request: Request, body: dict, user_id: str = Depends(get
 @router.post("/resy-verify-otp")
 @limiter.limit("5/minute")
 async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(get_user_id)):
-    """Verify the Resy phone OTP code and link the account.
-
-    May return a challenge requiring email verification (Resy security step
-    for phones linked to existing accounts).
-    """
+    """DISABLED — Phone OTP cannot store password, which the sniper requires."""
+    raise HTTPException(
+        400,
+        "Phone OTP linking is temporarily disabled. "
+        "Please use Email + Password to link your Resy account."
+    )
+    # ── Original implementation (kept for future reference) ──
     phone = body.get("phone", "").strip()
     code = body.get("code", "").strip()
     if not phone or not code:
@@ -341,7 +352,13 @@ async def resy_verify_otp(request: Request, body: dict, user_id: str = Depends(g
 @router.post("/resy-complete-challenge")
 @limiter.limit("5/minute")
 async def resy_complete_challenge(request: Request, body: dict, user_id: str = Depends(get_user_id)):
-    """Complete the email challenge after phone OTP verification."""
+    """DISABLED — Phone OTP flow disabled; challenge completion not needed."""
+    raise HTTPException(
+        400,
+        "Phone OTP linking is temporarily disabled. "
+        "Please use Email + Password to link your Resy account."
+    )
+    # ── Original implementation (kept for future reference) ──
     claim_token = body.get("claim_token", "").strip()
     challenge_id = body.get("challenge_id", "").strip()
     email = body.get("email", "").strip()

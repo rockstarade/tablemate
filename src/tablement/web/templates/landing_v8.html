@@ -238,7 +238,7 @@
 
     <!-- ═══ NAV ═══ -->
     <nav class="fixed top-0 inset-x-0 z-50 transition-all duration-500"
-         :class="scrolled ? 'bg-cream-50/95 backdrop-blur-xl border-b border-stone-200/60 shadow-sm' : 'bg-stone-950'">
+         :class="scrolled ? 'bg-cream-50/95 backdrop-blur-xl shadow-[0_1px_3px_rgba(0,0,0,0.06)]' : 'bg-stone-950'">
         <div class="max-w-6xl mx-auto px-6 flex items-center justify-between"
             :class="scrolled ? 'py-4' : 'py-6'">
             <a href="/" class="flex items-center gap-2">
@@ -285,14 +285,14 @@
                         </div>
 
                         <!-- Headline -->
-                        <h1 class="text-5xl sm:text-6xl lg:text-[4.2rem] font-serif font-medium text-white leading-[1.08] mb-8 anim-2">
+                        <h1 class="text-[2.6rem] sm:text-6xl lg:text-[4.2rem] font-serif font-medium text-white leading-[1.08] mb-8 anim-2">
                             The reservation you couldn't get?
                             <span class="italic gold-text">Consider it done.</span>
                         </h1>
 
                         <!-- Subhead -->
-                        <p class="text-xl sm:text-[22px] text-white/35 max-w-lg mb-10 anim-3 leading-relaxed font-light">
-                            Tell us the restaurant. We book it the instant it opens. You just show up.
+                        <p class="text-lg sm:text-[22px] text-white/35 max-w-lg mb-10 anim-3 leading-relaxed font-light">
+                            Choose your restaurant. We book the instant it opens. You just show up.
                         </p>
 
                         <!-- CTA -->
@@ -334,7 +334,7 @@
                         </div>
                         <div class="flex-1 glass-dark rounded-xl px-4 py-4 text-center border border-gold-400/15" style="box-shadow: 0 0 20px rgba(197,163,85,0.06);">
                             <p class="text-gold-300 text-3xl font-bold tracking-tight leading-none">99.8%</p>
-                            <p class="text-white/40 text-[11px] font-medium mt-1.5 uppercase tracking-wider">Success</p>
+                            <p class="text-white/40 text-[11px] font-medium mt-1.5 uppercase tracking-wider">Success rate</p>
                         </div>
                         <div class="flex-1 glass-dark rounded-xl px-4 py-4 text-center border border-gold-400/15" style="box-shadow: 0 0 20px rgba(197,163,85,0.06);">
                             <p class="text-gold-300 text-3xl font-bold tracking-tight leading-none">24/7</p>
@@ -492,7 +492,7 @@
         </section>
 
         <!-- ═══ PRICING ═══ -->
-        <section id="pricing" class="py-28 sm:py-36 bg-white relative grain">
+        <section id="pricing" class="py-16 sm:py-36 bg-white relative grain">
             <div class="max-w-4xl mx-auto px-6 relative z-10">
                 <div class="text-center mb-18 reveal">
                     <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Pricing</p>
@@ -501,7 +501,85 @@
                     </h2>
                     <p class="text-stone-400 text-lg max-w-md mx-auto">Pay when we confirm your table. That's the whole model.</p>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto mt-16">
+                <!-- Mobile: toggle picker -->
+                <div class="sm:hidden mt-10 max-w-sm mx-auto reveal" x-data="{ plan: 'pack' }">
+                    <div class="flex gap-1 p-1 rounded-xl mb-6" style="background: #F0EFEC;">
+                        <button @click="plan = 'single'" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all"
+                            :class="plan === 'single' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'">
+                            Per Reservation
+                        </button>
+                        <button @click="plan = 'pack'" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all relative"
+                            :class="plan === 'pack' ? 'bg-stone-950 text-white shadow-sm' : 'text-stone-400'">
+                            5 Pack <span class="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md" :class="plan === 'pack' ? 'bg-gold-400/20 text-gold-300' : 'bg-stone-200 text-stone-500'">-17%</span>
+                        </button>
+                    </div>
+                    <!-- Single card -->
+                    <div x-show="plan === 'single'" x-transition class="rounded-2xl border border-stone-200 bg-cream-50 p-8 text-center">
+                        <div class="mb-2">
+                            <span class="text-5xl font-bold text-stone-900 tracking-tight">$12</span>
+                        </div>
+                        <p class="text-stone-400 text-sm mb-6">per successful booking</p>
+                        <ul class="text-stone-500 text-[13px] space-y-3 mb-8 text-left">
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                Charged only if we get the table
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                Instant booking + cancellation monitoring
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full bg-stone-950 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                SMS confirmation instantly
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-cream-100 font-semibold text-sm transition-all">
+                            Get Started
+                        </button>
+                    </div>
+                    <!-- 5-pack card -->
+                    <div x-show="plan === 'pack'" x-transition class="rounded-2xl bg-stone-950 p-8 text-center relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-gold-400 to-transparent"></div>
+                        <div class="mb-2">
+                            <span class="text-5xl font-bold text-white tracking-tight">$10</span>
+                        </div>
+                        <p class="text-white/30 text-sm mb-6">per successful booking</p>
+                        <ul class="text-white/45 text-[13px] space-y-3 mb-8 text-left">
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Credits never expire</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">Save $2 per reservation vs. single</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(197,163,85,0.12);">
+                                    <svg class="w-3 h-3 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+                                <span class="text-white/60">All features included &mdash; best value</span>
+                            </li>
+                        </ul>
+                        <button @click="openAuth()"
+                            class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all"
+                            style="background: linear-gradient(135deg, #C5A355, #B08D3E); color: #0D0D0B;">
+                            Buy 5 Pack &mdash; $50
+                        </button>
+                    </div>
+                </div>
+                <!-- Desktop: side by side (unchanged) -->
+                <div class="hidden sm:grid grid-cols-2 gap-6 max-w-2xl mx-auto mt-16">
                     <!-- Per booking -->
                     <div class="reveal rounded-2xl border border-stone-200 bg-cream-50 p-10 text-center flex flex-col">
                         <h3 class="text-[11px] font-semibold text-stone-400 tracking-[0.2em] uppercase mb-6">Per Reservation</h3>
@@ -576,7 +654,7 @@
         </section>
 
         <!-- ═══ RESTAURANTS ═══ -->
-        <section id="restaurants" class="py-28 sm:py-36 bg-cream-50">
+        <section id="restaurants" class="py-16 sm:py-36 bg-cream-50">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="text-center mb-16 reveal">
                     <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">Restaurants</p>
@@ -611,7 +689,7 @@
         </section>
 
         <!-- ═══ FAQ ═══ -->
-        <section id="faq" class="py-28 sm:py-36 bg-white">
+        <section id="faq" class="py-16 sm:py-36 bg-white">
             <div class="max-w-3xl mx-auto px-6">
                 <div class="text-center mb-16 reveal">
                     <p class="text-gold-500 text-[11px] font-semibold tracking-[0.3em] uppercase mb-5">FAQ</p>

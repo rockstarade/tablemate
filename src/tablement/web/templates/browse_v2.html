@@ -1469,8 +1469,9 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
             <h2 class="text-lg font-bold mb-1" style="color: var(--c1);">Link your Resy account</h2>
-            <p class="text-sm mb-6" style="color: var(--c3);">We need your Resy credentials to book on your behalf.</p>
-            <div class="flex gap-1 mb-6 rounded-xl p-1" style="background: var(--bg-input);">
+            <p class="text-sm mb-6" style="color: var(--c3);">Enter your Resy email and password so we can book on your behalf.</p>
+            <!-- Phone OTP tab hidden — OTP flow disabled (doesn't store password needed for sniping) -->
+            <!-- <div class="flex gap-1 mb-6 rounded-xl p-1" style="background: var(--bg-input);">
                 <button @click="resyLinkTab = 'phone'" class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
                     :style="resyLinkTab === 'phone' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
                     Phone + OTP
@@ -1479,7 +1480,7 @@
                     :style="resyLinkTab === 'email' ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'color: var(--c3);'">
                     Email + Password
                 </button>
-            </div>
+            </div> -->
             <!-- Phone OTP -->
             <div x-show="resyLinkTab === 'phone'">
                 <!-- Step indicator -->
@@ -1727,7 +1728,7 @@
             modifySubmitting: false,
 
             // Resy link
-            resyLinkTab: 'phone',
+            resyLinkTab: 'email',  // OTP disabled — force email+password
             resyPhoneStep: 'phone',
             resyPhoneDisplay: '',
             resyPhoneDigits: '',
