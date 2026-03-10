@@ -2328,7 +2328,7 @@
                         res.status = 'confirmed';
                         res._liveMessage = '';
                         res.elapsed_seconds = data.elapsed_seconds || res.elapsed_seconds;
-                        this.showToast("You're in! Reservation confirmed.", '🎉');
+                        this.showToast("You're in! Reservation confirmed.", '🥂');
                     } else {
                         res.status = data.dry_run ? 'dry_run' : 'failed';
                         res.error = data.error;
