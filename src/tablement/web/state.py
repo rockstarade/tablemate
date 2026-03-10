@@ -127,3 +127,100 @@ class JobManager:
     @property
     def active_count(self) -> int:
         return len(self._jobs)
+
+
+class SnipeQueue:
+    """First-come-first-served ordering for competing snipes.
+
+    Keyed by (venue_id, target_date). When multiple users target the
+    same restaurant on the same date, this determines who fires first
+    based on reservation created_at timestamp.
+
+    NOT per time slot — because each user can only hold ONE reservation
+    per restaurant (Resy constraint), so the competition is for ANY
+    table at that venue, not a specific time.
+
+    Stagger approach: lower-priority users are DELAYED, not blocked.
+    If User 1 grabs the token, User 2's booking fails naturally and
+    the retry loop re-polls for fresh slots. User 2 is never marked
+    as failed — they always get to attempt.
+    """
+
+    STAGGER_MS = 150  # delay per queue position
+
+    def __init__(self) -> None:
+        self._queues: dict[tuple[int, str], list[dict]] = {}
+        # (venue_id, target_date) → sorted list of entries
+
+    def register(
+        self,
+        venue_id: int,
+        target_date: str,
+        reservation_id: str,
+        user_id: str,
+        created_at: str,
+    ) -> None:
+        """Add a snipe to the queue. Sorted by created_at (FCFS)."""
+        key = (venue_id, target_date)
+        if key not in self._queues:
+            self._queues[key] = []
+        existing = {e["reservation_id"] for e in self._queues[key]}
+        if reservation_id not in existing:
+            self._queues[key].append({
+                "reservation_id": reservation_id,
+                "user_id": user_id,
+                "created_at": created_at,
+            })
+            self._queues[key].sort(key=lambda e: e["created_at"])
+
+    def get_position(
+        self, venue_id: int, target_date: str, reservation_id: str,
+    ) -> int:
+        """0-indexed queue position. 0 = fires first."""
+        for i, e in enumerate(self._queues.get((venue_id, target_date), [])):
+            if e["reservation_id"] == reservation_id:
+                return i
+        return 0
+
+    def get_stagger_seconds(
+        self, venue_id: int, target_date: str, reservation_id: str,
+    ) -> float:
+        """Delay in seconds before this snipe should fire."""
+        pos = self.get_position(venue_id, target_date, reservation_id)
+        return pos * (self.STAGGER_MS / 1000)
+
+    def queue_size(self, venue_id: int, target_date: str) -> int:
+        """Number of snipes competing for this venue+date."""
+        return len(self._queues.get((venue_id, target_date), []))
+
+    def unregister(
+        self, venue_id: int, target_date: str, reservation_id: str,
+    ) -> None:
+        """Remove on cancel/complete/fail."""
+        key = (venue_id, target_date)
+        entries = self._queues.get(key, [])
+        self._queues[key] = [
+            e for e in entries if e["reservation_id"] != reservation_id
+        ]
+        if not self._queues.get(key):
+            self._queues.pop(key, None)
+
+    def get_all_queues(self) -> list[dict]:
+        """Return all active queues for admin dashboard."""
+        result = []
+        for (venue_id, target_date), entries in self._queues.items():
+            result.append({
+                "venue_id": venue_id,
+                "target_date": target_date,
+                "size": len(entries),
+                "entries": [
+                    {
+                        "reservation_id": e["reservation_id"],
+                        "user_id": e["user_id"],
+                        "position": i,
+                        "stagger_ms": i * self.STAGGER_MS,
+                    }
+                    for i, e in enumerate(entries)
+                ],
+            })
+        return result

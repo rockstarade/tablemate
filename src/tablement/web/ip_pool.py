@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import socket
 import subprocess
+import time as time_module
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,8 @@ class IPPool:
     def __init__(self) -> None:
         self._ips: list[str] = []
         self._assignments: dict[str, str] = {}  # key → local IP
+        self._block_counts: dict[str, int] = {}  # ip → total 429/403 count
+        self._last_block: dict[str, float] = {}  # ip → monotonic timestamp of last block
         self._discover()
 
     def _discover(self) -> None:
@@ -117,6 +120,31 @@ class IPPool:
         if removed:
             logger.debug("Released IP %s from %s", removed, key[:30])
 
+    def record_block(self, ip: str) -> None:
+        """Record a 429/403 block for this IP.
+
+        Called by scouts and snipe loops when Resy rate-limits or blocks
+        an IP. Tracks total count and last-blocked timestamp for admin
+        dashboard visibility.
+        """
+        self._block_counts[ip] = self._block_counts.get(ip, 0) + 1
+        self._last_block[ip] = time_module.monotonic()
+        logger.warning(
+            "IP %s blocked (total blocks: %d)", ip, self._block_counts[ip],
+        )
+
+    def get_block_stats(self) -> dict:
+        """Return per-IP block counts and timestamps for admin dashboard."""
+        now = time_module.monotonic()
+        return {
+            ip: {
+                "blocks": self._block_counts.get(ip, 0),
+                "last_block_ago_s": round(now - self._last_block[ip], 1)
+                if ip in self._last_block else None,
+            }
+            for ip in self._ips
+        }
+
     def get_stats(self) -> dict:
         """Return pool statistics for monitoring/admin."""
         per_ip: dict[str, int] = {ip: 0 for ip in self._ips}
@@ -129,6 +157,7 @@ class IPPool:
             "ips": self._ips,
             "active_assignments": len(self._assignments),
             "per_ip": per_ip,
+            "blocks": self.get_block_stats(),
         }
 
 

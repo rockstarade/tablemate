@@ -685,6 +685,7 @@ class ScoutOrchestrator:
                                     # On block: fall back to residential proxy
                                     err_str = str(e).lower()
                                     if "403" in err_str or "429" in err_str:
+                                        ip_pool.record_block(local_ip)
                                         logger.warning(
                                             "Drop scout %s: IP %s blocked at poll %d, falling back to proxy",
                                             venue_name, local_ip, poll_count,
@@ -789,6 +790,7 @@ class ScoutOrchestrator:
                                     ))
                                     err_str = str(e).lower()
                                     if "403" in err_str or "429" in err_str:
+                                        ip_pool.record_block(local_ip)
                                         logger.warning(
                                             "Drop scout %s: IP %s blocked at poll %d, falling back to proxy",
                                             venue_name, local_ip, poll_count,

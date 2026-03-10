@@ -48,7 +48,7 @@ from tablement.web.schemas import (
 )
 from tablement.web.ip_pool import ip_pool
 from tablement.web.ratelimit import limiter
-from tablement.web.state import JobState, SnipePhase
+from tablement.web.state import JobState, SnipePhase, SnipeQueue
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -250,10 +250,10 @@ class SnipeIntelBuffer:
         if self.reservation_id:
             entry["reservation_id"] = self.reservation_id
 
-        # Only include full slot data when slots > 0 (saves space)
+        # Include full slot data with tokens when slots > 0
         if slot_count > 0 and slots:
             entry["slots_json"] = [
-                {"time": s.date.start, "type": s.config.type}
+                {"time": s.date.start, "type": s.config.type, "token": s.config.token}
                 for s in slots[:50]  # Cap at 50 to avoid huge payloads
             ]
 
@@ -927,6 +927,24 @@ async def _run_snipe(
     local_ip = ip_pool.get_ip(snipe_ip_key)
     logger.info("Snipe %s: bound to IP %s", reservation_id, local_ip)
 
+    # Register in priority queue for FCFS ordering
+    snipe_queue: SnipeQueue = app.state.snipe_queue
+    try:
+        row_data = await db.get_reservation_by_id(reservation_id)
+        snipe_queue.register(
+            config.venue_id, day_str, reservation_id,
+            user_id, row_data.get("created_at", "") if row_data else "",
+        )
+        queue_size = snipe_queue.queue_size(config.venue_id, day_str)
+        if queue_size > 1:
+            pos = snipe_queue.get_position(config.venue_id, day_str, reservation_id)
+            logger.info(
+                "Snipe %s: queue position %d/%d (stagger: %dms)",
+                reservation_id, pos + 1, queue_size, pos * SnipeQueue.STAGGER_MS,
+            )
+    except Exception as q_err:
+        logger.debug("Queue registration skipped: %s", q_err)
+
     try:
         # Non-blocking NTP offset check (runs in thread, saves 2-5s)
         ntp_task = asyncio.create_task(scheduler.check_ntp_offset_async())
@@ -1144,6 +1162,9 @@ async def _run_snipe(
                     client, config, selector, payment_id, dry_run, job,
                     pre_drop_poll=True,
                     intel_buffer=intel_buffer,
+                    local_ip=local_ip,
+                    snipe_queue=snipe_queue,
+                    reservation_id=reservation_id,
                 )
             else:
                 # No scout or scout timed out — do our own pre-drop polling
@@ -1166,6 +1187,9 @@ async def _run_snipe(
                     client, config, selector, payment_id, dry_run, job,
                     pre_drop_poll=True,
                     intel_buffer=intel_buffer,
+                    local_ip=local_ip,
+                    snipe_queue=snipe_queue,
+                    reservation_id=reservation_id,
                 )
 
             # ---- DROP INTELLIGENCE: record observation from real snipe ----
@@ -1306,6 +1330,8 @@ async def _run_snipe(
                 update_fields["resy_token"] = result.resy_token
             if result.error:
                 update_fields["error"] = result.error
+            if result.booking_path:
+                update_fields["booking_path"] = result.booking_path
             await db.update_reservation(reservation_id, **update_fields)
 
             # Clean up slot claims on terminal state
@@ -1366,6 +1392,8 @@ async def _run_snipe(
             "attempts": job.status.attempt, "elapsed_seconds": 0,
         })
     finally:
+        # Unregister from priority queue
+        snipe_queue.unregister(config.venue_id, day_str, reservation_id)
         # Release IP assignment back to the pool
         ip_pool.release(snipe_ip_key)
         # Auto-stop scout if this was the last snipe for the venue
@@ -1468,6 +1496,24 @@ async def _cancellation_snipe_loop(
     day_str = config.date.isoformat()
     attempt = 0
 
+    # Register in priority queue for FCFS ordering
+    snipe_queue: SnipeQueue = app.state.snipe_queue
+    try:
+        row_data = await db.get_reservation_by_id(reservation_id)
+        snipe_queue.register(
+            config.venue_id, day_str, reservation_id,
+            user_id, row_data.get("created_at", "") if row_data else "",
+        )
+        queue_size = snipe_queue.queue_size(config.venue_id, day_str)
+        if queue_size > 1:
+            pos = snipe_queue.get_position(config.venue_id, day_str, reservation_id)
+            logger.info(
+                "Cancel snipe %s: queue position %d/%d (stagger: %dms)",
+                reservation_id, pos + 1, queue_size, pos * SnipeQueue.STAGGER_MS,
+            )
+    except Exception as q_err:
+        logger.debug("Queue registration skipped: %s", q_err)
+
     # Burst/rest tracking + per-user 429 backoff
     cancel_backoff = 0.0
     burst_start = time_module.monotonic()
@@ -1567,56 +1613,82 @@ async def _cancellation_snipe_loop(
                     if selected:
                         logger.info("Cancel snipe %s: found matching slot! Booking...", reservation_id)
 
+                        # Stagger if competing with other snipes for same venue+date
+                        stagger = snipe_queue.get_stagger_seconds(
+                            config.venue_id, day_str, reservation_id,
+                        )
+                        if stagger > 0:
+                            logger.info(
+                                "Cancel snipe %s: staggering %dms before booking burst",
+                                reservation_id, int(stagger * 1000),
+                            )
+                            await asyncio.sleep(stagger)
+
                         resy_email = profile.get("resy_email")
                         resy_pw_enc = profile.get("resy_password_encrypted")
                         if not resy_email or not resy_pw_enc:
                             raise ValueError("No Resy credentials — please re-link your Resy account")
                         resy_password = decrypt_password(resy_pw_enc)
 
-                        # Booking burst: same proxy IP + fingerprint as scout
-                        async with ResyApiClient(user_id=user_id, fingerprint=fp) as booker:
-                            await asyncio.sleep(random.uniform(0.3, 1.0))  # human delay
+                        # Assign dedicated EC2 IP for booking burst (speed on direct leg)
+                        book_ip_key = f"cancel-book-{reservation_id}"
+                        book_ip = ip_pool.get_ip(book_ip_key)
+                        logger.info("Cancel snipe %s: booking burst bound to IP %s", reservation_id, book_ip)
 
-                            for _auth_try in range(2):
-                                try:
-                                    auth_resp = await booker.authenticate(resy_email, resy_password)
-                                    break
-                                except Exception as _auth_err:
-                                    if _auth_try < 1:
-                                        logger.warning("Cancel snipe %s auth retry: %s", reservation_id, _auth_err)
-                                        await asyncio.sleep(1)
-                                    else:
-                                        raise
-                            booker.set_auth_token(auth_resp.token)
-                            pm = next(
-                                (p for p in auth_resp.payment_methods if p.is_default),
-                                auth_resp.payment_methods[0],
-                            )
-                            booker.prepare_book_template(pm.id)
+                        try:
+                            async with ResyApiClient(user_id=user_id, fingerprint=fp, local_address=book_ip) as booker:
+                                await asyncio.sleep(random.uniform(0.3, 1.0))  # human delay
 
-                            await asyncio.gather(
-                                booker.warmup_direct(),
-                                asyncio.sleep(random.uniform(0.2, 0.8)),
-                            )
+                                for _auth_try in range(2):
+                                    try:
+                                        auth_resp = await booker.authenticate(resy_email, resy_password)
+                                        break
+                                    except Exception as _auth_err:
+                                        if _auth_try < 1:
+                                            logger.warning("Cancel snipe %s auth retry: %s", reservation_id, _auth_err)
+                                            await asyncio.sleep(1)
+                                        else:
+                                            raise
+                                booker.set_auth_token(auth_resp.token)
+                                pm = next(
+                                    (p for p in auth_resp.payment_methods if p.is_default),
+                                    auth_resp.payment_methods[0],
+                                )
+                                booker.prepare_book_template(pm.id)
 
-                            book_token = await booker.get_details_fast(
-                                config_id=selected.config.token,
-                                day=day_str,
-                                party_size=config.party_size,
-                            )
+                                await asyncio.gather(
+                                    booker.warmup_direct(),
+                                    asyncio.sleep(random.uniform(0.2, 0.8)),
+                                )
 
-                            await asyncio.sleep(random.uniform(0.1, 0.5))
+                                book_token = await booker.get_details_fast(
+                                    config_id=selected.config.token,
+                                    day=day_str,
+                                    party_size=config.party_size,
+                                )
 
-                            result = await booker.dual_book(
-                                book_token=book_token,
-                                payment_method_id=pm.id,
-                            )
+                                await asyncio.sleep(random.uniform(0.1, 0.5))
+
+                                result = await booker.dual_book(
+                                    book_token=book_token,
+                                    payment_method_id=pm.id,
+                                )
+                        finally:
+                            ip_pool.release(book_ip_key)
+
+                        logger.info(
+                            "CANCEL BOOKING SUCCESS: %s slot=%s type=%s path=%s token=%s",
+                            reservation_id, selected.date.start, selected.config.type,
+                            result.booking_path or "unknown",
+                            selected.config.token[:20],
+                        )
 
                         # SUCCESS — update DB and cancel group
                         await db.update_reservation(
                             reservation_id,
                             status="confirmed",
                             resy_token=result.resy_token,
+                            booking_path=result.booking_path,
                             attempts=attempt,
                         )
                         await _cleanup_claims(reservation_id, "confirmed")
@@ -1693,6 +1765,7 @@ async def _cancellation_snipe_loop(
         await db.update_reservation(reservation_id, status="cancelled", error="Cancelled")
         await _cleanup_claims(reservation_id, "cancelled")
     finally:
+        snipe_queue.unregister(config.venue_id, day_str, reservation_id)
         app.state.jobs.remove(reservation_id)
 
 
@@ -1822,6 +1895,9 @@ async def _snipe_loop(
     *,
     pre_drop_poll: bool = False,
     intel_buffer: SnipeIntelBuffer | None = None,
+    local_ip: str | None = None,
+    snipe_queue: SnipeQueue | None = None,
+    reservation_id: str | None = None,
 ) -> SnipeResult:
     """Aggressive snipe loop with pre-drop polling and parallel booking.
 
@@ -1909,10 +1985,26 @@ async def _snipe_loop(
                 "message": f"SLOTS LIVE! {len(slots)} slots found on attempt {attempt}",
             })
 
+            # DETAILED SLOT LOGGING — log every slot with token for analysis
+            # This tells us: does Resy return multiple tokens per time+type?
+            _slot_summary: dict[str, list[str]] = {}  # "19:00 Dining Room" → [token1, token2]
+            for s in slots:
+                _key = f"{s.date.start} {s.config.type}"
+                _slot_summary.setdefault(_key, []).append(s.config.token[:16])
+            for _slot_key, _tokens in _slot_summary.items():
+                _multi = f" *** MULTIPLE TOKENS ({len(_tokens)})" if len(_tokens) > 1 else ""
+                logger.info("  SLOT: %s → tokens=[%s]%s",
+                            _slot_key, ", ".join(_tokens), _multi)
+            # Flag if any time+type has multiple tokens (the big question)
+            _multi_token_count = sum(1 for t in _slot_summary.values() if len(t) > 1)
+            if _multi_token_count > 0:
+                logger.info("*** MULTI-TOKEN DETECTED: %d time+type combos have multiple tokens ***",
+                            _multi_token_count)
+
             # Step 2: Select top matching slots for parallel booking
             top_matches = selector.select_top(
                 slots, config.time_preferences, config.date,
-                limit=PARALLEL_DETAILS_SLOTS,
+                limit=len(config.time_preferences) or PARALLEL_DETAILS_SLOTS,
             )
             if not top_matches:
                 continue
@@ -1936,6 +2028,25 @@ async def _snipe_loop(
                     elapsed_seconds=time_module.monotonic() - start,
                     error="DRY RUN - booking skipped",
                 ))
+
+            # --- PRIORITY QUEUE STAGGER ---
+            # Delay lower-priority users so higher-priority users book first.
+            # User 2 is NOT blocked — just delayed 150ms. If their first-choice
+            # token was taken, the sequential booking loop falls through to the
+            # next token, or the retry loop re-polls for fresh slots.
+            if snipe_queue and reservation_id:
+                stagger = snipe_queue.get_stagger_seconds(
+                    config.venue_id, day_str, reservation_id,
+                )
+                if stagger > 0:
+                    pos = snipe_queue.get_position(
+                        config.venue_id, day_str, reservation_id,
+                    )
+                    logger.info(
+                        "Snipe %s: position %d, staggering %dms before booking",
+                        reservation_id, pos + 1, int(stagger * 1000),
+                    )
+                    await asyncio.sleep(stagger)
 
             # Step 3: PARALLEL get_details on top matches
             # Fire details on all top matches simultaneously. First valid
@@ -1964,6 +2075,13 @@ async def _snipe_loop(
                 booked_slot = top_matches[i]
 
                 try:
+                    # Log exact token being booked (critical for multi-user analysis)
+                    logger.info(
+                        "BOOKING ATTEMPT: slot=%s type=%s config_token=%s book_token=%s",
+                        booked_slot.date.start, booked_slot.config.type,
+                        booked_slot.config.token[:20], book_token[:20] if book_token else "?",
+                    )
+
                     # Step 4: Race booking via direct EC2 + proxy simultaneously.
                     # book_token is single-use — second request fails harmlessly.
                     # Cancellation snipe already uses dual_book (line 1442).
@@ -1972,9 +2090,44 @@ async def _snipe_loop(
                         payment_method_id=payment_id,
                     )
 
+                    logger.info(
+                        "BOOKING SUCCESS: slot=%s path=%s resy_token=%s",
+                        booked_slot.date.start, result.booking_path or "unknown",
+                        result.resy_token[:20] if result.resy_token else "?",
+                    )
+
+                    # POST-BOOKING VERIFICATION: re-poll to see if token changed
+                    # This answers: does Resy return new tokens after one is booked?
+                    try:
+                        post_slots = await client.find_slots(
+                            config.venue_id, day_str, config.party_size, fast=True
+                        )
+                        _post_summary: dict[str, list[str]] = {}
+                        for ps in post_slots:
+                            _pk = f"{ps.date.start} {ps.config.type}"
+                            _post_summary.setdefault(_pk, []).append(ps.config.token[:16])
+                        # Check if the booked token still appears
+                        _booked_key = f"{booked_slot.date.start} {booked_slot.config.type}"
+                        _booked_token_short = booked_slot.config.token[:16]
+                        _post_tokens = _post_summary.get(_booked_key, [])
+                        if _booked_token_short in _post_tokens:
+                            logger.info("POST-BOOK: token %s STILL in find_slots (same token, multiple tables?)",
+                                        _booked_token_short)
+                        elif _post_tokens:
+                            logger.info("POST-BOOK: token %s GONE, NEW token(s) for %s: %s (token rotated)",
+                                        _booked_token_short, _booked_key, _post_tokens)
+                        else:
+                            logger.info("POST-BOOK: token %s GONE, NO tokens left for %s (last table taken)",
+                                        _booked_token_short, _booked_key)
+                        logger.info("POST-BOOK: total slots remaining: %d (was %d before booking)",
+                                    len(post_slots), len(slots))
+                    except Exception as post_err:
+                        logger.debug("Post-booking find_slots check failed (non-critical): %s", post_err)
+
                     return _stamp_intel(SnipeResult(
                         success=True,
                         resy_token=result.resy_token,
+                        booking_path=result.booking_path,
                         slot=booked_slot,
                         attempts=attempt,
                         elapsed_seconds=time_module.monotonic() - start,
@@ -1990,9 +2143,11 @@ async def _snipe_loop(
             logger.warning("All %d parallel book attempts failed, retrying...", len(top_matches))
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 429:
+            if e.response.status_code in (429, 403):
+                if local_ip:
+                    ip_pool.record_block(local_ip)
                 backoff_seconds = min(max(backoff_seconds * 2, 1.0), 30.0)
-                logger.warning("Attempt %d: 429 rate limited — backing off %.1fs", attempt, backoff_seconds)
+                logger.warning("Attempt %d: %d rate limited — backing off %.1fs", attempt, e.response.status_code, backoff_seconds)
                 await asyncio.sleep(backoff_seconds)
             else:
                 logger.warning("Attempt %d: HTTP %d", attempt, e.response.status_code)

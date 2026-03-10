@@ -21,7 +21,7 @@ from slowapi.errors import RateLimitExceeded
 
 from tablement.web import db
 from tablement.web.ratelimit import limiter
-from tablement.web.state import JobManager
+from tablement.web.state import JobManager, SnipeQueue
 
 logger = logging.getLogger(__name__)
 WEB_DIR = Path(__file__).parent
@@ -60,6 +60,9 @@ async def lifespan(app: FastAPI):
 
     # Initialize job manager (in-memory tracking of active snipe/monitor jobs)
     app.state.jobs = JobManager()
+
+    # Initialize snipe priority queue (FCFS ordering for competing snipes)
+    app.state.snipe_queue = SnipeQueue()
 
     # Initialize APScheduler for timed jobs
     try:

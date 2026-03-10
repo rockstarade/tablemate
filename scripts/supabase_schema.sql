@@ -172,3 +172,13 @@ CREATE TRIGGER reservations_updated_at
 CREATE INDEX IF NOT EXISTS idx_reservations_user_id ON reservations(user_id);
 CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status);
 CREATE INDEX IF NOT EXISTS idx_payment_methods_user_id ON payment_methods(user_id);
+
+-- ============================================================
+-- 6. MIGRATIONS — add columns safely (idempotent)
+-- ============================================================
+
+-- booking_path: "direct" or "proxy" — which dual_book leg won
+DO $$ BEGIN
+    ALTER TABLE reservations ADD COLUMN booking_path TEXT;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
