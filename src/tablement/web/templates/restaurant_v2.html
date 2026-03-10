@@ -69,11 +69,11 @@
             --logo-bg: #B08D3E;
             --logo-text: #ffffff;
             --cal-today-ring: #1A1917;
-            --cal-available-bg: rgba(197,163,85,0.14);
-            --cal-available-border: rgba(197,163,85,0.4);
-            --cal-available-text: #7A6428;
-            --cal-upcoming-bg: rgba(16,185,129,0.08);
-            --cal-upcoming-border: rgba(16,185,129,0.25);
+            --cal-available-bg: rgba(197,163,85,0.18);
+            --cal-available-border: rgba(160,130,50,0.5);
+            --cal-available-text: #6B5224;
+            --cal-upcoming-bg: rgba(16,185,129,0.12);
+            --cal-upcoming-border: rgba(5,150,105,0.35);
             --cal-upcoming-text: #047857;
             --cal-selected-bg: #B08D3E;
             --cal-selected-text: #ffffff;
@@ -276,7 +276,7 @@
                             <p class="text-xs md:text-base mt-0.5" style="color: var(--c3);">Select the dates that work for you</p>
                         </div>
                         <div class="flex items-center gap-1.5 md:gap-2.5">
-                            <template x-for="i in 5" :key="'dot-'+i">
+                            <template x-for="i in 3" :key="'dot-'+i">
                                 <div class="w-2 h-2 md:w-3 md:h-3 rounded-full transition-colors"
                                     :style="i <= selectedDates.length
                                         ? 'background: var(--accent);'
@@ -285,7 +285,7 @@
                             </template>
                             <span class="text-xs md:text-sm font-bold ml-1 md:ml-2 tabular-nums"
                                 :style="selectedDates.length > 0 ? 'color: var(--accent);' : 'color: var(--c4);'"
-                                x-text="selectedDates.length + '/5'"></span>
+                                x-text="selectedDates.length + '/3'"></span>
                         </div>
                     </div>
 
@@ -367,17 +367,17 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
-                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick up to 3 times &mdash; more options = better odds</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick up to 2 times &mdash; more options = better odds</p>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <template x-for="i in 3" :key="i">
+                                <template x-for="i in 2" :key="i">
                                     <span class="w-2 h-2 rounded-full transition-all duration-200"
                                         :style="i <= selectedTimes.length
                                             ? 'background: var(--accent); box-shadow: 0 0 4px var(--accent-soft);'
                                             : 'background: var(--border); opacity: 0.5;'"></span>
                                 </template>
                                 <span x-show="selectedTimes.length > 0" class="text-xs font-bold ml-1" style="color: var(--accent);"
-                                    x-text="selectedTimes.length + '/3'"></span>
+                                    x-text="selectedTimes.length + '/2'"></span>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -424,7 +424,7 @@
                             class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
                             style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
                             <span class="text-xs mt-0.5">&#x1F4A1;</span>
-                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting up to 3 times increases your chances of securing a table.</p>
+                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting 2 times increases your chances of securing a table.</p>
                         </div>
                     </div>
                 </template>
@@ -780,9 +780,7 @@
                 if (!dateStr) return;
                 const idx = this.selectedDates.indexOf(dateStr);
                 if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
-                if (this.isReleasedDate(dateStr)) {
-                    if (this.selectedDates.filter(d => this.isReleasedDate(d)).length >= 5) { this.showToast('Max 5 dates — pick your best shots'); return; }
-                }
+                if (this.selectedDates.length >= 3) { this.showToast('Max 3 dates — pick your best shots'); return; }
                 this.selectedDates.push(dateStr); this.selectedDates.sort();
                 this.fetchSlotClaims();
             },
@@ -820,7 +818,7 @@
 
             timeStyles(tp) {
                 const sel = this.selectedTimes.includes(tp.time);
-                const maxed = this.selectedTimes.length >= 3 && !sel;
+                const maxed = this.selectedTimes.length >= 2 && !sel;
                 if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
                 if (maxed) return `background: var(--bg-input); color: var(--c4); border: 1px solid var(--border); opacity: 0.4; cursor: default;`;
                 if (tp.isHot) return `background: var(--amber-soft); color: var(--c1); border: 1px solid var(--amber-border);`;
@@ -833,8 +831,8 @@
                     this.claimWarning = null;
                     return;
                 }
-                // Max 3 time slots
-                if (this.selectedTimes.length >= 3) return;
+                // Max 2 time slots
+                if (this.selectedTimes.length >= 2) return;
                 // Check if slot is claimed by other users
                 if (this.slotClaims[timeStr] > 0) {
                     this.showClaimWarning(timeStr);
@@ -882,13 +880,13 @@
                 this.claimWarning = { time: timeStr, alternatives, count: this.slotClaims[timeStr] };
             },
             selectAlternative(timeStr) {
-                if (this.selectedTimes.length >= 3) return;
+                if (this.selectedTimes.length >= 2) return;
                 this.selectedTimes.push(timeStr);
                 this.selectedTimes.sort();
                 this.claimWarning = null;
             },
             forceSelectClaimed() {
-                if (this.selectedTimes.length >= 3) return;
+                if (this.selectedTimes.length >= 2) return;
                 if (this.claimWarning) {
                     this.selectedTimes.push(this.claimWarning.time);
                     this.selectedTimes.sort();
