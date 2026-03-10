@@ -455,7 +455,13 @@ async def create_slot_claim(user_id: str, **fields) -> dict:
 
 
 async def get_active_claims(venue_id: int, target_date: str) -> list[dict]:
-    """Get all active claims for a venue+date (for conflict checking)."""
+    """Get all active claims for a venue+date (for conflict checking).
+
+    Applies a 48-hour TTL — claims older than 48h are treated as orphaned
+    (e.g. server crashed before cleaning up) and excluded from results.
+    """
+    from datetime import datetime, timedelta, timezone
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
     resp = (
         await get_service_client()
         .table("slot_claims")
@@ -463,6 +469,7 @@ async def get_active_claims(venue_id: int, target_date: str) -> list[dict]:
         .eq("venue_id", venue_id)
         .eq("target_date", target_date)
         .eq("status", "active")
+        .gte("created_at", cutoff)
         .execute()
     )
     return resp.data

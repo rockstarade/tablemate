@@ -2241,6 +2241,11 @@
             async submitModify(res) {
                 if (this.modifySubmitting || !this.modifyDate) return;
                 this.modifySubmitting = true;
+                // Save original values for rollback
+                const origDate = res.target_date;
+                const origParty = res.party_size;
+                const origTimePrefs = res.time_preferences || [];
+                let cancelled = false;
                 try {
                     // Find the restaurant data for drop_time info
                     const rest = this.restaurants.find(r => r.venue_id == res.venue_id);
@@ -2249,7 +2254,7 @@
                         dropTime = { hour: rest.drop_hour || 10, minute: rest.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: rest.drop_days_ahead };
                     }
                     const platform = (rest && rest.platform === 'opentable') ? 'opentable' : 'resy';
-                    const timePrefs = this.modifyTime ? [{ time: this.modifyTime, seating_type: null }] : (res.time_preferences || []);
+                    const timePrefs = this.modifyTime ? [{ time: this.modifyTime, seating_type: null }] : origTimePrefs;
                     const payload = {
                         venue_id: res.venue_id, venue_name: res.venue_name,
                         party_size: parseInt(this.modifyPartySize),
@@ -2266,6 +2271,7 @@
                         headers: { 'Authorization': 'Bearer ' + this.token },
                     });
                     if (!cancelResp.ok) throw new Error('Failed to cancel original reservation');
+                    cancelled = true;
 
                     // Close SSE for old reservation
                     if (this.eventSources[res.id]) { this.eventSources[res.id].close(); delete this.eventSources[res.id]; }
@@ -2276,14 +2282,50 @@
                         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
                         body: JSON.stringify(payload),
                     });
-                    if (!resp.ok) throw new Error('Failed to create modified reservation');
+                    if (!resp.ok) {
+                        const errData = await resp.json().catch(() => ({}));
+                        throw new Error(errData.detail || 'Failed to create modified reservation');
+                    }
 
                     this.modifyingResId = null;
                     this.showToast('Reservation modified');
-                    // Reload reservations to pick up the new one
                     await this.loadReservations();
                 } catch (e) {
-                    this.showToast(e.message || 'Modification failed');
+                    // Rollback: if we cancelled but recreate failed, restore the original reservation
+                    if (cancelled) {
+                        try {
+                            const rest = this.restaurants.find(r => r.venue_id == res.venue_id);
+                            let dropTime = null;
+                            if (rest && rest.drop_days_ahead) {
+                                dropTime = { hour: rest.drop_hour || 10, minute: rest.drop_minute || 0, second: 0, timezone: 'America/New_York', days_ahead: rest.drop_days_ahead };
+                            }
+                            const platform = (rest && rest.platform === 'opentable') ? 'opentable' : 'resy';
+                            const rollbackPayload = {
+                                venue_id: res.venue_id, venue_name: res.venue_name,
+                                party_size: origParty,
+                                dates: [origDate],
+                                time_preferences: origTimePrefs,
+                                drop_time: dropTime, book_earliest: true,
+                                notification_email: res.notification_email || null,
+                                platform: platform,
+                            };
+                            const rollbackResp = await fetch('/api/reservations/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                                body: JSON.stringify(rollbackPayload),
+                            });
+                            if (rollbackResp.ok) {
+                                this.showToast('Modify failed — original reservation restored');
+                                await this.loadReservations();
+                            } else {
+                                this.showToast('Modify failed and could not restore original — please re-create manually');
+                            }
+                        } catch (rollbackErr) {
+                            this.showToast('Modify failed and could not restore original — please re-create manually');
+                        }
+                    } else {
+                        this.showToast(e.message || 'Modification failed');
+                    }
                 } finally {
                     this.modifySubmitting = false;
                 }

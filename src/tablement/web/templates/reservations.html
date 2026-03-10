@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tablement — My Reservations</title>
+    <title>tablepass — My Reservations</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -103,8 +106,7 @@
         <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <a href="/browse" class="flex items-center gap-2">
-                    <span class="text-2xl">🍽</span>
-                    <span class="text-xl font-bold text-white">Tablement</span>
+                    <span class="text-xl font-medium text-white" style="font-family: 'Manrope', sans-serif; letter-spacing: 0.1em;">tablepass</span>
                 </a>
             </div>
             <div class="hidden sm:flex items-center gap-6">
@@ -242,11 +244,53 @@
                                 </div>
                             </div>
 
-                            <!-- Cancel button -->
-                            <button @click="cancelReservation(r.id)"
-                                class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition-colors flex-shrink-0">
-                                Cancel
-                            </button>
+                            <!-- Action buttons -->
+                            <div class="flex flex-col gap-2 flex-shrink-0">
+                                <button @click="startModify(r)"
+                                    class="px-3 py-1.5 rounded-lg border border-brand-500/30 text-brand-400 text-xs hover:bg-brand-500/10 transition-colors whitespace-nowrap">
+                                    Modify
+                                </button>
+                                <button @click="cancelReservation(r.id)"
+                                    class="px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10 transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Modify inline form -->
+                        <div x-show="modifyingResId === r.id" x-cloak x-transition
+                            class="mt-4 p-4 rounded-xl space-y-3" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(245,158,11,0.2);">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-brand-400">Modify Reservation</p>
+                            <div>
+                                <label class="text-[11px] font-medium mb-1 block text-slate-400">Date</label>
+                                <input type="date" x-model="modifyDate"
+                                    class="w-full px-3 py-2 rounded-lg text-sm bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-medium mb-1 block text-slate-400">Party Size</label>
+                                <select x-model="modifyPartySize"
+                                    class="w-full px-3 py-2 rounded-lg text-sm bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500">
+                                    <template x-for="n in [1,2,3,4,5,6,7,8]" :key="n">
+                                        <option :value="n" x-text="n + (n === 1 ? ' guest' : ' guests')"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-medium mb-1 block text-slate-400">Preferred Time</label>
+                                <input type="time" x-model="modifyTime"
+                                    class="w-full px-3 py-2 rounded-lg text-sm bg-slate-800/60 border border-slate-600/50 text-white focus:outline-none focus:border-brand-500">
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <button @click="submitModify(r)" :disabled="modifySubmitting || !modifyDate"
+                                    class="flex-1 py-2 rounded-lg text-xs font-bold bg-brand-500 text-slate-900 transition-all disabled:opacity-50">
+                                    <span x-show="!modifySubmitting">Save Changes</span>
+                                    <span x-show="modifySubmitting">Saving...</span>
+                                </button>
+                                <button @click="modifyingResId = null"
+                                    class="flex-1 py-2 rounded-lg text-xs font-medium border border-slate-600/50 text-slate-400">
+                                    Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -337,6 +381,11 @@
             token: localStorage.getItem('tablement_token'),
             eventSources: {},
             toast: { show: false, message: '', icon: '' },
+            modifyingResId: null,
+            modifyDate: '',
+            modifyPartySize: 2,
+            modifyTime: '',
+            modifySubmitting: false,
 
             tabs: [
                 { key: 'all', label: 'All' },
@@ -525,6 +574,86 @@
                     }
                 } catch (e) {
                     console.error('Cancel failed:', e);
+                }
+            },
+
+            startModify(res) {
+                this.modifyingResId = res.id;
+                this.modifyDate = res.target_date || '';
+                this.modifyPartySize = res.party_size || 2;
+                this.modifyTime = res.time_preferences?.[0]?.time || '';
+            },
+
+            async submitModify(res) {
+                if (this.modifySubmitting || !this.modifyDate) return;
+                this.modifySubmitting = true;
+                const origDate = res.target_date;
+                const origParty = res.party_size;
+                const origTimePrefs = res.time_preferences || [];
+                let cancelled = false;
+                try {
+                    const timePrefs = this.modifyTime ? [{ time: this.modifyTime, seating_type: null }] : origTimePrefs;
+                    const payload = {
+                        venue_id: res.venue_id, venue_name: res.venue_name,
+                        party_size: parseInt(this.modifyPartySize),
+                        dates: [this.modifyDate],
+                        time_preferences: timePrefs,
+                        drop_time: null, book_earliest: true,
+                        platform: 'resy',
+                    };
+
+                    // Cancel old reservation
+                    const cancelResp = await fetch(`/api/reservations/${res.id}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + this.token },
+                    });
+                    if (!cancelResp.ok) throw new Error('Failed to cancel original');
+                    cancelled = true;
+                    if (this.eventSources[res.id]) { this.eventSources[res.id].close(); delete this.eventSources[res.id]; }
+
+                    // Create new reservation
+                    const resp = await fetch('/api/reservations/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!resp.ok) {
+                        const errData = await resp.json().catch(() => ({}));
+                        throw new Error(errData.detail || 'Failed to create modified reservation');
+                    }
+
+                    this.modifyingResId = null;
+                    this.showToast('Reservation modified', '✅');
+                    await this.loadReservations();
+                } catch (e) {
+                    if (cancelled) {
+                        // Rollback: restore original reservation
+                        try {
+                            const rollbackPayload = {
+                                venue_id: res.venue_id, venue_name: res.venue_name,
+                                party_size: origParty, dates: [origDate],
+                                time_preferences: origTimePrefs,
+                                drop_time: null, book_earliest: true, platform: 'resy',
+                            };
+                            const rb = await fetch('/api/reservations/batch', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+                                body: JSON.stringify(rollbackPayload),
+                            });
+                            if (rb.ok) {
+                                this.showToast('Modify failed — original restored', '⚠️');
+                                await this.loadReservations();
+                            } else {
+                                this.showToast('Modify failed — please re-create manually', '❌');
+                            }
+                        } catch (_) {
+                            this.showToast('Modify failed — please re-create manually', '❌');
+                        }
+                    } else {
+                        this.showToast(e.message || 'Modification failed', '❌');
+                    }
+                } finally {
+                    this.modifySubmitting = false;
                 }
             },
 

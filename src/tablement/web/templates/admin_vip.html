@@ -101,15 +101,15 @@
 
             <!-- ==================== TAB 1: DASHBOARD ==================== -->
             <div x-show="activeTab === 'dashboard'" class="space-y-6">
-                <!-- Live Globe -->
-                <div class="relative rounded-xl overflow-hidden border border-slate-700/50" style="background: #0f172a;">
+                <!-- Live Globe — Shopify-style clean white -->
+                <div class="relative rounded-xl overflow-hidden border border-slate-200/60" style="background: #fafafa;">
                     <div class="absolute top-4 left-5 z-10 flex items-center gap-3">
-                        <h2 class="text-sm font-semibold text-white/90 tracking-wide uppercase">Live View</h2>
-                        <span class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-400/80">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Live
+                        <h2 class="text-sm font-semibold text-slate-700 tracking-wide uppercase">Live View</h2>
+                        <span class="flex items-center gap-1.5 text-[11px] font-medium text-emerald-500">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live
                         </span>
                     </div>
-                    <div class="absolute top-4 right-5 z-10 flex items-center gap-4 text-[11px] text-slate-400">
+                    <div class="absolute top-4 right-5 z-10 flex items-center gap-4 text-[11px] text-slate-500">
                         <span x-text="userLocations.filter(l => _getUserTier(l) === 'online').length + ' online'" class="tabular-nums"></span>
                         <span x-text="userLocations.length + ' total'" class="tabular-nums"></span>
                     </div>
@@ -3103,7 +3103,7 @@
             },
 
             _tierColor(tier) {
-                return { online: '#00ffaa', recent: '#f59e0b', offline: '#6d28d9' }[tier];
+                return { online: '#16a34a', recent: '#d97706', offline: '#a78bfa' }[tier];
             },
 
             _updateGlobe() {
@@ -3128,15 +3128,16 @@
 
                 if (!this._globe) {
                     this._globe = Globe()
-                        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+                        .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
                         .backgroundImageUrl('')
+                        .backgroundColor('rgba(250,250,250,0)')
                         .showAtmosphere(true)
-                        .atmosphereColor('#93c5fd')
-                        .atmosphereAltitude(0.18)
+                        .atmosphereColor('#d1d5db')
+                        .atmosphereAltitude(0.12)
                         .polygonsData([])
-                        .polygonCapColor(() => 'rgba(0,0,0,0)')
+                        .polygonCapColor(() => 'rgba(241,245,249,0.6)')
                         .polygonSideColor(() => 'rgba(0,0,0,0)')
-                        .polygonStrokeColor(() => 'rgba(255,255,255,0.35)')
+                        .polygonStrokeColor(() => 'rgba(148,163,184,0.4)')
                         .polygonAltitude(0.005)
                         .pointsData(points)
                         .pointLat('lat')
@@ -3146,9 +3147,9 @@
                         .pointRadius('size')
                         .pointsMerge(false)
                         .pointLabel(d => `
-                            <div style="font-family: system-ui; font-size: 12px; background: rgba(15,23,42,0.92); border: 1px solid ${d.color}40; border-radius: 8px; padding: 8px 12px; box-shadow: 0 0 12px ${d.color}30;">
-                                <div style="font-weight: 700; color: #f1f5f9; margin-bottom: 2px;">${d.phone || 'User'}</div>
-                                <div style="color: #94a3b8; font-size: 11px;">${d.city}</div>
+                            <div style="font-family: system-ui; font-size: 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                                <div style="font-weight: 700; color: #1e293b; margin-bottom: 2px;">${d.phone || 'User'}</div>
+                                <div style="color: #64748b; font-size: 11px;">${d.city}</div>
                                 <div style="color: ${d.color}; font-size: 11px; margin-top: 2px;">${d.tier === 'online' ? '● Online now' : d.tier === 'recent' ? '● Recently active' : '○ Offline'}</div>
                             </div>
                         `)

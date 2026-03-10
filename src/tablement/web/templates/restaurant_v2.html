@@ -822,13 +822,21 @@
             // ═══ Slot Claims ═══
             async fetchSlotClaims() {
                 if (!this.venueId || this.selectedDates.length === 0) return;
-                const date = this.selectedDates[0];
+                // Aggregate claims across ALL selected dates (not just first)
+                const merged = {};
                 try {
-                    const resp = await fetch(`/api/slots/claims?venue_id=${this.venueId}&date=${date}`);
-                    if (resp.ok) {
-                        const data = await resp.json();
-                        this.slotClaims = data.claims || {};
+                    const fetches = this.selectedDates.map(d =>
+                        fetch(`/api/slots/claims?venue_id=${this.venueId}&date=${d}`)
+                            .then(r => r.ok ? r.json() : { claims: {} })
+                            .catch(() => ({ claims: {} }))
+                    );
+                    const results = await Promise.all(fetches);
+                    for (const data of results) {
+                        for (const [time, count] of Object.entries(data.claims || {})) {
+                            merged[time] = Math.max(merged[time] || 0, count);
+                        }
                     }
+                    this.slotClaims = merged;
                 } catch (e) { console.warn('Failed to fetch slot claims:', e); }
             },
             showClaimWarning(timeStr) {

@@ -348,6 +348,8 @@ async def create_reservation(
     else:
         if not profile or not profile.get("resy_email"):
             raise HTTPException(400, "Please link your Resy account first (POST /api/auth/link-resy)")
+        if not profile.get("resy_password_encrypted"):
+            raise HTTPException(400, "Resy credentials incomplete — please re-link your Resy account")
 
     # Check for duplicate reservation (same user + venue + date)
     target_date_str = body.date if isinstance(body.date, str) else body.date.isoformat()
@@ -427,6 +429,8 @@ async def create_batch_reservations(
     else:
         if not profile or not profile.get("resy_email"):
             raise HTTPException(400, "Please link your Resy account first")
+        if not profile.get("resy_password_encrypted"):
+            raise HTTPException(400, "Resy credentials incomplete — please re-link your Resy account")
 
     if not body.time_preferences:
         raise HTTPException(400, "At least one time preference is required")
@@ -925,9 +929,18 @@ async def _run_snipe(
         _set_phase(SnipePhase.WAITING, f"Waiting until {drop_dt.strftime('%H:%M:%S %Z')}")
         await db.update_reservation(reservation_id, status="scheduled")
 
-        # Decrypt Resy credentials
-        resy_email = profile["resy_email"]
-        resy_password = decrypt_password(profile["resy_password_encrypted"])
+        # Decrypt Resy credentials — guard against NULL values
+        resy_email = profile.get("resy_email")
+        resy_pw_enc = profile.get("resy_password_encrypted")
+        if not resy_email or not resy_pw_enc:
+            error_msg = "No Resy credentials found — please re-link your Resy account"
+            logger.error("Snipe %s: NULL credentials (email=%s, pw_enc=%s)", reservation_id, bool(resy_email), bool(resy_pw_enc))
+            _set_phase(SnipePhase.DONE, error_msg)
+            await db.update_reservation(reservation_id, status="failed", error=error_msg)
+            await _cleanup_claims(reservation_id, "failed")
+            job.broadcast("snipe_result", {"success": False, "error": error_msg})
+            return
+        resy_password = decrypt_password(resy_pw_enc)
 
         # Collect NTP result
         ntp_offset = await ntp_task
@@ -1549,8 +1562,11 @@ async def _cancellation_snipe_loop(
                     if selected:
                         logger.info("Cancel snipe %s: found matching slot! Booking...", reservation_id)
 
-                        resy_email = profile["resy_email"]
-                        resy_password = decrypt_password(profile["resy_password_encrypted"])
+                        resy_email = profile.get("resy_email")
+                        resy_pw_enc = profile.get("resy_password_encrypted")
+                        if not resy_email or not resy_pw_enc:
+                            raise ValueError("No Resy credentials — please re-link your Resy account")
+                        resy_password = decrypt_password(resy_pw_enc)
 
                         # Booking burst: same proxy IP + fingerprint as scout
                         async with ResyApiClient(user_id=user_id, fingerprint=fp) as booker:
