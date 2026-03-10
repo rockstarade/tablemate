@@ -168,7 +168,7 @@
                                     <div class="space-y-2">
                                         <div class="flex items-center gap-3 text-slate-300">
                                             <svg class="w-4.5 h-4.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                            <span class="text-sm" x-text="formatDateFull(r.target_date)"></span>
+                                            <span class="text-sm" x-text="r._groupDates && r._groupDates.length > 1 ? r._groupDates.map(d => formatDate(d)).join(', ') : formatDateFull(r.target_date)"></span>
                                         </div>
                                         <div class="flex items-center gap-3 text-slate-300">
                                             <svg class="w-4.5 h-4.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -218,7 +218,7 @@
                                 <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400">
                                     <span class="flex items-center gap-1.5">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                        <span x-text="formatDate(r.target_date)"></span>
+                                        <span x-text="r._groupDates && r._groupDates.length > 1 ? r._groupDates.map(d => formatDate(d)).join(', ') : formatDate(r.target_date)"></span>
                                     </span>
                                     <span class="flex items-center gap-1.5">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -303,7 +303,7 @@
                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">No luck this time</span>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400 mb-2">
-                                    <span x-text="formatDate(r.target_date)"></span>
+                                    <span x-text="r._groupDates && r._groupDates.length > 1 ? r._groupDates.map(d => formatDate(d)).join(', ') : formatDate(r.target_date)"></span>
                                     <span x-text="'Party of ' + r.party_size"></span>
                                 </div>
                                 <p x-show="r.error" class="text-red-400/70 text-xs" x-text="friendlyError(r.error)"></p>
@@ -326,7 +326,7 @@
                                         x-text="r.status === 'dry_run' ? 'Test Run' : 'Cancelled'"></span>
                                 </div>
                                 <div class="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                                    <span x-text="formatDate(r.target_date)"></span>
+                                    <span x-text="r._groupDates && r._groupDates.length > 1 ? r._groupDates.map(d => formatDate(d)).join(', ') : formatDate(r.target_date)"></span>
                                     <span x-text="'Party of ' + r.party_size"></span>
                                 </div>
                             </div>
@@ -531,13 +531,41 @@
                 return ['scheduled', 'monitoring', 'sniping'].includes(status);
             },
 
+            _groupReservations(list) {
+                // Group reservations that share a group_id into a single entry
+                const groups = {};
+                const ungrouped = [];
+                for (const r of list) {
+                    if (r.group_id) {
+                        if (!groups[r.group_id]) {
+                            groups[r.group_id] = { ...r, _groupDates: [r.target_date], _groupMembers: [r] };
+                        } else {
+                            groups[r.group_id]._groupDates.push(r.target_date);
+                            groups[r.group_id]._groupMembers.push(r);
+                            // Keep the "best" status for the group (confirmed > active > failed)
+                            const statusPriority = { confirmed: 0, sniping: 1, monitoring: 2, scheduled: 3, failed: 4, cancelled: 5, dry_run: 6 };
+                            if ((statusPriority[r.status] ?? 99) < (statusPriority[groups[r.group_id].status] ?? 99)) {
+                                groups[r.group_id].status = r.status;
+                            }
+                        }
+                    } else {
+                        ungrouped.push({ ...r, _groupDates: [r.target_date], _groupMembers: [r] });
+                    }
+                }
+                // Sort group dates chronologically
+                Object.values(groups).forEach(g => g._groupDates.sort());
+                return [...Object.values(groups), ...ungrouped];
+            },
+
             filteredReservations(tab) {
-                if (tab === 'all') return this.reservations;
-                if (tab === 'active') return this.reservations.filter(r => this.isActive(r.status));
-                if (tab === 'confirmed') return this.reservations.filter(r => r.status === 'confirmed');
-                if (tab === 'history') return this.reservations.filter(r =>
+                let list;
+                if (tab === 'all') list = this.reservations;
+                else if (tab === 'active') list = this.reservations.filter(r => this.isActive(r.status));
+                else if (tab === 'confirmed') list = this.reservations.filter(r => r.status === 'confirmed');
+                else if (tab === 'history') list = this.reservations.filter(r =>
                     ['failed', 'cancelled', 'dry_run'].includes(r.status));
-                return this.reservations;
+                else list = this.reservations;
+                return this._groupReservations(list);
             },
 
             currentTabLabel() {
@@ -556,22 +584,25 @@
 
             async cancelReservation(id) {
                 try {
-                    const resp = await fetch(`/api/reservations/${id}/cancel`, {
-                        method: 'POST',
-                        headers: { 'Authorization': 'Bearer ' + this.token },
-                    });
-                    if (resp.ok) {
-                        const r = this.reservations.find(r => r.id === id);
-                        if (r) {
-                            r.status = 'cancelled';
-                            r._live = false;
-                        }
-                        if (this.eventSources[id]) {
-                            this.eventSources[id].close();
-                            delete this.eventSources[id];
-                        }
-                        this.showToast('Reservation cancelled', '✅');
+                    // Find the reservation and its group members
+                    const res = this.reservations.find(r => r.id === id);
+                    const idsToCancel = [id];
+                    if (res && res.group_id) {
+                        this.reservations.filter(r => r.group_id === res.group_id && r.id !== id && this.isActive(r.status))
+                            .forEach(r => idsToCancel.push(r.id));
                     }
+                    for (const cid of idsToCancel) {
+                        const resp = await fetch(`/api/reservations/${cid}/cancel`, {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + this.token },
+                        });
+                        if (resp.ok) {
+                            const r = this.reservations.find(r => r.id === cid);
+                            if (r) { r.status = 'cancelled'; r._live = false; }
+                            if (this.eventSources[cid]) { this.eventSources[cid].close(); delete this.eventSources[cid]; }
+                        }
+                    }
+                    this.showToast(idsToCancel.length > 1 ? 'All dates cancelled' : 'Reservation cancelled', '✅');
                 } catch (e) {
                     console.error('Cancel failed:', e);
                 }

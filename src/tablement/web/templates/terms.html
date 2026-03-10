@@ -6,14 +6,14 @@
     <title>Terms &amp; Conditions — tablepass</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        cream: { 50: '#FDFCFA', 100: '#FAF8F5' },
+                        cream: { 50: '#FDFCFA', 100: '#FAF8F5', 200: '#F5F0EA' },
                         stone: { 50: '#F9F8F6', 100: '#F0EFEC', 200: '#E0DDD8', 300: '#C8C3BB', 400: '#9E9789', 500: '#7A7468', 600: '#5C5850', 700: '#3D3A35', 800: '#2A2825', 900: '#1A1917', 950: '#0D0D0B' },
                         gold: { 400: '#C5A355', 500: '#B08D3E' },
                     }
@@ -22,131 +22,281 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background: #FDFCFA; color: #2A2825; }
-        .legal-body h2 { font-size: 1.25rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 0.75rem; color: #1A1917; }
-        .legal-body h3 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #2A2825; }
-        .legal-body p { margin-bottom: 1rem; line-height: 1.75; color: #5C5850; font-size: 0.9375rem; }
-        .legal-body ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .legal-body ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
-        .legal-body li { margin-bottom: 0.5rem; line-height: 1.75; color: #5C5850; font-size: 0.9375rem; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #0D0D0B;
+            color: #C8C3BB;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Section numbers */
+        .section-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(197,163,85,0.1);
+            color: #C5A355;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .legal-section {
+            padding: 1.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .legal-section:last-child { border-bottom: none; }
+
+        .legal-section h2 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #FAF8F5;
+            margin-bottom: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .legal-section p {
+            font-size: 0.875rem;
+            line-height: 1.8;
+            color: #9E9789;
+            margin-bottom: 0.75rem;
+        }
+
+        .legal-section ul, .legal-section ol {
+            margin-bottom: 0.75rem;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .legal-section li {
+            font-size: 0.875rem;
+            line-height: 1.8;
+            color: #9E9789;
+            margin-bottom: 0.375rem;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .legal-section ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.75em;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #C5A355;
+            opacity: 0.5;
+        }
+
+        .legal-section ol {
+            counter-reset: legal-steps;
+        }
+        .legal-section ol li {
+            counter-increment: legal-steps;
+        }
+        .legal-section ol li::before {
+            content: counter(legal-steps) '.';
+            position: absolute;
+            left: 0;
+            color: #C5A355;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            opacity: 0.7;
+        }
+
+        .legal-section li strong {
+            color: #E0DDD8;
+            font-weight: 500;
+        }
+
+        .legal-section p strong {
+            color: #E0DDD8;
+            font-weight: 500;
+        }
+
+        .highlight-box {
+            background: rgba(197,163,85,0.06);
+            border: 1px solid rgba(197,163,85,0.12);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
     </style>
 </head>
 <body>
-    <nav class="bg-cream-50 border-b border-stone-200/60 shadow-sm">
+    <!-- Nav -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl" style="background: rgba(13,13,11,0.85); border-bottom: 1px solid rgba(255,255,255,0.04);">
         <div class="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="/" class="text-xl font-medium tracking-[0.12em] text-stone-900" style="font-family: 'Manrope', sans-serif;">tablepass</a>
-            <a href="/" class="text-sm text-stone-400 hover:text-stone-700 transition-colors">&larr; Back</a>
+            <a href="/" class="text-lg font-medium tracking-[0.12em] text-white/80 hover:text-white transition-colors" style="font-family: 'Manrope', sans-serif;">tablepass</a>
+            <a href="/" class="flex items-center gap-1.5 text-sm text-white/30 hover:text-white/60 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Back
+            </a>
         </div>
     </nav>
 
-    <main class="max-w-3xl mx-auto px-6 py-12 sm:py-16">
-        <h1 class="text-3xl sm:text-4xl font-bold text-stone-900 mb-2">Terms &amp; Conditions</h1>
-        <p class="text-sm text-stone-400 mb-10">Last updated: March 9, 2026</p>
+    <main class="max-w-3xl mx-auto px-6 py-12 sm:py-20">
+        <!-- Header -->
+        <div class="mb-12">
+            <div class="flex items-center gap-2.5 mb-4">
+                <div class="h-px flex-1 max-w-[40px]" style="background: linear-gradient(90deg, #C5A355, transparent);"></div>
+                <span class="text-[11px] font-semibold tracking-[0.15em] uppercase" style="color: #C5A355;">Legal</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3" style="letter-spacing: -0.02em;">Terms &amp; Conditions</h1>
+            <p class="text-sm" style="color: #7A7468;">Last updated March 9, 2026 &middot; Effective immediately</p>
+        </div>
 
-        <div class="legal-body">
-            <p>Welcome to <strong>tablepass</strong>. By accessing or using our website and service at <strong>tablepass.nyc</strong>, you agree to be bound by these Terms &amp; Conditions. If you do not agree, please do not use our service.</p>
+        <!-- Intro -->
+        <div class="highlight-box mb-8">
+            <p class="text-sm leading-relaxed" style="color: #C8C3BB; margin: 0;">Welcome to <strong style="color: #FAF8F5;">tablepass</strong>. By accessing or using our website and service at <strong style="color: #FAF8F5;">tablepass.nyc</strong>, you agree to be bound by these Terms &amp; Conditions. If you do not agree, please do not use our service.</p>
+        </div>
 
-            <h2>1. Service Description</h2>
-            <p><strong>tablepass</strong> is an automated restaurant reservation booking service. We monitor reservation platforms (Resy and OpenTable) on your behalf and attempt to secure reservations at your preferred restaurants, dates, and times. Our service includes:</p>
-            <ul>
-                <li><strong>Drop sniping</strong> &mdash; automatically booking the instant new reservations are released</li>
-                <li><strong>Cancellation monitoring</strong> &mdash; watching for cancelled reservations 24/7 and booking them for you</li>
-                <li><strong>SMS notifications</strong> &mdash; real-time updates about your booking status</li>
-            </ul>
+        <!-- Sections -->
+        <div>
+            <div class="legal-section">
+                <h2><span class="section-number">1</span> Service Description</h2>
+                <p><strong>tablepass</strong> is an automated restaurant reservation booking service. We monitor reservation platforms on your behalf and attempt to secure reservations at your preferred restaurants, dates, and times. Our service includes:</p>
+                <ul>
+                    <li><strong>Drop sniping</strong> &mdash; automatically booking the instant new reservations are released</li>
+                    <li><strong>Cancellation monitoring</strong> &mdash; watching for cancelled reservations 24/7 and booking them for you</li>
+                    <li><strong>SMS notifications</strong> &mdash; real-time updates about your booking status</li>
+                </ul>
+            </div>
 
-            <h2>2. Account &amp; Eligibility</h2>
-            <p>To use tablepass, you must:</p>
-            <ul>
-                <li>Be at least 18 years of age</li>
-                <li>Have a valid phone number capable of receiving SMS messages</li>
-                <li>Have an active Resy and/or OpenTable account</li>
-                <li>Provide accurate and truthful information</li>
-            </ul>
-            <p>You are responsible for maintaining the security of your account and all activity that occurs under it.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">2</span> Account &amp; Eligibility</h2>
+                <p>To use tablepass, you must:</p>
+                <ul>
+                    <li>Be at least 18 years of age</li>
+                    <li>Have a valid phone number capable of receiving SMS messages</li>
+                    <li>Have an active Resy and/or OpenTable account</li>
+                    <li>Provide accurate and truthful information</li>
+                </ul>
+                <p>You are responsible for maintaining the security of your account and all activity that occurs under it.</p>
+            </div>
 
-            <h2>3. Pricing &amp; Payment</h2>
-            <ul>
-                <li><strong>Per Reservation:</strong> $12 per confirmed booking</li>
-                <li><strong>5 Pack:</strong> $50 for 5 reservation credits ($10 each) &mdash; credits never expire</li>
-            </ul>
-            <p>You are only charged when we successfully confirm a reservation on your behalf. If we are unable to secure a table, you are not charged. All fees are non-refundable once a reservation is confirmed, as the booking has been completed on your restaurant platform account.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">3</span> Pricing &amp; Payment</h2>
+                <ul>
+                    <li><strong>Per Reservation:</strong> $12 per confirmed booking</li>
+                    <li><strong>5 Pack:</strong> $50 for 5 reservation credits ($10 each) &mdash; credits never expire</li>
+                </ul>
+                <p>You are only charged when we successfully confirm a reservation on your behalf. If we are unable to secure a table, you are not charged. All fees are non-refundable once a reservation is confirmed, as the booking has been completed on your restaurant platform account.</p>
+            </div>
 
-            <h2>4. How It Works</h2>
-            <ol>
-                <li>You select a restaurant, date(s), preferred times, and party size</li>
-                <li>You link your Resy or OpenTable account credentials (encrypted and stored securely)</li>
-                <li>Our system monitors for availability and books on your behalf the instant a matching slot becomes available</li>
-                <li>You receive an SMS confirmation when your reservation is secured</li>
-                <li>The reservation appears directly in your Resy or OpenTable account under your name</li>
-            </ol>
+            <div class="legal-section">
+                <h2><span class="section-number">4</span> How It Works</h2>
+                <ol>
+                    <li>You select a restaurant, date(s), preferred times, and party size</li>
+                    <li>You link your Resy or OpenTable account credentials (encrypted and stored securely)</li>
+                    <li>Our system monitors for availability and books on your behalf the instant a matching slot becomes available</li>
+                    <li>You receive an SMS confirmation when your reservation is secured</li>
+                    <li>The reservation appears directly in your Resy or OpenTable account under your name</li>
+                </ol>
+            </div>
 
-            <h2>5. Credentials &amp; Authorization</h2>
-            <p>By linking your Resy or OpenTable account, you authorize tablepass to act as your agent and submit reservation requests using your credentials. Your password is encrypted at rest and transmitted only to the relevant platform&rsquo;s API. We do not use your credentials for any purpose other than booking reservations on your behalf.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">5</span> Credentials &amp; Authorization</h2>
+                <p>By linking your Resy or OpenTable account, you authorize tablepass to act as your agent and submit reservation requests using your credentials. Your password is encrypted at rest and transmitted only to the relevant platform&rsquo;s API. We do not use your credentials for any purpose other than booking reservations on your behalf.</p>
+            </div>
 
-            <h2>6. No Guarantee of Availability</h2>
-            <p>While we achieve a high success rate, we cannot guarantee that any specific reservation will be secured. Restaurant availability depends on factors outside our control, including platform timing, competition from other users, and restaurant policies. You will not be charged for unsuccessful booking attempts.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">6</span> No Guarantee of Availability</h2>
+                <p>While we achieve a high success rate, we cannot guarantee that any specific reservation will be secured. Restaurant availability depends on factors outside our control, including platform timing, competition from other users, and restaurant policies. You will not be charged for unsuccessful booking attempts.</p>
+            </div>
 
-            <h2>7. Cancellations &amp; Modifications</h2>
-            <p>Reservations booked through tablepass are held under your personal Resy or OpenTable account. You may cancel or modify them directly through those platforms, subject to each restaurant&rsquo;s cancellation policy. The tablepass service fee is non-refundable once a reservation is confirmed.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">7</span> Cancellations &amp; Modifications</h2>
+                <p>Reservations booked through tablepass are held under your personal Resy or OpenTable account. You may cancel or modify them directly through those platforms, subject to each restaurant&rsquo;s cancellation policy. The tablepass service fee is non-refundable once a reservation is confirmed.</p>
+            </div>
 
-            <h2>8. SMS Terms &amp; Conditions</h2>
-            <p>By creating a tablepass account, you consent to receive SMS messages from tablepass. Below are the required disclosures:</p>
-            <ul>
-                <li><strong>Program name:</strong> tablepass Reservation Alerts</li>
-                <li><strong>Description:</strong> Transactional SMS messages related to your restaurant reservation bookings, including booking confirmations, status updates, snipe results, and account notifications</li>
-                <li><strong>Message frequency:</strong> Message frequency varies based on your booking activity. You will typically receive 1&ndash;5 messages per active reservation request. You will not receive marketing or promotional messages.</li>
-                <li><strong>Message and data rates:</strong> Message and data rates may apply depending on your mobile carrier and plan. Check with your carrier for details.</li>
-                <li><strong>Opt-out:</strong> You can opt out of SMS messages at any time by texting <strong>STOP</strong> to any message you receive from us. You will receive a one-time confirmation that you have been unsubscribed. Note: opting out of SMS may affect your ability to receive timely booking confirmations.</li>
-                <li><strong>Help:</strong> For help with SMS messaging, text <strong>HELP</strong> to any message from us, or contact us at <strong>support@tablepass.nyc</strong></li>
-                <li><strong>Supported carriers:</strong> Major US carriers are supported including AT&amp;T, Verizon, T-Mobile, Sprint, and others. Carrier support is not guaranteed.</li>
-            </ul>
+            <div class="legal-section">
+                <h2><span class="section-number">8</span> SMS Terms &amp; Conditions</h2>
+                <p>By creating a tablepass account, you consent to receive SMS messages from tablepass. Below are the required disclosures:</p>
+                <ul>
+                    <li><strong>Program name:</strong> tablepass Reservation Alerts</li>
+                    <li><strong>Description:</strong> Transactional SMS messages related to your restaurant reservation bookings, including booking confirmations, status updates, snipe results, and account notifications</li>
+                    <li><strong>Message frequency:</strong> Message frequency varies based on your booking activity. You will typically receive 1&ndash;5 messages per active reservation request. You will not receive marketing or promotional messages.</li>
+                    <li><strong>Message and data rates:</strong> Message and data rates may apply depending on your mobile carrier and plan. Check with your carrier for details.</li>
+                    <li><strong>Opt-out:</strong> You can opt out of SMS messages at any time by texting <strong>STOP</strong> to any message you receive from us. You will receive a one-time confirmation that you have been unsubscribed. Note: opting out of SMS may affect your ability to receive timely booking confirmations.</li>
+                    <li><strong>Help:</strong> For help with SMS messaging, text <strong>HELP</strong> to any message from us, or contact us at <strong>support@tablepass.nyc</strong></li>
+                    <li><strong>Supported carriers:</strong> Major US carriers are supported including AT&amp;T, Verizon, T-Mobile, Sprint, and others. Carrier support is not guaranteed.</li>
+                </ul>
+            </div>
 
-            <h2>9. Prohibited Use</h2>
-            <p>You agree not to:</p>
-            <ul>
-                <li>Use the service for any unlawful purpose</li>
-                <li>Provide false or misleading information</li>
-                <li>Attempt to reverse-engineer, hack, or exploit the service</li>
-                <li>Use the service to scalp or resell reservations</li>
-                <li>Create multiple accounts to circumvent usage limits</li>
-                <li>Interfere with the operation of the service or other users&rsquo; access</li>
-            </ul>
+            <div class="legal-section">
+                <h2><span class="section-number">9</span> Prohibited Use</h2>
+                <p>You agree not to:</p>
+                <ul>
+                    <li>Use the service for any unlawful purpose</li>
+                    <li>Provide false or misleading information</li>
+                    <li>Attempt to reverse-engineer, hack, or exploit the service</li>
+                    <li>Use the service to scalp or resell reservations</li>
+                    <li>Create multiple accounts to circumvent usage limits</li>
+                    <li>Interfere with the operation of the service or other users&rsquo; access</li>
+                </ul>
+            </div>
 
-            <h2>10. Intellectual Property</h2>
-            <p>All content, design, and technology comprising the tablepass service are owned by or licensed to us. You may not copy, modify, or distribute any part of our service without written permission.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">10</span> Intellectual Property</h2>
+                <p>All content, design, and technology comprising the tablepass service are owned by or licensed to us. You may not copy, modify, or distribute any part of our service without written permission.</p>
+            </div>
 
-            <h2>11. Limitation of Liability</h2>
-            <p>To the maximum extent permitted by law, tablepass and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising out of or related to your use of the service. Our total liability for any claim shall not exceed the amount you paid to tablepass in the 12 months preceding the claim.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">11</span> Limitation of Liability</h2>
+                <p>To the maximum extent permitted by law, tablepass and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising out of or related to your use of the service. Our total liability for any claim shall not exceed the amount you paid to tablepass in the 12 months preceding the claim.</p>
+            </div>
 
-            <h2>12. Disclaimer of Warranties</h2>
-            <p>The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or that any specific reservation will be obtained.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">12</span> Disclaimer of Warranties</h2>
+                <p>The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo; without warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or that any specific reservation will be obtained.</p>
+            </div>
 
-            <h2>13. Indemnification</h2>
-            <p>You agree to indemnify and hold harmless tablepass and its operators from any claims, losses, damages, or expenses (including legal fees) arising from your use of the service or violation of these terms.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">13</span> Indemnification</h2>
+                <p>You agree to indemnify and hold harmless tablepass and its operators from any claims, losses, damages, or expenses (including legal fees) arising from your use of the service or violation of these terms.</p>
+            </div>
 
-            <h2>14. Termination</h2>
-            <p>We may suspend or terminate your account at our discretion if we believe you have violated these terms, engaged in fraudulent activity, or are using the service in a manner that could harm us or other users. You may close your account at any time by contacting us.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">14</span> Termination</h2>
+                <p>We may suspend or terminate your account at our discretion if we believe you have violated these terms, engaged in fraudulent activity, or are using the service in a manner that could harm us or other users. You may close your account at any time by contacting us.</p>
+            </div>
 
-            <h2>15. Governing Law</h2>
-            <p>These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law principles.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">15</span> Governing Law</h2>
+                <p>These Terms shall be governed by and construed in accordance with the laws of the State of New York, without regard to its conflict of law principles.</p>
+            </div>
 
-            <h2>16. Changes to These Terms</h2>
-            <p>We may update these Terms from time to time. Material changes will be communicated via SMS or a notice on our website. Your continued use of the service after changes constitutes acceptance of the updated terms.</p>
+            <div class="legal-section">
+                <h2><span class="section-number">16</span> Changes to These Terms</h2>
+                <p>We may update these Terms from time to time. Material changes will be communicated via SMS or a notice on our website. Your continued use of the service after changes constitutes acceptance of the updated terms.</p>
+            </div>
 
-            <h2>17. Contact Us</h2>
-            <p>If you have questions about these Terms &amp; Conditions, contact us at:</p>
-            <p><strong>Email:</strong> support@tablepass.nyc</p>
+            <div class="legal-section">
+                <h2><span class="section-number">17</span> Contact Us</h2>
+                <p>If you have questions about these Terms &amp; Conditions, contact us at:</p>
+                <div class="highlight-box mt-3">
+                    <p class="text-sm" style="color: #E0DDD8; margin: 0;"><strong>Email:</strong> support@tablepass.nyc</p>
+                </div>
+            </div>
         </div>
     </main>
 
-    <footer class="bg-stone-950 py-10 text-center">
-        <span class="text-white/30 text-lg font-medium tracking-[0.12em]" style="font-family: 'Manrope', sans-serif;">tablepass</span>
-        <div class="flex items-center justify-center gap-4 mt-3">
-            <a href="/terms" class="text-white/15 text-xs hover:text-white/30 transition-colors">Terms</a>
-            <span class="text-white/10">|</span>
-            <a href="/privacy" class="text-white/15 text-xs hover:text-white/30 transition-colors">Privacy</a>
+    <footer class="border-t" style="border-color: rgba(255,255,255,0.04); background: rgba(255,255,255,0.01);">
+        <div class="max-w-3xl mx-auto px-6 py-10 text-center">
+            <span class="text-white/20 text-lg font-medium tracking-[0.12em]" style="font-family: 'Manrope', sans-serif;">tablepass</span>
+            <div class="flex items-center justify-center gap-4 mt-3">
+                <a href="/terms" class="text-white/30 text-xs hover:text-white/50 transition-colors">Terms</a>
+                <span class="text-white/10">|</span>
+                <a href="/privacy" class="text-white/15 text-xs hover:text-white/30 transition-colors">Privacy</a>
+            </div>
+            <p class="text-white/10 text-xs mt-4">&copy; 2026 tablepass</p>
         </div>
-        <p class="text-white/10 text-xs mt-4">&copy; 2026 tablepass</p>
     </footer>
 </body>
 </html>

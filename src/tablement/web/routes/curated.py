@@ -106,6 +106,8 @@ async def get_curated(venue_id: int):
             "neighborhood": row.get("neighborhood", ""),
             "url_slug": row.get("url_slug", ""),
             "image_url": row.get("image_url") or f"/static/restaurants/{vid}.jpg",
+            "tagline": row.get("tagline", ""),
+            "price_level": row.get("price_level"),
             "slot_interval": row.get("slot_interval", 15),
             "drop_days_ahead": row.get("drop_days_ahead"),
             "drop_hour": row.get("drop_hour"),
