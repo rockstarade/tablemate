@@ -72,9 +72,9 @@
             --cal-available-bg: rgba(197,163,85,0.14);
             --cal-available-border: rgba(197,163,85,0.4);
             --cal-available-text: #7A6428;
-            --cal-upcoming-bg: rgba(139,128,186,0.08);
-            --cal-upcoming-border: rgba(139,128,186,0.2);
-            --cal-upcoming-text: #7B6FA0;
+            --cal-upcoming-bg: rgba(16,185,129,0.08);
+            --cal-upcoming-border: rgba(16,185,129,0.25);
+            --cal-upcoming-text: #047857;
             --cal-selected-bg: #1A1917;
             --cal-selected-text: #FDFCFA;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
@@ -124,9 +124,9 @@
             --cal-available-bg: rgba(212,185,120,0.15);
             --cal-available-border: rgba(212,185,120,0.4);
             --cal-available-text: #D4B978;
-            --cal-upcoming-bg: rgba(167,155,210,0.1);
-            --cal-upcoming-border: rgba(167,155,210,0.2);
-            --cal-upcoming-text: #A79BD2;
+            --cal-upcoming-bg: rgba(16,185,129,0.1);
+            --cal-upcoming-border: rgba(16,185,129,0.2);
+            --cal-upcoming-text: #34D399;
             --cal-selected-bg: #C5A355;
             --cal-selected-text: #0D0D0B;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
@@ -262,7 +262,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-base md:text-xl font-bold" style="color: var(--c1);">When do you want to go?</h2>
-                            <p class="text-xs md:text-base mt-0.5" style="color: var(--c3);">Tap the dates that work for you</p>
+                            <p class="text-xs md:text-base mt-0.5" style="color: var(--c3);">Select the dates that work for you</p>
                         </div>
                         <div class="flex items-center gap-1.5 md:gap-2.5">
                             <template x-for="i in 5" :key="'dot-'+i">
@@ -278,8 +278,8 @@
                         </div>
                     </div>
 
-                    <!-- Month nav -->
-                    <div class="flex items-center justify-between mb-3">
+                    <!-- Month nav + legend -->
+                    <div class="flex items-center justify-between mb-1">
                         <button @click="prevMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
                             <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </button>
@@ -287,6 +287,21 @@
                         <button @click="nextMonth()" class="p-1.5 md:p-2 rounded-lg transition-all hover:opacity-70" style="color: var(--c3);">
                             <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
+                    </div>
+                    <!-- Legend (above calendar) -->
+                    <div class="flex items-center justify-end gap-3 mb-2">
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
+                            <span class="text-[9px] font-medium" style="color: var(--c4);">Released</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
+                            <span class="text-[9px] font-medium" style="color: var(--c4);">Not yet released</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-selected-bg);"></div>
+                            <span class="text-[9px] font-medium" style="color: var(--c4);">Selected</span>
+                        </div>
                     </div>
 
                     <!-- Weekday headers -->
@@ -311,22 +326,7 @@
                         </template>
                     </div>
 
-                    <!-- Legend -->
-                    <div class="flex items-center gap-4 mt-4 pt-3" style="border-top: 1px solid var(--border-light);">
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Released</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Not yet released</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-selected-bg);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Selected</span>
-                        </div>
-                    </div>
-                    <p class="text-[10px] mt-2 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = the restaurant has opened reservations for this date (fully booked — we'll watch for cancellations). <strong style="color: var(--c3);">Not yet released</strong> = reservations haven't opened yet — we'll book the instant they drop.</p>
+                    <p class="text-[10px] mt-3 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = reservations opened (fully booked &mdash; we watch for cancellations). <strong style="color: var(--c3);">Not yet released</strong> = hasn't opened yet &mdash; we book the instant it drops.</p>
                 </div>
 
                 <!-- Info messages -->
@@ -1330,10 +1330,14 @@
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
                     <input type="password" x-model="resyPassword" placeholder="Resy password"
-                        class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-2 focus:outline-none"
                         style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <div class="text-right mb-4">
+                        <a href="https://resy.com/password-reset" target="_blank" class="text-xs font-medium transition-colors" style="color: var(--c3);"
+                            onmouseover="this.style.color='var(--accent)';" onmouseout="this.style.color='var(--c3)';">Forgot password?</a>
+                    </div>
                     <button type="submit" :disabled="resyLoading || !resyEmail || !resyPassword"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
                         :style="resyEmail && resyPassword ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">

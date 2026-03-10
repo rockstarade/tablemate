@@ -205,12 +205,6 @@
         .btn-book {
             transition: all 0.2s ease !important;
         }
-        /* Primary default → inverted on card hover */
-        .restaurant-card:hover .btn-book {
-            background: var(--btn-hover-bg) !important;
-            color: var(--btn-hover-text) !important;
-            border-color: var(--btn-hover-text) !important;
-        }
 
         /* ═══════ SKELETON SHIMMER ═══════ */
         @keyframes shimmer {
@@ -345,17 +339,20 @@
 
         <!-- Main nav -->
         <nav class="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-            <a href="/browse"
+            <a href="/browse" @click.prevent="showReservations = false; activeNav = 'home'"
                 class="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-semibold transition-all"
-                style="background: var(--nav-active-bg); color: var(--nav-active);">
+                :style="activeNav === 'home' ? 'background: var(--nav-active-bg); color: var(--nav-active);' : 'color: var(--nav);'"
+                :onmouseover="activeNav !== 'home' ? `this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';` : ''"
+                :onmouseout="activeNav !== 'home' ? `this.style.color='var(--nav)'; this.style.background='transparent';` : ''">
                 <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                 Home
             </a>
-            <button @click="openReservations()"
-                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] font-medium transition-all text-left"
-                style="color: var(--nav);"
-                onmouseover="this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';"
-                onmouseout="this.style.color='var(--nav)'; this.style.background='transparent';">
+            <button @click="openReservations(); activeNav = 'reservations'"
+                class="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-[15px] transition-all text-left"
+                :class="activeNav === 'reservations' ? 'font-semibold' : 'font-medium'"
+                :style="activeNav === 'reservations' ? 'background: var(--nav-active-bg); color: var(--nav-active);' : 'color: var(--nav);'"
+                :onmouseover="activeNav !== 'reservations' ? `this.style.color='var(--nav-hover)'; this.style.background='var(--bg-hover)';` : ''"
+                :onmouseout="activeNav !== 'reservations' ? `this.style.color='var(--nav)'; this.style.background='transparent';` : ''">
                 <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 My Reservations
                 <span x-show="activeResCount > 0"
@@ -624,14 +621,11 @@
                                 <img :src="r.image_url" :alt="r.name" loading="lazy"
                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                     @error="$event.target.style.display='none'">
-                                <!-- Top-right: Hot badge + Platform icon -->
+                                <!-- Top-right: Hot badge -->
                                 <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
                                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wide shadow-lg" style="background: linear-gradient(135deg, #C5A355, #B08D3E); box-shadow: 0 4px 12px rgba(197,163,85,0.3);">
                                         &#x1F525; Hot
                                     </span>
-                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
-                                        :style="r.platform === 'opentable' ? 'background:#DA3743; color:#fff;' : 'background:#FF462D; color:#fff;'"
-                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
                                 <!-- Top-left: City badge only -->
                                 <div x-show="r.city && r.city !== 'nyc'" class="absolute top-3 left-3">
@@ -710,15 +704,11 @@
                                     <span class="px-2 py-0.5 rounded-md backdrop-blur-md text-[9px] font-bold text-white uppercase tracking-wider" style="background: rgba(197,163,85,0.8);"
                                         x-text="r.city === 'boston' ? 'Boston' : r.city === 'seattle' ? 'Seattle' : r.city.charAt(0).toUpperCase() + r.city.slice(1)"></span>
                                 </div>
-                                <!-- Top-right: Platform icon -->
-                                <div class="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
-                                    <span x-show="isHotRestaurant(r)"
-                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wide shadow-lg" style="background: linear-gradient(135deg, #C5A355, #B08D3E); box-shadow: 0 4px 12px rgba(197,163,85,0.3);">
+                                <!-- Top-right: Hot badge -->
+                                <div x-show="isHotRestaurant(r)" class="absolute top-3 right-3">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-wide shadow-lg" style="background: linear-gradient(135deg, #C5A355, #B08D3E); box-shadow: 0 4px 12px rgba(197,163,85,0.3);">
                                         &#x1F525; Hot
                                     </span>
-                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black shadow-md"
-                                        :style="r.platform === 'opentable' ? 'background:#DA3743; color:#fff;' : 'background:#FF462D; color:#fff;'"
-                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
                                 </div>
                             </div>
                             <div class="p-5">
@@ -782,12 +772,7 @@
                             @click="goToRestaurant(r)">
                             <div class="relative h-52 sm:h-60 overflow-hidden">
                                 <img :src="r.image_url" :alt="r.name" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" loading="lazy">
-                                <!-- Platform icon -->
-                                <div class="absolute top-3 right-3">
-                                    <span class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shadow-md"
-                                        :class="r.platform === 'opentable' ? 'bg-red-600 text-white' : 'bg-white text-gray-800'"
-                                        x-text="r.platform === 'opentable' ? 'OT' : 'R'"></span>
-                                </div>
+                                <!-- City badge handled by parent -->
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-sm mb-1" style="color: var(--c1);" x-text="r.name"></h3>
@@ -1057,7 +1042,8 @@
     </div>
 
     <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
-    <div x-show="showSettings" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showSettings = false">
+    <div x-show="showSettings" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showSettings = false"
+        x-effect="showSettings ? document.body.style.overflow = 'hidden' : document.body.style.overflow = ''">
         <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showSettings = false"
             x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
         <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl shadow-2xl overflow-hidden modal-bg"
@@ -1337,10 +1323,13 @@
                 </div>
                 <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
                     <p class="text-base font-semibold mb-1" style="color: var(--c1);">Response time</p>
-                    <p class="text-sm" style="color: var(--c3);">We typically respond within a few hours during business days.</p>
+                    <p class="text-sm" style="color: var(--c3);">Our email is monitored 8 AM &ndash; 8 PM on business days. We typically respond within a few hours.</p>
                 </div>
                 <div class="p-4 rounded-xl" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                    <p class="text-base font-semibold mb-1" style="color: var(--c1);">FAQ</p>
+                    <div class="flex items-center justify-between mb-1">
+                        <p class="text-base font-semibold" style="color: var(--c1);">FAQ</p>
+                        <a href="/#faq" class="text-xs font-medium" style="color: var(--accent);">View all &rarr;</a>
+                    </div>
                     <div class="space-y-2 mt-2">
                         <p class="text-sm" style="color: var(--c2);"><span class="font-semibold">How does it work?</span> We monitor restaurant booking systems and grab tables the moment they become available.</p>
                         <p class="text-sm" style="color: var(--c2);"><span class="font-semibold">Is it safe?</span> Yes. We use your Resy credentials securely to make bookings on your behalf.</p>
@@ -1580,10 +1569,14 @@
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
                     <input type="password" x-model="resyPassword" placeholder="Resy password"
-                        class="w-full px-4 py-3 rounded-xl text-sm mb-4 focus:outline-none"
+                        class="w-full px-4 py-3 rounded-xl text-sm mb-2 focus:outline-none"
                         style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                         onfocus="this.style.borderColor='var(--search-focus)'; this.style.boxShadow='0 0 0 3px var(--search-focus)';"
                         onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';">
+                    <div class="text-right mb-4">
+                        <a href="https://resy.com/password-reset" target="_blank" class="text-xs font-medium transition-colors" style="color: var(--c3);"
+                            onmouseover="this.style.color='var(--accent)';" onmouseout="this.style.color='var(--c3)';">Forgot password?</a>
+                    </div>
                     <button type="submit" :disabled="resyLoading || !resyEmail || !resyPassword"
                         class="w-full py-3 rounded-xl font-semibold text-sm transition-all"
                         :style="resyEmail && resyPassword ? 'background: var(--btn-hot-bg); color: var(--btn-hot-text);' : 'background: var(--bg-input); color: var(--c4); cursor: not-allowed;'">
@@ -1651,11 +1644,13 @@
     <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
     <nav class="fixed bottom-0 inset-x-0 z-50 lg:hidden mobile-nav-bg">
         <div class="flex items-center justify-around py-2.5 px-2">
-            <a href="/browse" class="flex flex-col items-center gap-1 px-3 py-1" style="color: var(--nav-active);">
+            <a href="/browse" @click.prevent="showReservations = false; activeNav = 'home'" class="flex flex-col items-center gap-1 px-3 py-1"
+                :style="activeNav === 'home' ? 'color: var(--nav-active);' : 'color: var(--c3);'">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
                 <span class="text-[10px] font-bold">Home</span>
             </a>
-            <button @click="openReservations()" class="flex flex-col items-center gap-1 px-3 py-1 relative" style="color: var(--c3);">
+            <button @click="openReservations(); activeNav = 'reservations'" class="flex flex-col items-center gap-1 px-3 py-1 relative"
+                :style="activeNav === 'reservations' ? 'color: var(--nav-active);' : 'color: var(--c3);'">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 <span class="text-[10px] font-bold">Reservations</span>
                 <span x-show="activeResCount > 0" class="absolute -top-0.5 right-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center"
@@ -1685,6 +1680,7 @@
             searchResults: [],
             searchFocused: false,
             activeFilter: 'all',
+            activeNav: 'home',
 
             // Panels & Modals
             showReservations: false,
@@ -2080,8 +2076,9 @@
 
             get filteredRestaurants() {
                 const nyc = this.restaurants.filter(r => !r.city || r.city === 'nyc');
-                if (this.activeFilter === 'all') return nyc;
-                return nyc.filter(r => {
+                const sorted = nyc.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                if (this.activeFilter === 'all') return sorted;
+                return sorted.filter(r => {
                     const cuisine = (r.cuisine || '').toLowerCase();
                     const neighborhood = (r.neighborhood || '').toLowerCase();
                     const f = this.activeFilter.toLowerCase();
@@ -2100,11 +2097,11 @@
                     const c = (r.cuisine || '').split(/[-\/]/)[0].trim();
                     if (c) cuisineMap[c] = (cuisineMap[c] || 0) + 1;
                 });
-                // Show categories with 3+ restaurants, sorted by count
+                // Show categories with 2+ restaurants, sorted by count
                 const chips = Object.entries(cuisineMap)
-                    .filter(([_, count]) => count >= 3)
+                    .filter(([_, count]) => count >= 2)
                     .sort((a, b) => b[1] - a[1])
-                    .slice(0, 8)
+                    .slice(0, 10)
                     .map(([name]) => name);
                 return chips;
             },
