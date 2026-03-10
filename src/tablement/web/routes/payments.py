@@ -829,6 +829,7 @@ async def _charge_card(
                 "tablement_user_id": user_id,
                 "reservation_id": reservation_id,
             },
+            idempotency_key=f"charge-{reservation_id}-{description[:30]}",
         )
 
         if payment_intent.status == "succeeded":

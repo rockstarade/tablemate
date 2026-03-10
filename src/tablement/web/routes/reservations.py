@@ -78,7 +78,7 @@ PRE_DROP_POLL_MIN_SECONDS = 0.8
 PRE_DROP_POLL_MAX_SECONDS = 1.2
 # Polling interval range (jittered to avoid detection)
 PRE_DROP_POLL_MIN_MS = 40   # ~25 req/s at fastest
-PRE_DROP_POLL_MAX_MS = 60   # ~17 req/s at slowest, avg ~20 req/s
+PRE_DROP_POLL_MAX_MS = 75   # ~13 req/s at slowest, avg ~17 req/s
 
 # Legacy pre-fire offset (still used for busy-wait precision entry)
 PRE_FIRE_MS = 200
@@ -120,7 +120,7 @@ CANCEL_BURST_WARM = (25 * 60, 35 * 60)  # 25-35 min burst before rest (warm)
 # Active hours (ET)
 CANCEL_ACTIVE_START = 9             # 9 AM ET — start polling
 CANCEL_ACTIVE_END = 22              # 10 PM ET — start slowing down
-CANCEL_SLEEP_START = 1              # 1 AM ET — guaranteed no polling
+CANCEL_SLEEP_START = 0              # midnight ET — guaranteed no polling
 CANCEL_SLEEP_END = 9                # 9 AM ET — resume polling
 
 # Late-night slowdown: 10 PM–midnight, add extra seconds to interval
