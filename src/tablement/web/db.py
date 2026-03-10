@@ -457,11 +457,20 @@ async def create_slot_claim(user_id: str, **fields) -> dict:
 async def get_active_claims(venue_id: int, target_date: str) -> list[dict]:
     """Get all active claims for a venue+date (for conflict checking).
 
-    Applies a 48-hour TTL — claims older than 48h are treated as orphaned
-    (e.g. server crashed before cleaning up) and excluded from results.
+    Claims are considered orphaned (and excluded) only when the target_date
+    has already passed.  This is safe for both drop snipes (which run briefly)
+    and cancellation monitors (which can run for days/weeks until the
+    reservation date).
     """
-    from datetime import datetime, timedelta, timezone
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+    from datetime import date
+
+    # If the target_date is already in the past, no claims can be relevant
+    try:
+        if date.fromisoformat(target_date) < date.today():
+            return []
+    except ValueError:
+        pass  # malformed date — fall through to normal query
+
     resp = (
         await get_service_client()
         .table("slot_claims")
@@ -469,7 +478,6 @@ async def get_active_claims(venue_id: int, target_date: str) -> list[dict]:
         .eq("venue_id", venue_id)
         .eq("target_date", target_date)
         .eq("status", "active")
-        .gte("created_at", cutoff)
         .execute()
     )
     return resp.data

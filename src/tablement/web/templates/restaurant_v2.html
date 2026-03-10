@@ -72,9 +72,9 @@
             --cal-available-bg: rgba(197,163,85,0.14);
             --cal-available-border: rgba(197,163,85,0.4);
             --cal-available-text: #7A6428;
-            --cal-upcoming-bg: rgba(26,25,23,0.03);
-            --cal-upcoming-border: rgba(26,25,23,0.08);
-            --cal-upcoming-text: #9E9789;
+            --cal-upcoming-bg: rgba(139,128,186,0.08);
+            --cal-upcoming-border: rgba(139,128,186,0.2);
+            --cal-upcoming-text: #7B6FA0;
             --cal-selected-bg: #1A1917;
             --cal-selected-text: #FDFCFA;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
@@ -124,9 +124,9 @@
             --cal-available-bg: rgba(212,185,120,0.15);
             --cal-available-border: rgba(212,185,120,0.4);
             --cal-available-text: #D4B978;
-            --cal-upcoming-bg: rgba(250,248,245,0.04);
-            --cal-upcoming-border: rgba(250,248,245,0.08);
-            --cal-upcoming-text: #5A5650;
+            --cal-upcoming-bg: rgba(167,155,210,0.1);
+            --cal-upcoming-border: rgba(167,155,210,0.2);
+            --cal-upcoming-text: #A79BD2;
             --cal-selected-bg: #C5A355;
             --cal-selected-text: #0D0D0B;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
@@ -223,7 +223,7 @@
             <div>
 
                 <!-- ═══ RESTAURANT HERO ═══ -->
-                <div class="relative rounded-2xl overflow-hidden mb-6 anim-in" style="aspect-ratio: 16/8;">
+                <div class="relative rounded-2xl overflow-hidden mb-6 anim-in" style="aspect-ratio: 16/5;">
                     <div class="absolute inset-0 img-placeholder">
                         <img :src="restaurant.image_url" :alt="restaurant.name"
                             class="w-full h-full object-cover" @error="$event.target.style.display='none'">
@@ -319,13 +319,14 @@
                         </div>
                         <div class="flex items-center gap-1.5">
                             <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
-                            <span class="text-[10px] font-medium" style="color: var(--c3);">Coming soon</span>
+                            <span class="text-[10px] font-medium" style="color: var(--c3);">Not yet released</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <div class="w-2.5 h-2.5 rounded-sm" style="background: var(--cal-selected-bg);"></div>
                             <span class="text-[10px] font-medium" style="color: var(--c3);">Selected</span>
                         </div>
                     </div>
+                    <p class="text-[10px] mt-2 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = the restaurant has opened reservations for this date (fully booked — we'll watch for cancellations). <strong style="color: var(--c3);">Not yet released</strong> = reservations haven't opened yet — we'll book the instant they drop.</p>
                 </div>
 
                 <!-- Info messages -->
