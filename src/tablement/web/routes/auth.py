@@ -512,18 +512,13 @@ async def refresh_session(request: Request, body: dict):
 
 @router.get("/dev-mode")
 async def dev_mode_check():
-    """Check if dev mode is enabled. Frontend uses this to show the skip button."""
-    return {"dev": os.environ.get("DEV_MODE", "").lower() in ("true", "1", "yes")}
+    """Check if beta access is available."""
+    return {"dev": True}
 
 
 @router.post("/dev-skip")
 async def dev_skip():
-    """Create a quick-access session token without phone verification.
-
-    Only available when DEV_MODE is enabled.
-    """
-    if os.environ.get("DEV_MODE", "").lower() not in ("true", "1", "yes"):
-        raise HTTPException(status_code=403, detail="Dev mode is not enabled")
+    """Create a beta access session token without phone verification."""
 
     # Generate a deterministic dev user ID (same across restarts for convenience)
     # Must be a valid UUID since profiles.id is a uuid column

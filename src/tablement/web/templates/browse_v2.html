@@ -675,8 +675,10 @@
                     </div>
                 </div>
 
-                <!-- Filter chips -->
-                <div class="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide" style="-webkit-overflow-scrolling: touch;">
+                <!-- Filter chips (sticky under header) -->
+                <div class="flex gap-2 mb-5 overflow-x-auto pb-3 pt-3 -mt-3 scrollbar-hide sticky z-20 -mx-5 px-5 lg:-mx-8 lg:px-8"
+                    style="-webkit-overflow-scrolling: touch; top: 84px; background: var(--bg);"
+                >
                     <button @click="activeFilter = 'all'"
                         class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all"
                         :style="activeFilter === 'all'
@@ -2248,13 +2250,16 @@
                     const c = (r.cuisine || '').split(/[-\/]/)[0].trim();
                     if (c) cuisineMap[c] = (cuisineMap[c] || 0) + 1;
                 });
-                // Show categories with 2+ restaurants, sorted by count
-                const chips = Object.entries(cuisineMap)
-                    .filter(([_, count]) => count >= 2)
+                // Pinned categories first, then cuisine sorted by count
+                const pinned = ['Bar', 'Speakeasy'];
+                const cuisineChips = Object.entries(cuisineMap)
+                    .filter(([name, count]) => count >= 2 && !pinned.includes(name))
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 10)
                     .map(([name]) => name);
-                return chips;
+                // Only include pinned categories that actually exist in data
+                const pinnedExist = pinned.filter(p => cuisineMap[p]);
+                return [...pinnedExist, ...cuisineChips];
             },
 
             isHotRestaurant(r) {
