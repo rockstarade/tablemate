@@ -459,7 +459,10 @@ async def me(user_id: str = Depends(get_user_id)):
 
 @router.post("/set-name")
 async def set_name(body: dict, user_id: str = Depends(get_user_id)):
-    """Save the user's first name (shown after initial login)."""
+    """Save the user's first name (shown after initial login).
+
+    Optionally accepts a referral_code to apply the referral discount.
+    """
     name = (body.get("first_name") or "").strip()
     if not name:
         raise HTTPException(400, "first_name is required")
@@ -467,7 +470,45 @@ async def set_name(body: dict, user_id: str = Depends(get_user_id)):
         name = name[:50]
     await db.upsert_profile(user_id, first_name=name)
     logger.info("User %s set first_name to %r", user_id, name)
-    return {"ok": True, "first_name": name}
+
+    # Handle optional referral code (only if user doesn't already have a referral discount)
+    referral_applied = False
+    ref_code = (body.get("referral_code") or "").strip().upper()
+    if ref_code:
+        try:
+            profile = await db.get_profile(user_id)
+            # Only apply if user hasn't already redeemed a referral
+            if profile and not profile.get("referral_discount") and not profile.get("referred_by"):
+                referrer = await db.get_profile_by_referral_code(ref_code)
+                if referrer and referrer["id"] != user_id:
+                    referrer_gifts = referrer.get("gifts_remaining", 0)
+                    if referrer_gifts > 0:
+                        await db.decrement_gifts(referrer["id"])
+                        await db.upsert_profile(user_id, referred_by=referrer["id"], referral_discount=True)
+                        await db.create_transaction(
+                            user_id=user_id,
+                            type="referral_received",
+                            amount_cents=0,
+                            credits_delta=0,
+                            description=f"50% off first reservation from {ref_code}",
+                        )
+                        await db.create_transaction(
+                            user_id=referrer["id"],
+                            type="referral_sent",
+                            amount_cents=0,
+                            credits_delta=0,
+                            description=f"Referral discount sent to new user (code {ref_code})",
+                        )
+                        referral_applied = True
+                        logger.info("Late referral: %s used code %s", user_id, ref_code)
+                    else:
+                        logger.info("Referral code %s has no gifts remaining", ref_code)
+                else:
+                    logger.info("Invalid referral code %s (not found or self-referral)", ref_code)
+        except Exception as e:
+            logger.warning("Late referral failed for code %s: %s", ref_code, e)
+
+    return {"ok": True, "first_name": name, "referral_applied": referral_applied}
 
 
 # ---------------------------------------------------------------------------

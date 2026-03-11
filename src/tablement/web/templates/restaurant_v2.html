@@ -646,11 +646,20 @@
             resyLoading: false,
             resyError: '',
 
+            // User plan & credits
+            userPlan: 'free',         // free | beta | pro | vip
+            userCredits: 0,
+            userBookingsUsed: 0,
+            userReferralDiscount: false,
+            planBookingsIncluded: 0,   // computed from plan
+
             // Payment method
             hasPaymentMethod: false,
             showPaymentLink: false,
             paymentCardLoading: false,
             paymentCardError: '',
+            selectedPricingTier: null, // 'single' | 'pro' | 'vip'
+            pricingStep: 'choose',     // 'choose' | 'card'
             _stripe: null,
             _stripeElements: null,
             _cardElement: null,
@@ -691,15 +700,26 @@
                         const meData = await meResp.json();
                         this.resyLinked = meData.resy_linked || false;
                         this.otLinked = meData.opentable_linked || false;
+                        this.userPlan = meData.plan || 'free';
+                        this.userBookingsUsed = meData.plan_bookings_used || 0;
+                        this.userReferralDiscount = meData.referral_discount || false;
+                        this.planBookingsIncluded = this.userPlan === 'pro' ? 5 : this.userPlan === 'vip' ? 12 : 0;
                     }
                 } catch (e) {}
 
-                // Check if user has a payment method
+                // Check payment method + credit balance in parallel
                 try {
-                    const pmResp = await this.authFetch('/api/payments/methods');
+                    const [pmResp, credResp] = await Promise.all([
+                        this.authFetch('/api/payments/methods'),
+                        this.authFetch('/api/payments/credits'),
+                    ]);
                     if (pmResp.ok) {
                         const pmData = await pmResp.json();
                         this.hasPaymentMethod = pmData.methods && pmData.methods.length > 0;
+                    }
+                    if (credResp.ok) {
+                        const credData = await credResp.json();
+                        this.userCredits = credData.credits || 0;
                     }
                 } catch (e) {}
 
@@ -979,8 +999,19 @@
                 } else {
                     if (!this.resyLinked) { this.showResyLink = true; return; }
                 }
-                // Check payment method
-                if (!this.hasPaymentMethod) { this.showPaymentLink = true; this.initPaymentSetup(); return; }
+                // Check if user can book without payment (has plan with remaining bookings, credits, or referral discount)
+                const canBookFree = this.userPlan === 'beta'
+                    || (this.userPlan === 'pro' && this.userBookingsUsed < 5)
+                    || (this.userPlan === 'vip' && this.userBookingsUsed < 12)
+                    || this.userCredits > 0
+                    || this.userReferralDiscount;
+                // If user can book free OR already has payment method, skip pricing modal
+                if (!canBookFree && !this.hasPaymentMethod) {
+                    this.selectedPricingTier = null;
+                    this.pricingStep = 'choose';
+                    this.showPaymentLink = true;
+                    return;
+                }
                 // If no email saved and prompt not showing yet, show the email prompt
                 const savedEmail = localStorage.getItem('resr_notify_email');
                 if (!savedEmail && !this.showEmailPrompt) {
@@ -1024,9 +1055,9 @@
                 };
 
                 try {
-                    const resp = await fetch('/api/reservations/batch', {
+                    const resp = await this.authFetch('/api/reservations/batch', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload),
                     });
                     if (!resp.ok) {
@@ -1216,6 +1247,12 @@
             },
 
             // ═══ Payment Method Link ═══
+            selectPricingTier(tier) {
+                this.selectedPricingTier = tier;
+                this.pricingStep = 'card';
+                this.initPaymentSetup();
+            },
+
             async initPaymentSetup() {
                 this.paymentCardError = '';
                 try {
@@ -1270,8 +1307,34 @@
                     }
 
                     this.hasPaymentMethod = true;
+
+                    // If user selected a subscription plan, subscribe now
+                    if (this.selectedPricingTier === 'pro' || this.selectedPricingTier === 'vip') {
+                        try {
+                            const subResp = await this.authFetch('/api/payments/subscribe', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ plan: this.selectedPricingTier }),
+                            });
+                            if (subResp.ok) {
+                                this.userPlan = this.selectedPricingTier;
+                                this.userBookingsUsed = 0;
+                                this.planBookingsIncluded = this.selectedPricingTier === 'pro' ? 5 : 12;
+                            } else {
+                                const subData = await subResp.json();
+                                throw new Error(subData.detail || 'Failed to start subscription');
+                            }
+                        } catch (subErr) {
+                            this.paymentCardError = subErr.message;
+                            this.paymentCardLoading = false;
+                            return;
+                        }
+                    }
+
                     this.showPaymentLink = false;
-                    this.showToast('Card saved!');
+                    this.showToast(this.selectedPricingTier === 'pro' || this.selectedPricingTier === 'vip'
+                        ? `${this.selectedPricingTier.toUpperCase()} plan activated!`
+                        : 'Card saved!');
                     // Continue the booking flow
                     this.handleBookClick();
                 } catch (e) { this.paymentCardError = e.message; }
@@ -1482,58 +1545,176 @@
         </div>
     </div>
 
-    <!-- ═══ PAYMENT LINK MODAL ═══ -->
+    <!-- ═══ PAYMENT / PRICING MODAL ═══ -->
     <div x-show="showPaymentLink" x-cloak class="fixed inset-0 z-[80] flex items-center justify-center" @keydown.escape.window="showPaymentLink = false">
         <div class="absolute inset-0 backdrop-blur-sm" style="background: var(--bg-overlay);" @click="showPaymentLink = false"></div>
-        <div class="relative z-10 w-full max-w-md mx-4 rounded-2xl p-8 shadow-2xl modal-bg"
+        <div class="relative z-10 w-full mx-4 rounded-2xl p-6 pb-5 shadow-2xl modal-bg"
+            :class="pricingStep === 'choose' ? 'max-w-lg' : 'max-w-md'"
             style="border: 1px solid var(--border);"
             x-transition:enter="transition ease-out duration-250" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
-            <button @click="showPaymentLink = false" class="absolute top-4 right-4 transition-colors" style="color: var(--c3);"
+            <button @click="showPaymentLink = false" class="absolute top-4 right-4 transition-colors z-10" style="color: var(--c3);"
                 onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
-            <!-- Card icon -->
-            <div class="flex justify-center mb-5">
-                <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
-                    <svg class="w-8 h-8" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/>
-                    </svg>
-                </div>
-            </div>
-
-            <h2 class="text-xl font-bold text-center mb-2" style="color: var(--c1);">Link your payment method</h2>
-            <p class="text-sm text-center mb-6" style="color: var(--c3);">You will only be charged if your reservation is successful.</p>
-
-            <!-- Pricing info -->
-            <div class="rounded-xl p-4 mb-5" style="background: var(--bg-input); border: 1px solid var(--border-subtle);">
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 flex-shrink-0" style="color: var(--status-confirmed);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    <div>
-                        <p class="text-sm font-medium" style="color: var(--c1);">$12 per successful reservation</p>
-                        <p class="text-xs" style="color: var(--c3);">No charge if we don't find a table</p>
+            <!-- ═══ STEP 1: Choose pricing tier ═══ -->
+            <template x-if="pricingStep === 'choose'">
+                <div>
+                    <div class="text-center mb-5">
+                        <h2 class="text-xl font-bold mb-1" style="color: var(--c1);">Choose your plan</h2>
+                        <p class="text-sm" style="color: var(--c3);">Only charged when we successfully book your table</p>
                     </div>
+
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <!-- Single -->
+                        <button @click="selectPricingTier('single')"
+                            class="relative rounded-xl p-4 text-left transition-all group cursor-pointer"
+                            :style="selectedPricingTier === 'single'
+                                ? 'background: var(--accent-bg); border: 2px solid var(--accent);'
+                                : 'background: var(--bg-input); border: 2px solid var(--border);'"
+                            onmouseover="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--accent)'"
+                            onmouseout="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--border)'">
+                            <div class="text-2xl font-bold mb-0.5" style="color: var(--c1);">$12</div>
+                            <div class="text-[11px] font-medium mb-3" style="color: var(--c3);">per booking</div>
+                            <div class="text-[11px] leading-relaxed" style="color: var(--c3);">
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Pay as you go</span>
+                                </div>
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span>Released & unreleased</span>
+                                </div>
+                                <div class="flex items-start gap-1.5">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span>No commitment</span>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- Pro -->
+                        <button @click="selectPricingTier('pro')"
+                            class="relative rounded-xl p-4 text-left transition-all cursor-pointer"
+                            :style="selectedPricingTier === 'pro'
+                                ? 'background: var(--accent-bg); border: 2px solid var(--accent);'
+                                : 'background: var(--bg-input); border: 2px solid var(--border);'"
+                            onmouseover="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--accent)'"
+                            onmouseout="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--border)'">
+                            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide" style="background: var(--accent); color: #fff;">POPULAR</div>
+                            <div class="text-2xl font-bold mb-0.5" style="color: var(--c1);">$29</div>
+                            <div class="text-[11px] font-medium mb-3" style="color: var(--c3);">per month</div>
+                            <div class="text-[11px] leading-relaxed" style="color: var(--c3);">
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span><strong style="color: var(--c1);">5 bookings</strong> included</span>
+                                </div>
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span style="color: var(--accent); font-weight: 600;">$5.80/booking</span>
+                                </div>
+                                <div class="flex items-start gap-1.5">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span>$10/extra booking</span>
+                                </div>
+                            </div>
+                        </button>
+
+                        <!-- VIP -->
+                        <button @click="selectPricingTier('vip')"
+                            class="relative rounded-xl p-4 text-left transition-all cursor-pointer"
+                            :style="selectedPricingTier === 'vip'
+                                ? 'background: linear-gradient(135deg, rgba(197,163,85,0.12), rgba(197,163,85,0.04)); border: 2px solid var(--accent);'
+                                : 'background: var(--bg-input); border: 2px solid var(--border);'"
+                            onmouseover="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--accent)'"
+                            onmouseout="if(!this.classList.contains('ring-2'))this.style.borderColor='var(--border)'">
+                            <div class="text-2xl font-bold mb-0.5" style="color: var(--c1);">$69</div>
+                            <div class="text-[11px] font-medium mb-3" style="color: var(--c3);">per month</div>
+                            <div class="text-[11px] leading-relaxed" style="color: var(--c3);">
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span><strong style="color: var(--c1);">12 bookings</strong> included</span>
+                                </div>
+                                <div class="flex items-start gap-1.5 mb-1">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span style="color: var(--accent); font-weight: 600;">$5.75/booking</span>
+                                </div>
+                                <div class="flex items-start gap-1.5">
+                                    <svg class="w-3 h-3 mt-0.5 shrink-0" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span>$8/extra &mdash; best value</span>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-center gap-1.5 mb-3">
+                        <svg class="w-3.5 h-3.5" style="color: var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <span class="text-xs" style="color: var(--c3);">No charge if we don't find your table</span>
+                    </div>
+
+                    <button @click="skipPaymentLink()" class="w-full py-2 text-sm transition-colors" style="color: var(--c4);"
+                        onmouseover="this.style.color='var(--c2)';" onmouseout="this.style.color='var(--c4)';">
+                        Skip for now
+                    </button>
                 </div>
-            </div>
+            </template>
 
-            <!-- Stripe card element -->
-            <div id="card-element-restaurant" class="px-4 py-3.5 rounded-xl mb-3" style="background: var(--bg-input); border: 1px solid var(--border);"></div>
-            <p x-show="paymentCardError" x-cloak class="text-xs mb-3" style="color: var(--status-failed);" x-text="paymentCardError"></p>
+            <!-- ═══ STEP 2: Enter card ═══ -->
+            <template x-if="pricingStep === 'card'">
+                <div>
+                    <button @click="pricingStep = 'choose'; selectedPricingTier = null" class="flex items-center gap-1 mb-4 text-sm transition-colors" style="color: var(--c3);"
+                        onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        Back
+                    </button>
 
-            <button @click="confirmPaymentCard()" :disabled="paymentCardLoading"
-                class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 mb-3"
-                style="background: var(--accent); color: #fff;">
-                <span x-show="!paymentCardLoading">Confirm</span>
-                <span x-show="paymentCardLoading" class="flex items-center justify-center gap-2">
-                    <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
-                    Saving...
-                </span>
-            </button>
+                    <!-- Selected plan summary -->
+                    <div class="rounded-xl p-4 mb-5" style="background: var(--accent-bg); border: 1px solid var(--accent-border);">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span x-show="selectedPricingTier === 'single'" class="text-sm font-semibold" style="color: var(--c1);">Pay per booking</span>
+                                <span x-show="selectedPricingTier === 'pro'" class="text-sm font-semibold" style="color: var(--c1);">Pro Plan</span>
+                                <span x-show="selectedPricingTier === 'vip'" class="text-sm font-semibold" style="color: var(--c1);">VIP Plan</span>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">
+                                    <span x-show="selectedPricingTier === 'single'">$12 per successful booking</span>
+                                    <span x-show="selectedPricingTier === 'pro'">$29/mo &mdash; 5 bookings included</span>
+                                    <span x-show="selectedPricingTier === 'vip'">$69/mo &mdash; 12 bookings included</span>
+                                </p>
+                            </div>
+                            <div class="text-lg font-bold" style="color: var(--accent);">
+                                <span x-show="selectedPricingTier === 'single'">$12</span>
+                                <span x-show="selectedPricingTier === 'pro'">$29</span>
+                                <span x-show="selectedPricingTier === 'vip'">$69</span>
+                            </div>
+                        </div>
+                    </div>
 
-            <button @click="skipPaymentLink()" class="w-full py-2 text-sm transition-colors" style="color: var(--c3);"
-                onmouseover="this.style.color='var(--c1)';" onmouseout="this.style.color='var(--c3)';">
-                Skip for now
-            </button>
+                    <h2 class="text-lg font-bold mb-1" style="color: var(--c1);">Add payment method</h2>
+                    <p class="text-xs mb-5" style="color: var(--c3);">Your card is saved securely. You won't be charged until we book a table.</p>
+
+                    <!-- Stripe card element -->
+                    <div id="card-element-restaurant" class="px-4 py-3.5 rounded-xl mb-3" style="background: var(--bg-input); border: 1px solid var(--border);"></div>
+                    <p x-show="paymentCardError" x-cloak class="text-xs mb-3" style="color: var(--status-failed);" x-text="paymentCardError"></p>
+
+                    <button @click="confirmPaymentCard()" :disabled="paymentCardLoading"
+                        class="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 mb-3"
+                        style="background: var(--accent); color: #fff;">
+                        <span x-show="!paymentCardLoading">
+                            <span x-show="selectedPricingTier === 'single'">Save Card & Continue</span>
+                            <span x-show="selectedPricingTier === 'pro'">Start Pro &mdash; $29/mo</span>
+                            <span x-show="selectedPricingTier === 'vip'">Start VIP &mdash; $69/mo</span>
+                        </span>
+                        <span x-show="paymentCardLoading" class="flex items-center justify-center gap-2">
+                            <svg class="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+                            Setting up...
+                        </span>
+                    </button>
+
+                    <button @click="skipPaymentLink()" class="w-full py-2 text-sm transition-colors" style="color: var(--c4);"
+                        onmouseover="this.style.color='var(--c2)';" onmouseout="this.style.color='var(--c4)';">
+                        Skip for now
+                    </button>
+                </div>
+            </template>
         </div>
     </div>
 

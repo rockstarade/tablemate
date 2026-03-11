@@ -376,12 +376,19 @@
                 <h3 class="text-xl font-bold mb-1" style="color: var(--c1);">Welcome to TablePass</h3>
                 <p class="text-sm" style="color: var(--c3);">What should we call you?</p>
             </div>
-            <div class="px-8 py-5">
+            <div class="px-8 py-5 space-y-3">
                 <input type="text" x-model="namePromptValue" placeholder="Your first name"
                     maxlength="50" autocomplete="given-name" autofocus
                     class="w-full px-4 py-3 rounded-xl text-base font-medium text-center"
                     style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
                     @keydown.enter="saveNamePrompt()">
+                <div class="relative">
+                    <input type="text" x-model="referralCodeInput" placeholder="Referral code (optional)"
+                        maxlength="10" autocomplete="off"
+                        class="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-center uppercase tracking-wider"
+                        style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c3);"
+                        @keydown.enter="saveNamePrompt()">
+                </div>
             </div>
             <div class="px-8 pb-8 flex gap-3">
                 <button @click="showNamePrompt = false"
@@ -1987,6 +1994,7 @@
             showNamePrompt: false,
             namePromptValue: '',
             namePromptSaving: false,
+            referralCodeInput: '',
             showWelcome: false,
             welcomeName: '',
             referralCode: '',
@@ -2839,13 +2847,20 @@
                 if (!this.namePromptValue.trim()) return;
                 this.namePromptSaving = true;
                 const name = this.namePromptValue.trim();
+                const refCode = (this.referralCodeInput || '').trim();
                 try {
-                    await this.authFetch('/api/auth/set-name', {
+                    const payload = { first_name: name };
+                    if (refCode) payload.referral_code = refCode;
+                    const resp = await this.authFetch('/api/auth/set-name', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ first_name: name }),
+                        body: JSON.stringify(payload),
                     });
+                    const data = await resp.json();
                     this.userName = name;
+                    if (data.referral_applied) {
+                        this.referralDiscount = true;
+                    }
                     this.showNamePrompt = false;
                     // Show welcome popup
                     this.welcomeName = name;
