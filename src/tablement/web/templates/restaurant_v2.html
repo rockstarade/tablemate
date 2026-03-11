@@ -380,6 +380,18 @@
                             <strong style="color: var(--c3);">Opening soon</strong> = tables aren't available yet &mdash; we'll book the instant they are.
                         </p>
                     </template>
+                    <!-- Cutoff notice when within 30 min of drop -->
+                    <template x-if="dropCutoffPassed">
+                        <div class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl anim-in"
+                             style="background: var(--amber-soft); border: 1px solid var(--amber-border);">
+                            <span class="text-xs mt-0.5">&#9200;</span>
+                            <div>
+                                <p class="text-xs font-semibold" style="color: var(--c2);">Drop cutoff passed</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);"
+                                    x-text="'Bookings for today\'s ' + (restaurant.drop_hour > 12 ? (restaurant.drop_hour - 12) : restaurant.drop_hour) + ':' + String(restaurant.drop_minute || 0).padStart(2,'0') + (restaurant.drop_hour >= 12 ? ' PM' : ' AM') + ' drop closed 30 minutes prior. You can still book these dates as cancellation watches.'"></p>
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- ═══ STEP 2: PICK YOUR TIMES ═══ -->
@@ -790,10 +802,24 @@
                 const now = new Date();
                 const dropH = this.restaurant.drop_hour ?? 10;
                 const dropM = this.restaurant.drop_minute ?? 0;
-                const droppedToday = now.getHours() > dropH || (now.getHours() === dropH && now.getMinutes() >= dropM);
+                // 30-minute cutoff: treat drop as "already happened" if within 30 min
+                const dropTotalMin = dropH * 60 + dropM;
+                const nowTotalMin = now.getHours() * 60 + now.getMinutes();
+                const droppedToday = nowTotalMin >= (dropTotalMin - 30);
                 const ahead = droppedToday ? this.restaurant.drop_days_ahead : this.restaurant.drop_days_ahead - 1;
                 const d = new Date(); d.setDate(d.getDate() + ahead); d.setHours(0,0,0,0);
                 return d;
+            },
+            get dropCutoffPassed() {
+                // Returns true if we're within 30 min of today's drop (cutoff zone)
+                if (!this.restaurant || !this.restaurant.drop_days_ahead) return false;
+                const now = new Date();
+                const dropH = this.restaurant.drop_hour ?? 10;
+                const dropM = this.restaurant.drop_minute ?? 0;
+                const dropTotalMin = dropH * 60 + dropM;
+                const nowTotalMin = now.getHours() * 60 + now.getMinutes();
+                // In cutoff zone: within 30 min BEFORE drop, but drop hasn't happened yet
+                return nowTotalMin >= (dropTotalMin - 30) && nowTotalMin < dropTotalMin;
             },
             isReleasedDate(dateStr) {
                 if (!this.lastReleasedDate) return true;

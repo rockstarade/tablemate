@@ -299,13 +299,17 @@ async def create_reservation(
             ),
         )
         _drop_dt = _sched.calculate_drop_datetime(_config)
-        if _drop_dt < datetime.now(_drop_dt.tzinfo):
+        _now = datetime.now(_drop_dt.tzinfo)
+        if _drop_dt < _now:
             raise HTTPException(400, "Drop time has already passed")
-        _minutes_until = (_drop_dt - datetime.now(_drop_dt.tzinfo)).total_seconds() / 60
-        if _minutes_until < 10:
+        _minutes_until = (_drop_dt - _now).total_seconds() / 60
+        if _minutes_until < 30:
+            _cutoff = _drop_dt - timedelta(minutes=30)
+            _cutoff_str = _cutoff.strftime("%-I:%M %p")
             raise HTTPException(
                 400,
-                f"Drop is only {_minutes_until:.0f} minutes away — minimum 10 minutes needed for warmup",
+                f"Same-day cutoff has passed — bookings for this drop closed at {_cutoff_str}. "
+                f"Try selecting a different date.",
             )
 
     # Check user has linked the appropriate platform account
@@ -436,30 +440,47 @@ async def create_batch_reservations(
             raise HTTPException(400, "Maximum 2 time preferences for drop bookings")
 
     # Validate: if any dates are unreleased (snipe mode), drop time must be in the future
+    # and at least 30 minutes away (cutoff for same-day drops)
     if body.drop_time:
         from tablement.scheduler import PrecisionScheduler
         _sched = PrecisionScheduler()
-        _any_date = date.fromisoformat(body.dates[0])
-        _config = SnipeConfig(
-            venue_id=body.venue_id,
-            date=_any_date,
-            party_size=body.party_size,
-            time_preferences=[],
-            drop_time=DropTime(
-                hour=body.drop_time.hour,
-                minute=body.drop_time.minute,
-                days_ahead=body.drop_time.days_ahead,
-            ),
-        )
-        _drop_dt = _sched.calculate_drop_datetime(_config)
         days_ahead_val = body.drop_time.days_ahead
         today = date.today()
         has_unreleased = any(
             date.fromisoformat(d) > today + timedelta(days=days_ahead_val)
             for d in body.dates
         )
-        if has_unreleased and _drop_dt < datetime.now(_drop_dt.tzinfo):
-            raise HTTPException(400, "Drop time has already passed for unreleased dates")
+        if has_unreleased:
+            # Check earliest unreleased date to see when its drop fires
+            unreleased_dates = sorted(
+                d for d in body.dates
+                if date.fromisoformat(d) > today + timedelta(days=days_ahead_val)
+            )
+            _earliest = date.fromisoformat(unreleased_dates[0])
+            _config = SnipeConfig(
+                venue_id=body.venue_id,
+                date=_earliest,
+                party_size=body.party_size,
+                time_preferences=[],
+                drop_time=DropTime(
+                    hour=body.drop_time.hour,
+                    minute=body.drop_time.minute,
+                    days_ahead=body.drop_time.days_ahead,
+                ),
+            )
+            _drop_dt = _sched.calculate_drop_datetime(_config)
+            _now = datetime.now(_drop_dt.tzinfo)
+            if _drop_dt < _now:
+                raise HTTPException(400, "Drop time has already passed for unreleased dates")
+            _minutes_until = (_drop_dt - _now).total_seconds() / 60
+            if _minutes_until < 30:
+                _cutoff = _drop_dt - timedelta(minutes=30)
+                _cutoff_str = _cutoff.strftime("%-I:%M %p")
+                raise HTTPException(
+                    400,
+                    f"Same-day cutoff has passed — bookings for this drop closed at {_cutoff_str}. "
+                    f"Try selecting a different date.",
+                )
 
     # Block if user already has active reservations for this venue
     if await db.has_active_reservation_for_venue(user_id, body.venue_id):
