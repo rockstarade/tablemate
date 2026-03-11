@@ -659,14 +659,6 @@
                 </svg>
             </button>
 
-            <!-- Admin (temp) -->
-            <a href="/admin" class="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all text-xs font-medium"
-                style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--c3);"
-                onmouseover="this.style.color='var(--c1)';"
-                onmouseout="this.style.color='var(--c3)';">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-                Admin
-            </a>
         </div>
     </header>
 
@@ -2054,7 +2046,7 @@
                     }
                 });
 
-                // Capture user location for admin map — ping every 60s
+                // Capture user location — ping every 60s
                 this._sendLocation();
                 this._locationInterval = setInterval(() => this._sendLocation(), 60000);
             },
@@ -2389,7 +2381,7 @@
 
             // ── Restaurant Logic ──
             get hotRestaurants() {
-                // Driven entirely by is_hot flag in DB (toggle from admin)
+                // Driven entirely by is_hot flag in DB
                 // Show 5 on ultra-wide, 4 otherwise — matches grid columns
                 const cols = window.innerWidth >= 1536 ? 5 : 4;
                 return this.restaurants.filter(r => r.is_hot).slice(0, cols);

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>404 Not Found</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #0D0D0B;
+    color: #9ca3af;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+.e-c {
+    text-align: center;
+    max-width: 480px;
+}
+.e-c h1 {
+    font-size: 72px;
+    font-weight: 700;
+    color: #4b5563;
+    margin: 0 0 16px 0;
+    letter-spacing: -2px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.e-c h1 span {
+    display: inline;
+    cursor: default;
+}
+.e-c p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+    color: #6b7280;
+}
+.e-c a {
+    color: #6b7280;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.e-c a:hover {
+    color: #9ca3af;
+}
+.g {
+    display: none;
+    margin-top: 32px;
+    animation: fi 0.4s ease;
+}
+@keyframes fi {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.g input {
+    display: block;
+    width: 260px;
+    margin: 0 auto 12px;
+    padding: 12px 16px;
+    background: #1a1a18;
+    border: 1px solid #2a2a28;
+    border-radius: 8px;
+    color: #e5e7eb;
+    font-size: 14px;
+    outline: none;
+    text-align: center;
+    letter-spacing: 2px;
+}
+.g input:focus {
+    border-color: #3f3f3b;
+}
+.g button {
+    display: block;
+    width: 260px;
+    margin: 0 auto;
+    padding: 10px 16px;
+    background: #1f1f1d;
+    border: 1px solid #2a2a28;
+    border-radius: 8px;
+    color: #9ca3af;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.g button:hover {
+    background: #2a2a28;
+    color: #e5e7eb;
+}
+.g .err {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: 8px;
+    min-height: 18px;
+}
+.g .rl {
+    color: #f59e0b;
+    font-size: 12px;
+    margin-top: 8px;
+}
+</style>
+</head>
+<body>
+<div class="e-c">
+    <h1><span id="d1">4</span><span>0</span><span id="d2">4</span></h1>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <p><a href="/">Go back home</a></p>
+    <div class="g" id="g">
+        <input type="password" id="k" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" autocomplete="off" spellcheck="false">
+        <button id="sb" onclick="v()">Continue</button>
+        <div class="err" id="err"></div>
+    </div>
+</div>
+<script>
+(function(){
+    var s=0,t=0;
+    document.getElementById('d1').addEventListener('click',function(){
+        s=1;t=Date.now();
+    });
+    document.getElementById('d2').addEventListener('click',function(){
+        if(s===1&&Date.now()-t<3000){s=2;document.getElementById('g').style.display='block';document.getElementById('k').focus();}
+        else{s=0;}
+    });
+    document.getElementById('k').addEventListener('keydown',function(e){
+        if(e.key==='Enter')v();
+    });
+    var a=0;
+    window.v=function(){
+        var p=document.getElementById('k').value;
+        if(!p)return;
+        a++;
+        if(a>5){
+            document.getElementById('err').className='rl';
+            document.getElementById('err').textContent='Too many attempts. Try later.';
+            document.getElementById('sb').disabled=true;
+            return;
+        }
+        document.getElementById('err').textContent='';
+        fetch('/api/r/stats',{headers:{'Content-Type':'application/json','X-Admin-Token':p}})
+        .then(function(r){
+            if(r.ok){
+                localStorage.setItem('t_k',p);
+                window.location.href='/royce/panel';
+            }else if(r.status===429){
+                document.getElementById('err').className='rl';
+                document.getElementById('err').textContent='Rate limited. Try later.';
+            }else{
+                document.getElementById('err').className='err';
+                document.getElementById('err').textContent='Invalid';
+            }
+        })
+        .catch(function(){
+            document.getElementById('err').className='err';
+            document.getElementById('err').textContent='Connection error';
+        });
+    };
+})();
+</script>
+</body>
+</html>

@@ -158,7 +158,7 @@
                         <svg x-show="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                         <svg x-show="!isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     </button>
-                    <a href="/admin/vip" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="background: rgba(167,139,250,0.12); color: #a78bfa;">
+                    <a href="/royce/panel" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="background: rgba(167,139,250,0.12); color: #a78bfa;">
                         VIP Control
                     </a>
                     <a href="/browse" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style="background: var(--accent-soft); color: var(--accent);">
@@ -446,7 +446,7 @@
     function adminApp() {
         return {
             password: '',
-            adminToken: localStorage.getItem('tablement_admin_token') || '',
+            adminToken: localStorage.getItem('t_k') || '',
             authenticated: false,
             loginError: '',
             isDark: true,
@@ -478,7 +478,7 @@
 
                 if (this.adminToken) {
                     try {
-                        const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                        const resp = await fetch('/api/r/stats', { headers: this.headers() });
                         if (resp.ok) {
                             this.authenticated = true;
                             this.stats = await resp.json();
@@ -489,7 +489,7 @@
                         }
                     } catch (e) {}
                     this.adminToken = '';
-                    localStorage.removeItem('tablement_admin_token');
+                    localStorage.removeItem('t_k');
                 }
             },
 
@@ -497,12 +497,12 @@
                 this.loginError = '';
                 this.adminToken = this.password;
                 try {
-                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    const resp = await fetch('/api/r/stats', { headers: this.headers() });
                     if (!resp.ok) {
                         const data = await resp.json().catch(() => ({}));
                         throw new Error(data.detail || 'Invalid password');
                     }
-                    localStorage.setItem('tablement_admin_token', this.adminToken);
+                    localStorage.setItem('t_k', this.adminToken);
                     this.authenticated = true;
                     this.stats = await resp.json();
                     this.lastRefresh = new Date().toLocaleTimeString();
@@ -518,7 +518,7 @@
                 this.authenticated = false;
                 this.adminToken = '';
                 this.password = '';
-                localStorage.removeItem('tablement_admin_token');
+                localStorage.removeItem('t_k');
                 if (this._refreshInterval) clearInterval(this._refreshInterval);
             },
 
@@ -538,19 +538,19 @@
 
             async loadStats() {
                 try {
-                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    const resp = await fetch('/api/r/stats', { headers: this.headers() });
                     if (resp.ok) this.stats = await resp.json();
                 } catch (e) {}
             },
             async loadUsers() {
                 try {
-                    const resp = await fetch('/api/admin/users', { headers: this.headers() });
+                    const resp = await fetch('/api/r/users', { headers: this.headers() });
                     if (resp.ok) { const d = await resp.json(); this.users = d.users || []; }
                 } catch (e) {}
             },
             async loadReservations() {
                 try {
-                    const resp = await fetch('/api/admin/reservations', { headers: this.headers() });
+                    const resp = await fetch('/api/r/reservations', { headers: this.headers() });
                     if (resp.ok) { const d = await resp.json(); this.reservations = d.reservations || []; }
                 } catch (e) {}
             },
@@ -566,7 +566,7 @@
             async cancelReservation(id) {
                 if (!confirm('Force-cancel this reservation?')) return;
                 try {
-                    const resp = await fetch('/api/admin/reservations/' + id + '/cancel', {
+                    const resp = await fetch('/api/r/reservations/' + id + '/cancel', {
                         method: 'POST', headers: this.headers(),
                     });
                     if (resp.ok) { await this.loadReservations(); await this.loadStats(); }
@@ -580,7 +580,7 @@
                 if (isNaN(n) || n < 1 || n > 100) { alert('Enter a number between 1 and 100'); return; }
                 const reason = prompt('Reason (optional):', 'Admin credit') || 'Admin credit';
                 try {
-                    const resp = await fetch(`/api/admin/users/${user.id}/credits`, {
+                    const resp = await fetch(`/api/r/users/${user.id}/credits`, {
                         method: 'POST',
                         headers: this.headers(),
                         body: JSON.stringify({ amount: n, reason }),

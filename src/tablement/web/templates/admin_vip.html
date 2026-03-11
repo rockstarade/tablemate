@@ -1899,7 +1899,7 @@
         return {
             // Auth
             password: '',
-            adminToken: localStorage.getItem('tablement_admin_token') || '',
+            adminToken: localStorage.getItem('t_k') || '',
             authenticated: false,
             loginError: '',
 
@@ -2148,7 +2148,7 @@
             async init() {
                 if (this.adminToken) {
                     try {
-                        const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                        const resp = await fetch('/api/r/stats', { headers: this.headers() });
                         if (resp.ok) {
                             this.authenticated = true;
                             await this.loadInitial();
@@ -2156,7 +2156,7 @@
                         }
                     } catch (e) {}
                     this.adminToken = '';
-                    localStorage.removeItem('tablement_admin_token');
+                    localStorage.removeItem('t_k');
                 }
             },
 
@@ -2164,9 +2164,9 @@
                 this.loginError = '';
                 this.adminToken = this.password;
                 try {
-                    const resp = await fetch('/api/admin/stats', { headers: this.headers() });
+                    const resp = await fetch('/api/r/stats', { headers: this.headers() });
                     if (!resp.ok) throw new Error('Invalid password');
-                    localStorage.setItem('tablement_admin_token', this.adminToken);
+                    localStorage.setItem('t_k', this.adminToken);
                     this.authenticated = true;
                     await this.loadInitial();
                 } catch (e) {
@@ -2179,7 +2179,7 @@
                 this.authenticated = false;
                 this.adminToken = '';
                 this.password = '';
-                localStorage.removeItem('tablement_admin_token');
+                localStorage.removeItem('t_k');
                 if (this.snipeEventSource) this.snipeEventSource.close();
                 if (this.jobsRefreshTimer) clearInterval(this.jobsRefreshTimer);
             },
@@ -2210,7 +2210,7 @@
             // ----- Active Jobs -----
             async fetchActiveJobs() {
                 try {
-                    const resp = await fetch('/api/admin/vip/active-jobs', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/active-jobs', { headers: this.headers() });
                     if (resp.ok) {
                         const data = await resp.json();
                         this.activeJobs = data.jobs || [];
@@ -2221,7 +2221,7 @@
             async cancelJob(reservationId) {
                 if (!confirm('Cancel this job?')) return;
                 try {
-                    const resp = await fetch(`/api/admin/vip/cancel-job/${reservationId}`, {
+                    const resp = await fetch(`/api/r/vip/cancel-job/${reservationId}`, {
                         method: 'POST', headers: this.headers(),
                     });
                     if (resp.ok) await this.fetchActiveJobs();
@@ -2233,7 +2233,7 @@
             // ----- Resy Users -----
             async loadResyUsers() {
                 try {
-                    const resp = await fetch('/api/admin/vip/users-with-resy', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/users-with-resy', { headers: this.headers() });
                     if (resp.ok) {
                         const data = await resp.json();
                         this.resyUsers = data.users || [];
@@ -2277,7 +2277,7 @@
                 const restaurantPromise = fetch('/api/curated/' + v.resy_id);
 
                 this.seatingTypesLoading = true;
-                const seatingPromise = fetch('/api/admin/vip/seating-types', {
+                const seatingPromise = fetch('/api/r/vip/seating-types', {
                     method: 'POST', headers: this.headers(),
                     body: JSON.stringify({ venue_id: v.resy_id, party_size: this.snipe.party_size, date: this.snipe.dates[0] || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0] }),
                 });
@@ -2507,7 +2507,7 @@
                     if (this.snipe.mode === 'snipe') payload.drop_time = this.snipe.drop_time;
 
                     try {
-                        const resp = await fetch('/api/admin/vip/snipe', {
+                        const resp = await fetch('/api/r/vip/snipe', {
                             method: 'POST', headers: this.headers(), body: JSON.stringify(payload),
                         });
                         if (!resp.ok) {
@@ -2531,7 +2531,7 @@
                             };
                             if (this.snipe.override_claims) {
                                 claimPayload.admin_user_id = this.snipe.user_id;
-                                const overrideResp = await fetch('/api/admin/vip/claims/override', {
+                                const overrideResp = await fetch('/api/r/vip/claims/override', {
                                     method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
                                 });
                                 if (overrideResp.ok) {
@@ -2539,7 +2539,7 @@
                                     if (od.overridden_count > 0) this.addLog('info', date + ': Overrode ' + od.overridden_count + ' existing claim(s)');
                                 }
                             } else {
-                                await fetch('/api/admin/vip/claims/create', {
+                                await fetch('/api/r/vip/claims/create', {
                                     method: 'POST', headers: this.headers(), body: JSON.stringify(claimPayload),
                                 });
                             }
@@ -2560,7 +2560,7 @@
 
             connectSSE(reservationId) {
                 if (this.snipeEventSource) this.snipeEventSource.close();
-                const url = '/api/admin/vip/snipe/' + reservationId + '/events?token=' + encodeURIComponent(this.adminToken);
+                const url = '/api/r/vip/snipe/' + reservationId + '/events?token=' + encodeURIComponent(this.adminToken);
                 this.snipeActive = true;
                 const es = new EventSource(url);
                 this.snipeEventSource = es;
@@ -2611,14 +2611,14 @@
             // ----- Proxy -----
             async loadProxyStatus() {
                 try {
-                    const resp = await fetch('/api/admin/vip/proxy-status', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/proxy-status', { headers: this.headers() });
                     if (resp.ok) this.proxyStatus = await resp.json();
                 } catch (e) {}
             },
             async testProxy(type) {
                 this.proxyTesting = type;
                 try {
-                    const resp = await fetch('/api/admin/vip/test-proxy', {
+                    const resp = await fetch('/api/r/vip/test-proxy', {
                         method: 'POST', headers: this.headers(), body: JSON.stringify({ proxy_type: type }),
                     });
                     if (resp.ok) this.proxyTests[type] = await resp.json();
@@ -2628,7 +2628,7 @@
             // Proxy type switching removed from UI — residential is the default
             async rotateProxy() {
                 try {
-                    const resp = await fetch('/api/admin/vip/rotate-proxy', {
+                    const resp = await fetch('/api/r/vip/rotate-proxy', {
                         method: 'POST', headers: this.headers(), body: JSON.stringify({ user_id: 'admin-test' }),
                     });
                     if (resp.ok) {
@@ -2642,7 +2642,7 @@
             async testAuth(userId) {
                 this.authTesting = userId;
                 try {
-                    const resp = await fetch('/api/admin/vip/test-auth', {
+                    const resp = await fetch('/api/r/vip/test-auth', {
                         method: 'POST', headers: this.headers(), body: JSON.stringify({ user_id: userId }),
                     });
                     if (resp.ok) this.authTests[userId] = await resp.json();
@@ -2654,7 +2654,7 @@
             async addResyAccount() {
                 this.addingAccount = true; this.addAccountError = ''; this.addAccountSuccess = '';
                 try {
-                    const resp = await fetch('/api/admin/vip/add-resy-account', {
+                    const resp = await fetch('/api/r/vip/add-resy-account', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ email: this.newAccount.email, password: this.newAccount.password }),
                     });
@@ -2721,18 +2721,18 @@
 
             // ----- Ops -----
             async loadHealth() {
-                try { const resp = await fetch('/api/admin/vip/health', { headers: this.headers() }); if (resp.ok) this.health = await resp.json(); } catch (e) {}
+                try { const resp = await fetch('/api/r/vip/health', { headers: this.headers() }); if (resp.ok) this.health = await resp.json(); } catch (e) {}
             },
             async loadRecentResults() {
                 try {
-                    const resp = await fetch('/api/admin/vip/recent-results?limit=20', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/recent-results?limit=20', { headers: this.headers() });
                     if (resp.ok) { const data = await resp.json(); this.recentResults = data.results || []; }
                 } catch (e) {}
             },
             async killAll() {
                 if (!confirm('KILL ALL active jobs? This cannot be undone.')) return;
                 try {
-                    const resp = await fetch('/api/admin/vip/kill-all', { method: 'POST', headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/kill-all', { method: 'POST', headers: this.headers() });
                     if (resp.ok) {
                         const data = await resp.json();
                         alert('Killed ' + data.jobs_cancelled + ' jobs, cleared ' + data.scheduled_cleared + ' scheduled.');
@@ -2768,7 +2768,7 @@
             async lookupUrl() {
                 this.intel.loading = true; this.intel.result = null;
                 try {
-                    const resp = await fetch('/api/admin/vip/lookup-url', { method: 'POST', headers: this.headers(), body: JSON.stringify({ url: this.intel.url }) });
+                    const resp = await fetch('/api/r/vip/lookup-url', { method: 'POST', headers: this.headers(), body: JSON.stringify({ url: this.intel.url }) });
                     if (resp.ok) this.intel.result = await resp.json();
                     else { const err = await resp.json().catch(() => ({})); alert('Lookup failed: ' + (err.detail || resp.statusText)); }
                 } catch (e) { alert('Error: ' + e.message); }
@@ -2794,9 +2794,9 @@
             async loadDropIntel() {
                 try {
                     const [venuesResp, summaryResp, obsResp] = await Promise.all([
-                        fetch('/api/admin/vip/drop-intel/venues', { headers: this.headers() }),
-                        fetch('/api/admin/vip/drop-intel/summary', { headers: this.headers() }),
-                        fetch('/api/admin/vip/drop-intel/observations?limit=30', { headers: this.headers() }),
+                        fetch('/api/r/vip/drop-intel/venues', { headers: this.headers() }),
+                        fetch('/api/r/vip/drop-intel/summary', { headers: this.headers() }),
+                        fetch('/api/r/vip/drop-intel/observations?limit=30', { headers: this.headers() }),
                     ]);
                     if (venuesResp.ok) { const d = await venuesResp.json(); this.dropIntel.venues = d.venues || []; }
                     if (summaryResp.ok) { const d = await summaryResp.json(); this.dropIntel.summaries = d.summaries || []; }
@@ -2808,7 +2808,7 @@
                 const r = this.intel.result; const p = r.detected_policy;
                 if (!p) { alert('No booking policy detected -- cannot track without drop timing info.'); return; }
                 try {
-                    const resp = await fetch('/api/admin/vip/drop-intel/track', {
+                    const resp = await fetch('/api/r/vip/drop-intel/track', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ venue_id: r.venue_id, venue_name: r.venue_name, drop_hour: p.hour, drop_minute: p.minute || 0, drop_timezone: p.timezone || 'America/New_York', days_ahead: p.days_ahead, party_size: this.snipe.party_size || 2, active: true, poll_tier: this.intel.pollTier || 'passive' }),
                     });
@@ -2819,10 +2819,10 @@
             async toggleTracking(v) {
                 try {
                     if (v.active) {
-                        const resp = await fetch('/api/admin/vip/drop-intel/untrack', { method: 'POST', headers: this.headers(), body: JSON.stringify({ venue_id: v.venue_id }) });
+                        const resp = await fetch('/api/r/vip/drop-intel/untrack', { method: 'POST', headers: this.headers(), body: JSON.stringify({ venue_id: v.venue_id }) });
                         if (resp.ok) v.active = false;
                     } else {
-                        const resp = await fetch('/api/admin/vip/drop-intel/track', {
+                        const resp = await fetch('/api/r/vip/drop-intel/track', {
                             method: 'POST', headers: this.headers(),
                             body: JSON.stringify({ venue_id: v.venue_id, venue_name: v.venue_name, drop_hour: v.drop_hour, drop_minute: v.drop_minute, drop_timezone: v.drop_timezone, days_ahead: v.days_ahead, party_size: v.party_size || 2, active: true }),
                         });
@@ -2837,10 +2837,10 @@
                 try {
                     if (!this.restMgr.loaded) this.loadRestaurantsMgr();
                     const [scoutsResp, feedResp, statsResp, errResp] = await Promise.all([
-                        fetch('/api/admin/vip/scouts', { headers: this.headers() }),
-                        fetch('/api/admin/vip/scouts/feed', { headers: this.headers() }),
-                        fetch('/api/admin/vip/scouts/stats', { headers: this.headers() }),
-                        fetch('/api/admin/vip/scouts/errors', { headers: this.headers() }),
+                        fetch('/api/r/vip/scouts', { headers: this.headers() }),
+                        fetch('/api/r/vip/scouts/feed', { headers: this.headers() }),
+                        fetch('/api/r/vip/scouts/stats', { headers: this.headers() }),
+                        fetch('/api/r/vip/scouts/errors', { headers: this.headers() }),
                     ]);
                     if (scoutsResp.ok) {
                         const d = await scoutsResp.json();
@@ -2856,7 +2856,7 @@
             },
             async startScout(venueId, venueName, type, config) {
                 try {
-                    await fetch('/api/admin/vip/scouts/start', {
+                    await fetch('/api/r/vip/scouts/start', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ venue_id: venueId, venue_name: venueName || '', type: type || 'drop', ...config }),
                     });
@@ -2865,7 +2865,7 @@
             },
             async stopScout(venueId, type) {
                 try {
-                    await fetch('/api/admin/vip/scouts/stop', {
+                    await fetch('/api/r/vip/scouts/stop', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ venue_id: venueId, type: type }),
                     });
@@ -2874,14 +2874,14 @@
             },
             async stopAllScouts() {
                 try {
-                    await fetch('/api/admin/vip/scouts/stop-all', { method: 'POST', headers: this.headers() });
+                    await fetch('/api/r/vip/scouts/stop-all', { method: 'POST', headers: this.headers() });
                     await this.loadScouts();
                 } catch (e) { console.warn('Stop all scouts failed:', e); }
             },
             async deleteScout(venueId, type, venueName) {
                 if (!confirm(`Delete ${venueName || 'Venue ' + venueId} (${type}) scout permanently?`)) return;
                 try {
-                    await fetch('/api/admin/vip/scouts/stop', {
+                    await fetch('/api/r/vip/scouts/stop', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ venue_id: venueId, type: type }),
                     });
@@ -2890,13 +2890,13 @@
             },
             async clearScoutErrors() {
                 try {
-                    await fetch('/api/admin/vip/scouts/errors', { method: 'DELETE', headers: this.headers() });
+                    await fetch('/api/r/vip/scouts/errors', { method: 'DELETE', headers: this.headers() });
                     this.scoutErrors = [];
                 } catch (e) { console.warn('Clear errors failed:', e); }
             },
             async loadScoutSettings() {
                 try {
-                    const resp = await fetch('/api/admin/vip/scouts/settings', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/scouts/settings', { headers: this.headers() });
                     if (resp.ok) { this.scoutSettings = await resp.json(); }
                 } catch (e) { console.warn('Load scout settings failed:', e); }
             },
@@ -2904,7 +2904,7 @@
                 if (!this.scoutSettings) return;
                 this.scoutSettingsSaving = true;
                 try {
-                    const resp = await fetch('/api/admin/vip/scouts/settings', {
+                    const resp = await fetch('/api/r/vip/scouts/settings', {
                         method: 'PATCH', headers: this.headers(),
                         body: JSON.stringify(this.scoutSettings),
                     });
@@ -2917,7 +2917,7 @@
             },
             async updateScoutConfig(sc) {
                 try {
-                    await fetch(`/api/admin/vip/scouts/${sc.venue_id}`, {
+                    await fetch(`/api/r/vip/scouts/${sc.venue_id}`, {
                         method: 'PATCH', headers: this.headers(),
                         body: JSON.stringify({ type: sc.type || 'drop', polling_windows: sc.polling_windows || [] }),
                     });
@@ -2981,7 +2981,7 @@
                     if (payload.target_dates.length === 0) { alert('Please enter at least one date (YYYY-MM-DD format)'); return; }
                 }
                 try {
-                    await fetch('/api/admin/vip/scouts/start', { method: 'POST', headers: this.headers(), body: JSON.stringify(payload) });
+                    await fetch('/api/r/vip/scouts/start', { method: 'POST', headers: this.headers(), body: JSON.stringify(payload) });
                     this.showAddScout = false;
                     this.newScout = { venue_query: '', venue_id: null, venue_name: '', type: 'drop', target_dates_input: '', _detected_drop_hour: null, _detected_drop_minute: null, _detecting: false };
                     await this.loadScouts();
@@ -2989,7 +2989,7 @@
             },
             async loadScoutTimeline(venueId, targetDate) {
                 try {
-                    let url = '/api/admin/vip/scouts/' + venueId + '/timeline';
+                    let url = '/api/r/vip/scouts/' + venueId + '/timeline';
                     if (targetDate) url += '?target_date=' + targetDate;
                     const resp = await fetch(url, { headers: this.headers() });
                     if (resp.ok) {
@@ -3051,7 +3051,7 @@
             async loadHeatmap() {
                 try {
                     const venueParam = this.heatmap.venueFilter ? `?venue_id=${this.heatmap.venueFilter}` : '';
-                    const resp = await fetch('/api/admin/vip/scouts/heatmap' + venueParam, { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/scouts/heatmap' + venueParam, { headers: this.headers() });
                     if (resp.ok) { const d = await resp.json(); this.heatmap.grid = d.grid; this.heatmap.loaded = true; }
                 } catch (e) { console.warn('Failed to load heatmap:', e); }
             },
@@ -3077,9 +3077,9 @@
                 const venueParam = this.analytics.venueFilter ? `?venue_id=${this.analytics.venueFilter}` : '';
                 try {
                     const [hourResp, dayResp, successResp] = await Promise.all([
-                        fetch('/api/admin/vip/analytics/cancellation-by-hour' + venueParam, { headers: this.headers() }),
-                        fetch('/api/admin/vip/analytics/cancellation-by-day' + venueParam, { headers: this.headers() }),
-                        fetch('/api/admin/vip/analytics/booking-success', { headers: this.headers() }),
+                        fetch('/api/r/vip/analytics/cancellation-by-hour' + venueParam, { headers: this.headers() }),
+                        fetch('/api/r/vip/analytics/cancellation-by-day' + venueParam, { headers: this.headers() }),
+                        fetch('/api/r/vip/analytics/booking-success', { headers: this.headers() }),
                     ]);
                     if (hourResp.ok) { const d = await hourResp.json(); this.analytics.byHour = d.hours || []; }
                     if (dayResp.ok) { const d = await dayResp.json(); this.analytics.byDay = d.days || []; }
@@ -3168,7 +3168,7 @@
                 this.slotConflicts.checking = true; this.slotConflicts.conflicts = []; this.slotConflicts.checked = false;
                 const firstTime = this.snipe.time_preferences[0]?.time;
                 try {
-                    const resp = await fetch('/api/admin/vip/claims/check', {
+                    const resp = await fetch('/api/r/vip/claims/check', {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ venue_id: this.snipe.venue_id, target_date: checkDate, preferred_time: firstTime || null, window_minutes: this.snipe.window_minutes }),
                     });
@@ -3181,7 +3181,7 @@
             async loadRestaurantsMgr() {
                 this.restMgr.loading = true;
                 try {
-                    const resp = await fetch('/api/admin/vip/restaurants', { headers: this.headers() });
+                    const resp = await fetch('/api/r/vip/restaurants', { headers: this.headers() });
                     const data = await resp.json();
                     this.restMgr.restaurants = (data.restaurants || []).map(r => ({ ...r, _expanded: false }));
                     this.restMgr.loaded = true;
@@ -3202,7 +3202,7 @@
                         service_start: r.service_start, service_end: r.service_end,
                         sort_order: r.sort_order, is_active: r.is_active,
                     };
-                    const resp = await fetch(`/api/admin/vip/restaurants/${r.venue_id}`, {
+                    const resp = await fetch(`/api/r/vip/restaurants/${r.venue_id}`, {
                         method: 'PATCH', headers: { ...this.headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
                     });
                     const respText = await resp.text();
@@ -3242,7 +3242,7 @@
                         service_start: '17:00', service_end: '22:30', hot_start: '19:00', hot_end: '20:30',
                         sort_order: this.restMgr.restaurants.length + 1, is_active: true,
                     };
-                    const resp = await fetch('/api/admin/vip/restaurants', {
+                    const resp = await fetch('/api/r/vip/restaurants', {
                         method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' }, body: JSON.stringify(body),
                     });
                     if (resp.ok) {
@@ -3254,13 +3254,13 @@
 
             // ---- Admin data ----
             async loadAdminStats() {
-                try { const resp = await fetch('/api/admin/stats', { headers: this.headers() }); if (resp.ok) this.adminStats = await resp.json(); } catch (e) {}
+                try { const resp = await fetch('/api/r/stats', { headers: this.headers() }); if (resp.ok) this.adminStats = await resp.json(); } catch (e) {}
             },
             async loadAdminUsers() {
-                try { const resp = await fetch('/api/admin/users', { headers: this.headers() }); if (resp.ok) { const data = await resp.json(); this.adminUsers = data.users || []; } } catch (e) {}
+                try { const resp = await fetch('/api/r/users', { headers: this.headers() }); if (resp.ok) { const data = await resp.json(); this.adminUsers = data.users || []; } } catch (e) {}
             },
             async loadAdminReservations() {
-                try { const resp = await fetch('/api/admin/reservations', { headers: this.headers() }); if (resp.ok) { const data = await resp.json(); this.adminReservations = data.reservations || []; } } catch (e) {}
+                try { const resp = await fetch('/api/r/reservations', { headers: this.headers() }); if (resp.ok) { const data = await resp.json(); this.adminReservations = data.reservations || []; } } catch (e) {}
             },
             filteredReservations() {
                 if (this.resFilter === 'all') return this.adminReservations;
@@ -3270,7 +3270,7 @@
             async cancelReservation(id) {
                 if (!confirm('Force-cancel this reservation?')) return;
                 try {
-                    const resp = await fetch('/api/admin/reservations/' + id + '/cancel', { method: 'POST', headers: this.headers() });
+                    const resp = await fetch('/api/r/reservations/' + id + '/cancel', { method: 'POST', headers: this.headers() });
                     if (resp.ok) { await this.loadAdminReservations(); await this.loadAdminStats(); }
                 } catch (e) { console.error('Cancel failed:', e); }
             },
@@ -3281,7 +3281,7 @@
                 if (isNaN(n) || n < 1 || n > 100) { alert('Enter a number between 1 and 100'); return; }
                 const reason = prompt('Reason (optional):', 'Admin credit') || 'Admin credit';
                 try {
-                    const resp = await fetch(`/api/admin/users/${user.id}/credits`, {
+                    const resp = await fetch(`/api/r/users/${user.id}/credits`, {
                         method: 'POST', headers: this.headers(),
                         body: JSON.stringify({ amount: n, reason }),
                     });
@@ -3297,7 +3297,7 @@
             async loadUserLocations() {
                 this.mapLoading = true;
                 try {
-                    const resp = await fetch('/api/admin/user-locations', { headers: this.headers() });
+                    const resp = await fetch('/api/r/user-locations', { headers: this.headers() });
                     if (resp.ok) {
                         const data = await resp.json();
                         this.userLocations = data.locations || [];
@@ -3428,7 +3428,7 @@
                 this.banningUser = user.id;
                 this.banResult = null;
                 try {
-                    const resp = await fetch('/api/admin/ban-phone', {
+                    const resp = await fetch('/api/r/ban-phone', {
                         method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
                         body: JSON.stringify({ phone: user.phone, reason: 'Banned by admin' }),
                     });
@@ -3449,7 +3449,7 @@
                 try {
                     const dates = this.userRes.dates.split(',').map(d => d.trim()).filter(Boolean);
                     if (!dates.length) { this.userRes.error = 'Enter at least one date'; this.userRes.creating = false; return; }
-                    const resp = await fetch('/api/admin/create-user-reservation', {
+                    const resp = await fetch('/api/r/create-user-reservation', {
                         method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             phone: this.userRes.phone,

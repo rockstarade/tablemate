@@ -1,25 +1,6 @@
-"""Admin panel API routes.
+"""Protected panel API routes.
 
-Protected by a simple ADMIN_PASSWORD env var. The admin dashboard
-at /admin sends this password as an X-Admin-Token header.
-
-Endpoints:
-- GET /api/admin/stats     — system overview (users, reservations, jobs)
-- GET /api/admin/users     — all user profiles
-- GET /api/admin/reservations — all reservations across users
-- POST /api/admin/reservations/{id}/cancel — force-cancel a reservation
-
-VIP endpoints (admin ops command center):
-- POST /api/admin/vip/snipe          — launch snipe from admin panel
-- POST /api/admin/vip/test-auth      — test Resy login for a user
-- POST /api/admin/vip/test-proxy     — test proxy connectivity
-- POST /api/admin/vip/rotate-proxy   — force rotate proxy session
-- GET  /api/admin/vip/proxy-status   — proxy config + active sessions
-- POST /api/admin/vip/kill-all       — cancel all active jobs
-- GET  /api/admin/vip/health         — system health (latencies, offsets)
-- GET  /api/admin/vip/recent-results — last N completed snipes
-- POST /api/admin/vip/lookup-url     — Resy URL → venue + policy
-- PATCH /api/admin/vip/proxy-config  — switch proxy type
+Secured by ADMIN_PASSWORD env var + rate limiting.
 """
 
 from __future__ import annotations
@@ -41,6 +22,7 @@ from tablement.models import DropTime, SnipeConfig, TimePreference
 from tablement.proxy import ProxyType, proxy_pool
 from tablement.web import db
 from tablement.web.encryption import decrypt_password, encrypt_password
+from tablement.web.ratelimit import limiter
 from tablement.web.state import JobState, SnipePhase
 
 logger = logging.getLogger(__name__)
@@ -64,6 +46,7 @@ async def _require_admin(token: str | None = Depends(_admin_key_header)):
 
 
 @router.get("/stats", dependencies=[Depends(_require_admin)])
+@limiter.limit("10/minute")
 async def stats(request: Request):
     """System overview."""
     # Active in-memory jobs
@@ -435,6 +418,7 @@ async def admin_cancel_reservation(reservation_id: str, request: Request):
 
 
 @router.post("/vip/snipe", dependencies=[Depends(_require_admin)])
+@limiter.limit("5/minute")
 async def vip_launch_snipe(body: dict, request: Request):
     """Launch a snipe or monitor from the admin VIP panel.
 
@@ -883,6 +867,7 @@ def _mask_proxy_url_safe(url: str | None) -> str | None:
 
 
 @router.post("/vip/kill-all", dependencies=[Depends(_require_admin)])
+@limiter.limit("3/minute")
 async def vip_kill_all(request: Request):
     """Cancel ALL active jobs instantly (kill switch)."""
     job_manager = request.app.state.jobs

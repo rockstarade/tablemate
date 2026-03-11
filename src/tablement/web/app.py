@@ -150,7 +150,7 @@ def create_app() -> FastAPI:
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "X-Admin-Key"],
+        allow_headers=["Authorization", "Content-Type", "X-Admin-Token"],
     )
 
     # Security headers on every response
@@ -163,7 +163,7 @@ def create_app() -> FastAPI:
     app.include_router(venue.router, prefix="/api/venue")
     app.include_router(policy.router, prefix="/api/policy")
     app.include_router(reservations.router, prefix="/api/reservations")
-    app.include_router(admin.router, prefix="/api/admin")
+    app.include_router(admin.router, prefix="/api/r")
     app.include_router(curated.router, prefix="/api/curated")
     app.include_router(slots.router, prefix="/api/slots")
 
@@ -221,13 +221,13 @@ def create_app() -> FastAPI:
     async def terms_page(request: Request):
         return templates.TemplateResponse("terms.html", {"request": request})
 
-    @app.get("/admin")
-    async def admin_page(request: Request):
-        return templates.TemplateResponse("admin_vip.html", {"request": request})
+    @app.get("/royce")
+    async def royce_gate(request: Request):
+        return templates.TemplateResponse("404_decoy.html", {"request": request})
 
-    @app.get("/admin/vip")
-    async def admin_vip_redirect(request: Request):
-        return RedirectResponse("/admin", status_code=302)
+    @app.get("/royce/panel")
+    async def royce_panel(request: Request):
+        return templates.TemplateResponse("admin_vip.html", {"request": request})
 
     # --- Consumer-facing pages ---
 
@@ -266,7 +266,6 @@ def create_app() -> FastAPI:
             "User-agent: *\n"
             "Allow: /\n"
             "Disallow: /api/\n"
-            "Disallow: /admin\n"
             "Disallow: /browse\n"
             "Disallow: /settings\n"
             "Disallow: /reservations\n"
