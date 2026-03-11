@@ -75,6 +75,9 @@
             --cal-upcoming-bg: rgba(16,185,129,0.12);
             --cal-upcoming-border: rgba(5,150,105,0.35);
             --cal-upcoming-text: #047857;
+            --cal-nextdrop-bg: rgba(5,150,105,0.22);
+            --cal-nextdrop-border: rgba(5,150,105,0.55);
+            --cal-nextdrop-text: #047857;
             --cal-selected-bg: #B08D3E;
             --cal-selected-text: #ffffff;
             --shadow-card: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
@@ -127,6 +130,9 @@
             --cal-upcoming-bg: rgba(16,185,129,0.1);
             --cal-upcoming-border: rgba(16,185,129,0.2);
             --cal-upcoming-text: #34D399;
+            --cal-nextdrop-bg: rgba(16,185,129,0.22);
+            --cal-nextdrop-border: rgba(16,185,129,0.5);
+            --cal-nextdrop-text: #34d399;
             --cal-selected-bg: #C5A355;
             --cal-selected-text: #0D0D0B;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
@@ -311,9 +317,15 @@
                                 <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Selected</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1.5 sm:gap-1">
-                            <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
-                            <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Not yet released</span>
+                        <div class="flex items-center gap-3 sm:gap-3">
+                            <div class="flex items-center gap-1.5 sm:gap-1">
+                                <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-nextdrop-bg); border: 1.5px solid var(--cal-nextdrop-border);"></div>
+                                <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Next to open</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 sm:gap-1">
+                                <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
+                                <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Not yet released</span>
+                            </div>
                         </div>
                     </div>
 
@@ -339,27 +351,36 @@
                         </template>
                     </div>
 
-                    <p class="text-[11px] sm:text-[10px] mt-3 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = fully booked, but we'll snag a cancellation the moment one opens. <strong style="color: var(--c3);">Not yet released</strong> = reservations haven't dropped yet &mdash; we'll book the instant they do.</p>
+                    <!-- Mode-aware explanation banners -->
+                    <template x-if="bookingMode === 'cancel'">
+                        <div class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl anim-in"
+                             style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
+                            <span class="text-xs mt-0.5">👀</span>
+                            <div>
+                                <p class="text-xs font-semibold" style="color: var(--c2);">Watching for cancellations</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">These dates are fully booked. We'll monitor around the clock and grab a table the moment one opens up.</p>
+                                <p class="text-xs mt-1.5" style="color: var(--c4);">Looking to book an upcoming date instead? Submit these first, then come back to pick future dates.</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="bookingMode === 'drop'">
+                        <div class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl anim-in"
+                             style="background: var(--green-soft); border: 1px solid var(--green-border);">
+                            <span class="text-xs mt-0.5">⚡</span>
+                            <div>
+                                <p class="text-xs font-semibold" style="color: var(--c2);">Booking when reservations open</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);">These reservations haven't opened yet. We'll book your table the instant they go live &mdash; first come, first served.</p>
+                                <p class="text-xs mt-1.5" style="color: var(--c4);">Need a table on a fully booked date? Submit these first, then come back to watch for cancellations.</p>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="bookingMode === 'none' && selectedDates.length === 0">
+                        <p class="text-[11px] sm:text-[10px] mt-3 leading-relaxed" style="color: var(--c4);">
+                            <strong style="color: var(--c3);">Released</strong> = fully booked, but we'll snag a cancellation the moment one opens.
+                            <strong style="color: var(--c3);">Not yet released</strong> = reservations haven't dropped yet &mdash; we'll book the instant they do.
+                        </p>
+                    </template>
                 </div>
-
-                <!-- Info messages -->
-                <template x-if="hasReleasedSelected">
-                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--green-soft); border: 1px solid var(--green-border);">
-                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--green);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                        </svg>
-                        <p class="text-xs font-medium" style="color: var(--c2);">These dates are released but booked up. We'll watch for cancellations and grab one instantly.</p>
-                    </div>
-                </template>
-                <template x-if="hasUnreleasedSelected">
-                    <div class="flex items-start gap-3 px-4 py-3 rounded-xl mb-3 anim-in" style="background: var(--amber-soft); border: 1px solid var(--amber-border);">
-                        <svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--amber);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-xs font-medium" style="color: var(--c2);">These dates haven't opened yet. We'll book the second they drop.</p>
-                    </div>
-                </template>
 
                 <!-- ═══ STEP 2: PICK YOUR TIMES ═══ -->
                 <template x-if="selectedDates.length > 0">
@@ -368,9 +389,9 @@
                             <div>
                                 <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
                                 <p class="text-xs mt-0.5" style="color: var(--c3);"
-                                    x-text="hasReleasedSelected
+                                    x-text="bookingMode === 'cancel'
                                         ? 'Pick at least 3 times \u2014 more options = better odds for cancellations'
-                                        : 'Pick up to 2 times \u2014 more options = better odds'"></p>
+                                        : 'Pick up to 2 times \u2014 we\'ll grab whichever opens first'"></p>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 <template x-for="i in maxTimeSlots" :key="i">
@@ -428,8 +449,8 @@
                             style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
                             <span class="text-xs mt-0.5">&#x1F4A1;</span>
                             <p class="text-xs font-medium" style="color: var(--c2);"
-                                x-text="hasReleasedSelected
-                                    ? 'Select at least 3 times for cancellation sniping \u2014 more flexibility means better chances.'
+                                x-text="bookingMode === 'cancel'
+                                    ? 'Select at least 3 times for cancellation watching \u2014 more flexibility means better chances.'
                                     : 'Selecting 2 times increases your chances of securing a table.'"></p>
                         </div>
                     </div>
@@ -594,6 +615,7 @@
             selectedDates: [], selectedTimes: [],
             partySize: 2, bookEarliest: false, latestNotify: 2,
             submitting: false, toast: null,
+            bookingMode: 'none', // 'none' | 'drop' | 'cancel' — locks on first date tap
             slotClaims: {},      // { "19:00": 2, "19:15": 1 } — claim counts per time
             claimWarning: null,  // { time, alternatives: [...], count } — active warning
             venueId: {{ venue_id }},
@@ -638,6 +660,15 @@
                 if (this.selectedDates.length > 0 && this.selectedTimes.length > 0) return 3;
                 if (this.selectedDates.length > 0) return 2;
                 return 1;
+            },
+
+            get nextDropDate() {
+                for (const week of this.calendarWeeks) {
+                    for (const cell of week) {
+                        if (cell.day && !cell.isPast && cell.isUnreleased) return cell.dateStr;
+                    }
+                }
+                return null;
             },
 
             async init() {
@@ -771,22 +802,52 @@
                 if (!cell.day) return 'cal-empty pointer-events-none';
                 if (cell.isPast) return 'cal-past opacity-20 pointer-events-none';
                 if (this.selectedDates.includes(cell.dateStr)) return 'cal-selected';
+                // Disable clicks on opposite-type dates when mode is locked
+                if (this.bookingMode !== 'none') {
+                    const dateType = this.isReleasedDate(cell.dateStr) ? 'cancel' : 'drop';
+                    if (dateType !== this.bookingMode) return 'pointer-events-none';
+                }
                 return '';
             },
             cellStyles(cell) {
                 if (!cell.day || cell.isPast) return 'color: var(--c4);';
                 const sel = this.selectedDates.includes(cell.dateStr);
-                if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700;`;
-                if (cell.isReleased) return `background: var(--cal-available-bg); color: var(--cal-available-text);`;
-                if (cell.isUnreleased) return `background: var(--cal-upcoming-bg); color: var(--cal-upcoming-text);`;
-                return `color: var(--c3);`;
+                if (sel) return 'background: var(--cal-selected-bg); color: var(--cal-selected-text); font-weight: 700;';
+                // Dim opposite-type dates when mode is locked
+                if (this.bookingMode !== 'none') {
+                    const dateType = this.isReleasedDate(cell.dateStr) ? 'cancel' : 'drop';
+                    if (dateType !== this.bookingMode) return 'color: var(--c4); opacity: 0.2;';
+                }
+                if (cell.isReleased) return 'background: var(--cal-available-bg); color: var(--cal-available-text);';
+                // "Next to open" date gets brighter green
+                if (cell.isUnreleased && cell.dateStr === this.nextDropDate) {
+                    return 'background: var(--cal-nextdrop-bg); color: var(--cal-nextdrop-text); font-weight: 600; box-shadow: 0 0 0 1.5px var(--cal-nextdrop-border);';
+                }
+                if (cell.isUnreleased) return 'background: var(--cal-upcoming-bg); color: var(--cal-upcoming-text);';
+                return 'color: var(--c3);';
             },
 
             toggleDate(dateStr) {
                 if (!dateStr) return;
                 const idx = this.selectedDates.indexOf(dateStr);
-                if (idx >= 0) { this.selectedDates.splice(idx, 1); return; }
-                if (this.selectedDates.length >= 3) { this.showToast('Max 3 dates — pick your best shots'); return; }
+                // Deselect
+                if (idx >= 0) {
+                    this.selectedDates.splice(idx, 1);
+                    // Reset mode when all dates removed
+                    if (this.selectedDates.length === 0) {
+                        this.bookingMode = 'none';
+                        this.selectedTimes = [];
+                    }
+                    return;
+                }
+                // Determine this date's type
+                const dateType = this.isReleasedDate(dateStr) ? 'cancel' : 'drop';
+                // Set mode on first selection
+                if (this.bookingMode === 'none') this.bookingMode = dateType;
+                // Block opposite type
+                if (dateType !== this.bookingMode) return;
+                // Max 3 dates
+                if (this.selectedDates.length >= 3) { this.showToast('Max 3 dates per booking'); return; }
                 this.selectedDates.push(dateStr); this.selectedDates.sort();
                 this.fetchSlotClaims();
             },
@@ -903,9 +964,9 @@
             get releasedCount() { return this.selectedDates.filter(d => this.isReleasedDate(d)).length; },
             get hasReleasedSelected() { return this.releasedCount > 0; },
             get hasUnreleasedSelected() { return this.selectedDates.some(d => this.isUnreleasedDate(d)); },
-            // Cancellation sniping benefits from more time options (we already poll all times)
-            get maxTimeSlots() { return this.hasReleasedSelected ? 4 : 2; },
-            get minTimesNeeded() { return this.hasReleasedSelected ? 3 : 1; },
+            // Cancel mode: min 3, max 5 times — Drop mode: min 1, max 2
+            get maxTimeSlots() { return this.bookingMode === 'cancel' ? 5 : 2; },
+            get minTimesNeeded() { return this.bookingMode === 'cancel' ? 3 : 1; },
             get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length >= this.minTimesNeeded && !this.loading; },
 
             // ═══ Submit ═══

@@ -335,8 +335,15 @@ async def create_reservation(
         if count >= 5:
             raise HTTPException(429, "Maximum 5 active cancellation monitors allowed")
 
-    if len(body.time_preferences) > 2:
-        raise HTTPException(400, "Maximum 2 time preferences allowed")
+    # Mode-aware time preference limits
+    if body.mode == "monitor":
+        if len(body.time_preferences) < 3:
+            raise HTTPException(400, "Select at least 3 time preferences for cancellation watching")
+        if len(body.time_preferences) > 5:
+            raise HTTPException(400, "Maximum 5 time preferences allowed")
+    else:
+        if len(body.time_preferences) > 2:
+            raise HTTPException(400, "Maximum 2 time preferences for drop bookings")
 
     # Build time_preferences and drop_time as JSON for DB
     time_prefs_json = [tp.model_dump() for tp in body.time_preferences]
@@ -406,8 +413,27 @@ async def create_batch_reservations(
 
     if not body.time_preferences:
         raise HTTPException(400, "At least one time preference is required")
-    if len(body.time_preferences) > 2:
-        raise HTTPException(400, "Maximum 2 time preferences allowed")
+
+    # Mode-aware time preference validation
+    # Determine if dates are released (cancel mode) or unreleased (drop mode)
+    days_ahead_check = body.drop_time.days_ahead if body.drop_time else 30
+    _today = date.today()
+    _last_released = _today + timedelta(days=days_ahead_check)
+    released_dates = [d for d in body.dates if date.fromisoformat(d) <= _last_released]
+    unreleased_dates = [d for d in body.dates if date.fromisoformat(d) > _last_released]
+
+    if released_dates and unreleased_dates:
+        raise HTTPException(400, "Cannot mix released and unreleased dates in one booking. Submit them separately.")
+
+    is_cancel_mode = len(released_dates) > 0
+    if is_cancel_mode:
+        if len(body.time_preferences) < 3:
+            raise HTTPException(400, "Select at least 3 time preferences for cancellation watching")
+        if len(body.time_preferences) > 5:
+            raise HTTPException(400, "Maximum 5 time preferences allowed")
+    else:
+        if len(body.time_preferences) > 2:
+            raise HTTPException(400, "Maximum 2 time preferences for drop bookings")
 
     # Validate: if any dates are unreleased (snipe mode), drop time must be in the future
     if body.drop_time:
