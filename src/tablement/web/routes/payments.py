@@ -63,7 +63,7 @@ PRO_MONTHLY_CENTS = 2900              # $29/mo
 PRO_INCLUDED_BOOKINGS = 5
 PRO_OVERAGE_CENTS = 1000              # $10 per extra booking
 
-VIP_MONTHLY_CENTS = 4900              # $49/mo
+VIP_MONTHLY_CENTS = 6900              # $69/mo
 VIP_INCLUDED_BOOKINGS = 10
 VIP_OVERAGE_CENTS = 800               # $8 per extra booking
 
