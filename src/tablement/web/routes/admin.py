@@ -1529,11 +1529,11 @@ async def analytics_booking_success():
     cancelled = [r for r in reservations if r["status"] == "cancelled"]
 
     avg_attempts_success = (
-        round(sum(r.get("attempts", 0) for r in confirmed) / len(confirmed), 1)
+        round(sum((r.get("attempts") or 0) for r in confirmed) / len(confirmed), 1)
         if confirmed else 0
     )
     avg_time_success = (
-        round(sum(r.get("elapsed_seconds", 0) for r in confirmed) / len(confirmed), 2)
+        round(sum((r.get("elapsed_seconds") or 0) for r in confirmed) / len(confirmed), 2)
         if confirmed else 0
     )
 
