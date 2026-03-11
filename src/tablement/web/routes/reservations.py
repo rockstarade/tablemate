@@ -2308,8 +2308,12 @@ async def _snipe_loop(
                 await client.aclose()
             except Exception:
                 pass
-            # Recreate client with same auth state
-            new_client = ResyApiClient()
+            # Recreate client with same auth state + IP binding + fingerprint
+            new_client = ResyApiClient(
+                user_id=getattr(client, '_user_id', None),
+                local_address=getattr(client, '_local_address', None),
+                fingerprint=getattr(client, '_fingerprint', None),
+            )
             await new_client.__aenter__()
             if hasattr(client, '_auth_token') and client._auth_token:
                 new_client.set_auth_token(client._auth_token)

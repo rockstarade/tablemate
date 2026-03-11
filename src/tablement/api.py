@@ -114,8 +114,9 @@ class ResyApiClient:
         self._local_address = local_address
         self._client: httpx.AsyncClient | None = None
 
-        # Dual-path: direct client (no proxy) for fastest booking path
+        # Dual-path: secondary client for booking race (opposite transport of main)
         self._direct_client: httpx.AsyncClient | None = None
+        self._using_proxy: bool = False  # Set in __aenter__
 
         # Pre-built booking template (populated via prepare_book_template)
         self._book_template: dict | None = None
@@ -136,26 +137,35 @@ class ResyApiClient:
             else httpx.Timeout(10.0, connect=5.0)
         )
 
-        # Layer 1: Per-user residential proxy
-        proxy_url = proxy_pool.get_proxy_url(self._user_id)
-
         client_kwargs: dict = {
             "base_url": self.BASE_URL,
             "headers": self._base_headers(),
             "timeout": timeout,
         }
 
-        if proxy_url:
-            # Proxy mode: proxy determines exit IP, local_address irrelevant
-            client_kwargs["proxy"] = proxy_url
-            client_kwargs["http2"] = True
-            logger.debug("Using proxy for user %s", (self._user_id or "anon")[:8])
-        else:
-            # Direct mode: use transport with local_address for IP control
-            transport_kwargs: dict = {"http2": True}
-            if self._local_address:
-                transport_kwargs["local_address"] = self._local_address
+        # IP routing priority:
+        # 1. If caller provided local_address → direct binding to that EIP.
+        #    This is for drop snipes and scouts that need low-latency dedicated IPs.
+        #    The proxy path is still available via dual_book's secondary client.
+        # 2. If no local_address → residential proxy for stealth (cancel snipe polling).
+        # 3. If no proxy configured → direct with no specific IP.
+        if self._local_address:
+            # Direct mode: bind to the provided EIP. No proxy on main client.
+            transport_kwargs: dict = {"http2": True, "local_address": self._local_address}
             client_kwargs["transport"] = httpx.AsyncHTTPTransport(**transport_kwargs)
+            self._using_proxy = False
+            logger.debug("Using direct EIP %s for user %s", self._local_address, (self._user_id or "anon")[:8])
+        else:
+            proxy_url = proxy_pool.get_proxy_url(self._user_id)
+            if proxy_url:
+                client_kwargs["proxy"] = proxy_url
+                client_kwargs["http2"] = True
+                self._using_proxy = True
+                logger.debug("Using proxy for user %s", (self._user_id or "anon")[:8])
+            else:
+                transport_kwargs: dict = {"http2": True}
+                client_kwargs["transport"] = httpx.AsyncHTTPTransport(**transport_kwargs)
+                self._using_proxy = False
 
         self._client = httpx.AsyncClient(**client_kwargs)
         return self
@@ -428,10 +438,17 @@ class ResyApiClient:
     ) -> list[Slot]:
         """find_slots() using the direct (no-proxy) client for minimal latency.
 
-        Falls back to the regular proxy client if direct isn't warmed yet.
+        Falls back to the regular client if direct isn't available.
         Used during pre-drop polling where every millisecond counts.
+
+        When local_address is provided, the main client IS already direct (EIP),
+        so this always returns the fastest available path.
         """
-        use_client = self._direct_client if self._direct_client else self._client
+        # If main client is direct (EIP), use it. Otherwise fall back to _direct_client.
+        if not self._using_proxy:
+            use_client = self._client
+        else:
+            use_client = self._direct_client if self._direct_client else self._client
         assert use_client is not None
         resp = await use_client.get(
             "/4/find",
@@ -535,31 +552,52 @@ class ResyApiClient:
     # ------------------------------------------------------------------
 
     async def warmup_direct(self) -> None:
-        """Create and warm a direct (no-proxy) HTTP client for fastest booking path.
+        """Create and warm a secondary client for dual-path booking race.
 
-        Call during warmup phase (T-30s). This client skips the residential proxy,
-        saving 50-200ms on the final booking request.
-        Uses same local_address as main client for consistent IP binding.
+        When main client is proxy → secondary is direct (EIP, no proxy).
+        When main client is direct (EIP) → secondary is proxy (residential).
+        This gives dual_book() two different network paths to race.
+
+        Call during warmup phase (T-30s).
         """
         if self._direct_client:
             return  # Already warm
 
         timeout = httpx.Timeout(3.0, connect=2.0)
-        transport_kwargs: dict = {"http2": True}
-        if self._local_address:
-            transport_kwargs["local_address"] = self._local_address
-        self._direct_client = httpx.AsyncClient(
-            transport=httpx.AsyncHTTPTransport(**transport_kwargs),
-            base_url=self.BASE_URL,
-            headers=self._base_headers(),
-            timeout=timeout,
-        )
+
+        if self._using_proxy:
+            # Main client is proxy → create direct (EIP) secondary
+            transport_kwargs: dict = {"http2": True}
+            if self._local_address:
+                transport_kwargs["local_address"] = self._local_address
+            self._direct_client = httpx.AsyncClient(
+                transport=httpx.AsyncHTTPTransport(**transport_kwargs),
+                base_url=self.BASE_URL,
+                headers=self._base_headers(),
+                timeout=timeout,
+            )
+            label = f"direct (EIP {self._local_address})" if self._local_address else "direct"
+        else:
+            # Main client is direct (EIP) → create proxy secondary
+            proxy_url = proxy_pool.get_proxy_url(self._user_id)
+            if not proxy_url:
+                logger.debug("No proxy available — dual-path booking will use single direct path")
+                return
+            self._direct_client = httpx.AsyncClient(
+                proxy=proxy_url,
+                http2=True,
+                base_url=self.BASE_URL,
+                headers=self._base_headers(),
+                timeout=timeout,
+            )
+            label = "proxy (residential)"
+
         # Warm the TCP+TLS+HTTP/2 connection
         try:
             await self._direct_client.head("/")
-            logger.debug("Direct client warmed (no proxy)")
+            logger.debug("Secondary client warmed: %s", label)
         except Exception:
-            logger.debug("Direct client warmup ping failed (non-fatal)")
+            logger.debug("Secondary client warmup ping failed (non-fatal)")
 
     async def dual_book(self, book_token: str, payment_method_id: int) -> BookResponse:
         """Fire booking via BOTH direct and proxy paths simultaneously.
@@ -599,9 +637,12 @@ class ResyApiClient:
             return result
 
         # Race both paths — first to succeed wins
+        # Labels reflect actual transport: main client may be direct or proxy
+        main_label = "proxy" if self._using_proxy else "direct"
+        alt_label = "direct" if self._using_proxy else "proxy"
         tasks = [
-            asyncio.create_task(_book_via(self._direct_client, "direct")),
-            asyncio.create_task(_book_via(self._client, "proxy")),
+            asyncio.create_task(_book_via(self._client, main_label)),
+            asyncio.create_task(_book_via(self._direct_client, alt_label)),
         ]
 
         done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
@@ -674,9 +715,11 @@ class ResyApiClient:
         requests (find_slots, ping), this is a no-op verification.
         """
         assert self._client is not None
-        result = {"proxy_client": {}, "direct_client": {}}
+        main_label = "proxy" if self._using_proxy else "direct"
+        alt_label = "direct" if self._using_proxy else "proxy"
+        result = {f"{main_label}_client": {}, f"{alt_label}_client": {}}
 
-        # Warm proxy client
+        # Warm main client
         try:
             t0 = time.time()
             resp = await self._client.head("/")
@@ -688,21 +731,21 @@ class ResyApiClient:
                 if any(tag in k for tag in ("visid_incap", "nlbi_", "incap_ses"))
             }
 
-            result["proxy_client"] = {
+            result[f"{main_label}_client"] = {
                 "latency_ms": round(latency_ms, 1),
                 "status": resp.status_code,
                 "imperva_cookies": len(imperva_cookies),
                 "cookie_names": list(imperva_cookies.keys()),
             }
             logger.info(
-                "Imperva pre-warm (proxy): %dms, %d cookies set",
-                round(latency_ms), len(imperva_cookies),
+                "Imperva pre-warm (%s): %dms, %d cookies set",
+                main_label, round(latency_ms), len(imperva_cookies),
             )
         except Exception as e:
-            result["proxy_client"] = {"error": str(e)}
-            logger.warning("Imperva pre-warm (proxy) failed: %s", e)
+            result[f"{main_label}_client"] = {"error": str(e)}
+            logger.warning("Imperva pre-warm (%s) failed: %s", main_label, e)
 
-        # Warm direct client (if it exists)
+        # Warm secondary client (if it exists)
         if self._direct_client:
             try:
                 t0 = time.time()
@@ -715,19 +758,19 @@ class ResyApiClient:
                     if any(tag in k for tag in ("visid_incap", "nlbi_", "incap_ses"))
                 }
 
-                result["direct_client"] = {
+                result[f"{alt_label}_client"] = {
                     "latency_ms": round(latency_ms, 1),
                     "status": resp.status_code,
                     "imperva_cookies": len(imperva_cookies),
                     "cookie_names": list(imperva_cookies.keys()),
                 }
                 logger.info(
-                    "Imperva pre-warm (direct): %dms, %d cookies set",
-                    round(latency_ms), len(imperva_cookies),
+                    "Imperva pre-warm (%s): %dms, %d cookies set",
+                    alt_label, round(latency_ms), len(imperva_cookies),
                 )
             except Exception as e:
-                result["direct_client"] = {"error": str(e)}
-                logger.warning("Imperva pre-warm (direct) failed: %s", e)
+                result[f"{alt_label}_client"] = {"error": str(e)}
+                logger.warning("Imperva pre-warm (%s) failed: %s", alt_label, e)
 
         return result
 
@@ -764,11 +807,13 @@ class ResyApiClient:
                 return round(median, 1)
             return None
 
+        main_label = "proxy" if self._using_proxy else "direct"
+        alt_label = "direct" if self._using_proxy else "proxy"
         result = {
-            "proxy_ms": await _measure(self._client, "proxy"),
+            f"{main_label}_ms": await _measure(self._client, main_label),
         }
         if self._direct_client:
-            result["direct_ms"] = await _measure(self._direct_client, "direct")
+            result[f"{alt_label}_ms"] = await _measure(self._direct_client, alt_label)
         return result
 
     # ------------------------------------------------------------------
