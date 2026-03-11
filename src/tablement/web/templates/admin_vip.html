@@ -345,31 +345,83 @@
                             </div>
                         </div>
 
-                        <!-- Mode -->
-                        <div>
-                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Mode</label>
-                            <div class="flex gap-2">
-                                <button @click="snipe.mode = 'snipe'"
-                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                                    :class="snipe.mode === 'snipe' ? 'bg-brand-500/20 text-brand-400 border border-brand-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
-                                    Snipe (timed drop)
-                                </button>
-                                <button @click="snipe.mode = 'monitor'"
-                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                                    :class="snipe.mode === 'monitor' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-700/30 text-slate-400 border border-slate-600/30'">
-                                    Monitor (poll)
-                                </button>
-                            </div>
+                        <!-- Mode badge (auto-set by first date tap) -->
+                        <div x-show="snipe.dates.length > 0" class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-medium"
+                                :class="snipe.mode === 'snipe' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-brand-500/15 text-brand-400 border border-brand-500/30'"
+                                x-text="snipe.mode === 'snipe' ? '⚡ Booking when tables open' : '👀 Watching for cancellations'"></span>
+                            <span class="text-xs text-slate-500" x-text="snipe.dates.length + ' date' + (snipe.dates.length > 1 ? 's' : '') + ' selected'"></span>
+                            <button @click="snipe.dates = []; snipe.time_preferences = []; snipe.mode = 'snipe'"
+                                class="text-xs text-slate-500 hover:text-red-400 ml-auto">Clear dates</button>
                         </div>
 
-                        <!-- Dates (multi-select) + Party -->
+                        <!-- Calendar + Party Size -->
                         <div>
-                            <div class="grid grid-cols-2 gap-3 mb-2">
+                            <div class="grid grid-cols-2 gap-3 mb-3">
                                 <div>
                                     <label class="block text-xs font-medium text-slate-400 mb-1.5">
                                         Dates
-                                        <span x-show="snipe.dates.length > 0" class="text-brand-400 ml-1" x-text="'(' + snipe.dates.length + ' selected)'"></span>
+                                        <span x-show="!snipe.restaurantData" class="text-slate-500 ml-1">(select restaurant first)</span>
                                     </label>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Party Size</label>
+                                    <input type="number" x-model.number="snipe.party_size" min="1" max="20"
+                                        class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                </div>
+                            </div>
+
+                            <!-- Visual Calendar -->
+                            <template x-if="snipe.restaurantData">
+                                <div>
+                                    <!-- Month nav -->
+                                    <div class="flex items-center justify-between mb-2">
+                                        <button @click="snipeCalPrev()" class="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                                        </button>
+                                        <span class="text-sm font-medium text-slate-300" x-text="snipeCalMonthLabel"></span>
+                                        <button @click="snipeCalNext()" class="p-1 rounded hover:bg-slate-700/50 text-slate-400 hover:text-white">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                                        </button>
+                                    </div>
+                                    <!-- Day headers -->
+                                    <div class="grid grid-cols-7 gap-1 mb-1">
+                                        <template x-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']">
+                                            <div class="text-center text-[10px] font-medium text-slate-500 py-1" x-text="d"></div>
+                                        </template>
+                                    </div>
+                                    <!-- Date cells -->
+                                    <div class="grid grid-cols-7 gap-1">
+                                        <template x-for="cell in snipeCalendarCells" :key="cell.dateStr || Math.random()">
+                                            <button class="aspect-square flex items-center justify-center text-xs rounded-lg transition-all"
+                                                :style="cell.day ? snipeCellStyle(cell) : 'opacity:0; cursor:default;'"
+                                                :disabled="snipeCellDisabled(cell)"
+                                                @click="cell.day && !cell.isPast && toggleSnipeDate(cell.dateStr)">
+                                                <span x-text="cell.day || ''"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <!-- Calendar legend -->
+                                    <div class="flex items-center gap-4 mt-2">
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-2.5 h-2.5 rounded-sm" style="background: rgba(176,141,62,0.12); border: 1px solid rgba(176,141,62,0.3);"></div>
+                                            <span class="text-[10px] text-slate-500">Fully booked</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-2.5 h-2.5 rounded-sm" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);"></div>
+                                            <span class="text-[10px] text-slate-500">Opening soon</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <div class="w-2.5 h-2.5 rounded-sm" style="background: #b08d3e;"></div>
+                                            <span class="text-[10px] text-slate-500">Selected</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Fallback: manual date input if no restaurant data -->
+                            <template x-if="!snipe.restaurantData && snipe.venue_id">
+                                <div>
                                     <div class="flex gap-2">
                                         <input type="date" x-model="snipe.date"
                                             class="flex-1 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
@@ -378,66 +430,79 @@
                                             + Add
                                         </button>
                                     </div>
+                                    <!-- Selected dates as chips -->
+                                    <div x-show="snipe.dates.length > 0" class="flex flex-wrap gap-1.5 mt-2">
+                                        <template x-for="(d, idx) in snipe.dates" :key="d">
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                                                <span x-text="formatSnipeDate(d)"></span>
+                                                <button @click="snipe.dates.splice(idx, 1)" class="text-brand-400/60 hover:text-red-400 ml-0.5">&times;</button>
+                                            </span>
+                                        </template>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Party Size</label>
-                                    <input type="number" x-model.number="snipe.party_size" min="1" max="20"
-                                        class="w-full px-3 py-2.5 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
-                                </div>
-                            </div>
-                            <!-- Selected dates as chips -->
-                            <div x-show="snipe.dates.length > 0" class="flex flex-wrap gap-1.5">
-                                <template x-for="(d, idx) in snipe.dates" :key="d">
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-500/15 text-brand-400 border border-brand-500/30">
-                                        <span x-text="formatSnipeDate(d)"></span>
-                                        <button @click="snipe.dates.splice(idx, 1)" class="text-brand-400/60 hover:text-red-400 ml-0.5">&times;</button>
-                                    </span>
-                                </template>
-                                <button @click="snipe.dates = []" x-show="snipe.dates.length > 1"
-                                    class="text-xs text-slate-500 hover:text-red-400 px-2 py-1">Clear all</button>
-                            </div>
+                            </template>
                         </div>
 
-                        <!-- Time preferences -->
+                        <!-- Time Preferences — Pills -->
                         <div>
                             <div class="flex items-center gap-2 mb-1.5">
-                                <label class="block text-xs font-medium text-slate-400">Time Preferences (priority order)</label>
+                                <label class="block text-xs font-medium text-slate-400">Time Preferences</label>
+                                <span x-show="snipe.time_preferences.length > 0" class="text-xs text-brand-400" x-text="snipe.time_preferences.length + ' selected'"></span>
                                 <span x-show="seatingTypesLoading" class="text-xs text-slate-500 flex items-center gap-1">
                                     <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                    detecting seating types...
+                                    detecting seating...
                                 </span>
-                                <span x-show="venueSeatingTypes.length > 1 && !seatingTypesLoading" class="text-xs text-emerald-400" x-text="venueSeatingTypes.length + ' seating types available'"></span>
-                                <span x-show="venueSeatingTypes.length === 1 && !seatingTypesLoading" class="text-xs text-slate-500" x-text="'Only: ' + venueSeatingTypes[0]"></span>
                             </div>
-                            <div class="space-y-2">
-                                <template x-for="(tp, idx) in snipe.time_preferences" :key="idx">
-                                    <div class="flex gap-2 items-center">
-                                        <input type="time" x-model="tp.time"
-                                            class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
-                                        <template x-if="venueSeatingTypes.length > 0">
-                                            <select x-model="tp.seating_type"
-                                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
-                                                <option value="">Any seating type</option>
-                                                <template x-for="st in venueSeatingTypes" :key="st">
-                                                    <option :value="st" x-text="st"></option>
-                                                </template>
-                                            </select>
-                                        </template>
-                                        <template x-if="venueSeatingTypes.length === 0">
-                                            <input type="text" x-model="tp.seating_type" placeholder="Seating type (optional)"
-                                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                                        </template>
-                                        <button @click="snipe.time_preferences.splice(idx, 1)" class="text-red-400 hover:text-red-300 p-1"
-                                            x-show="snipe.time_preferences.length > 1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+
+                            <!-- Time pills grid -->
+                            <template x-if="snipeTimePills.length > 0">
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    <template x-for="pill in snipeTimePills" :key="pill.time">
+                                        <button @click="toggleSnipeTime(pill.time)"
+                                            class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                            :class="isSnipeTimeSelected(pill.time)
+                                                ? 'bg-brand-500 text-slate-900 border border-brand-500'
+                                                : pill.isHot
+                                                    ? 'bg-brand-500/10 text-brand-400 border border-brand-500/30 hover:bg-brand-500/20'
+                                                    : 'bg-slate-700/30 text-slate-400 border border-slate-600/30 hover:bg-slate-700/50'"
+                                            x-text="pill.label">
                                         </button>
-                                    </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <!-- Manual time input fallback -->
+                            <template x-if="snipeTimePills.length === 0">
+                                <div class="space-y-2 mb-2">
+                                    <template x-for="(tp, idx) in snipe.time_preferences" :key="idx">
+                                        <div class="flex gap-2 items-center">
+                                            <input type="time" x-model="tp.time"
+                                                class="flex-1 px-3 py-2 rounded-lg bg-slate-800/60 border border-slate-600/50 text-white text-sm focus:outline-none focus:border-brand-500">
+                                            <button @click="snipe.time_preferences.splice(idx, 1)" class="text-red-400 hover:text-red-300 p-1"
+                                                x-show="snipe.time_preferences.length > 1">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <button @click="snipe.time_preferences.push({time: '19:00', seating_type: ''})"
+                                        class="text-xs text-brand-400 hover:text-brand-300">+ Add time</button>
+                                </div>
+                            </template>
+
+                            <!-- Seating type + Window -->
+                            <div class="flex items-center gap-3">
+                                <template x-if="venueSeatingTypes.length > 0">
+                                    <label class="flex items-center gap-1.5">
+                                        <span class="text-xs text-slate-500">Seating:</span>
+                                        <select @change="snipe.time_preferences.forEach(tp => tp.seating_type = $event.target.value)"
+                                            class="px-2 py-1 rounded bg-slate-800/60 border border-slate-600/50 text-white text-xs focus:outline-none focus:border-brand-500">
+                                            <option value="">Any</option>
+                                            <template x-for="st in venueSeatingTypes" :key="st">
+                                                <option :value="st" x-text="st"></option>
+                                            </template>
+                                        </select>
+                                    </label>
                                 </template>
-                            </div>
-                            <div class="flex items-center gap-3 mt-2">
-                                <button @click="snipe.time_preferences.push({time: '19:00', seating_type: ''})"
-                                    class="text-xs text-brand-400 hover:text-brand-300">+ Add time</button>
-                                <span class="text-slate-600">|</span>
                                 <label class="flex items-center gap-1.5 cursor-pointer">
                                     <span class="text-xs text-slate-500">&plusmn;</span>
                                     <select x-model.number="snipe.window_minutes"
@@ -554,7 +619,7 @@
                             </label>
                             <div class="flex-1"></div>
                             <button @click="fireSnipe()"
-                                :disabled="!snipe.venue_id || !snipe.user_id || snipe.dates.length === 0 || snipeFiring"
+                                :disabled="!snipe.venue_id || !snipe.user_id || snipe.dates.length === 0 || snipe.time_preferences.length === 0 || snipeFiring"
                                 class="px-6 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-30"
                                 :class="snipe.dry_run ? 'bg-blue-500 hover:bg-blue-400 text-white' : 'bg-brand-500 hover:bg-brand-400 text-slate-900'">
                                 <span x-show="!snipeFiring" x-text="snipe.dry_run ? 'DRY RUN' : 'FIRE'"></span>
@@ -1878,7 +1943,9 @@
                 dry_run: true,
                 override_claims: false,
                 detected_policy: null,
+                restaurantData: null,
             },
+            snipeCalMonth: new Date(),
             venueResults: [],
             venueDropdownOpen: false,
             venueSeatingTypes: [],
@@ -2195,12 +2262,19 @@
                 this.venueResults = [];
                 this.venueDropdownOpen = false;
                 this.venueSeatingTypes = [];
+                this.snipe.restaurantData = null;
+                this.snipe.dates = [];
+                this.snipe.time_preferences = [];
+                this.snipe.mode = 'snipe';
 
                 const policyPromise = fetch('/api/venue/select', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ resy_id: v.resy_id, name: v.name, url_slug: v.url_slug, location_slug: v.location_slug }),
                 });
+
+                // Fetch full restaurant data for calendar + time pills
+                const restaurantPromise = fetch('/api/curated/' + v.resy_id);
 
                 this.seatingTypesLoading = true;
                 const seatingPromise = fetch('/api/admin/vip/seating-types', {
@@ -2223,15 +2297,25 @@
                 } catch (e) {}
 
                 try {
+                    const resp = await restaurantPromise;
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        this.snipe.restaurantData = data.restaurant || null;
+                        // Auto-populate drop time from restaurant data if policy wasn't detected
+                        const rd = this.snipe.restaurantData;
+                        if (rd && rd.drop_days_ahead && !this.snipe.detected_policy) {
+                            this.snipe.drop_time.days_ahead = rd.drop_days_ahead;
+                            this.snipe.drop_time.hour = rd.drop_hour || 10;
+                            this.snipe.drop_time.minute = rd.drop_minute || 0;
+                        }
+                    }
+                } catch (e) {}
+
+                try {
                     const resp = await seatingPromise;
                     if (resp.ok) {
                         const data = await resp.json();
                         this.venueSeatingTypes = data.seating_types || [];
-                        if (this.venueSeatingTypes.length === 1) {
-                            for (const tp of this.snipe.time_preferences) {
-                                if (!tp.seating_type) tp.seating_type = this.venueSeatingTypes[0];
-                            }
-                        }
                     }
                 } catch (e) {}
                 this.seatingTypesLoading = false;
@@ -2250,6 +2334,145 @@
                 if (!dateStr) return '';
                 const d = new Date(dateStr + 'T12:00:00');
                 return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            },
+
+            // ----- Calendar -----
+            parseTime(str) { const [h, m] = (str || '0:0').split(':').map(Number); return h * 60 + (m || 0); },
+
+            get snipeCalendarCells() {
+                const rd = this.snipe.restaurantData;
+                const year = this.snipeCalMonth.getFullYear(), month = this.snipeCalMonth.getMonth();
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const today = new Date(); today.setHours(0,0,0,0);
+                const cells = [];
+                for (let i = 0; i < firstDay; i++)
+                    cells.push({ day: null, dateStr: null, isPast: true, isReleased: false, isUnreleased: false });
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const cellDate = new Date(year, month, d); cellDate.setHours(0,0,0,0);
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const isPast = cellDate < today;
+                    let isReleased = false, isUnreleased = false;
+                    if (!isPast && rd && rd.drop_days_ahead) {
+                        const daysOut = Math.ceil((cellDate - today) / 86400000);
+                        isReleased = daysOut <= rd.drop_days_ahead;
+                        isUnreleased = daysOut > rd.drop_days_ahead && daysOut <= rd.drop_days_ahead + 14;
+                    } else if (!isPast) {
+                        isReleased = true;
+                    }
+                    cells.push({ day: d, dateStr, isPast, isReleased, isUnreleased });
+                }
+                return cells;
+            },
+
+            get snipeCalMonthLabel() {
+                return this.snipeCalMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            },
+
+            snipeCalPrev() {
+                const d = new Date(this.snipeCalMonth);
+                d.setMonth(d.getMonth() - 1);
+                this.snipeCalMonth = d;
+            },
+            snipeCalNext() {
+                const d = new Date(this.snipeCalMonth);
+                d.setMonth(d.getMonth() + 1);
+                this.snipeCalMonth = d;
+            },
+
+            isReleasedDate(dateStr) {
+                const rd = this.snipe.restaurantData;
+                if (!rd || !rd.drop_days_ahead) return true;
+                const today = new Date(); today.setHours(0,0,0,0);
+                const cellDate = new Date(dateStr + 'T12:00:00');
+                const daysOut = Math.ceil((cellDate - today) / 86400000);
+                return daysOut <= rd.drop_days_ahead;
+            },
+
+            toggleSnipeDate(dateStr) {
+                if (!dateStr) return;
+                const idx = this.snipe.dates.indexOf(dateStr);
+                if (idx >= 0) {
+                    this.snipe.dates.splice(idx, 1);
+                    if (this.snipe.dates.length === 0) {
+                        this.snipe.mode = 'snipe';
+                        this.snipe.time_preferences = [];
+                    }
+                    return;
+                }
+                const dateType = this.isReleasedDate(dateStr) ? 'monitor' : 'snipe';
+                // Auto-set mode on first date
+                if (this.snipe.dates.length === 0) {
+                    this.snipe.mode = dateType;
+                }
+                // Block opposite type
+                if (dateType !== this.snipe.mode) return;
+                this.snipe.dates.push(dateStr);
+                this.snipe.dates.sort();
+            },
+
+            snipeCellStyle(cell) {
+                if (!cell.day || cell.isPast) return 'opacity: 0.2; cursor: default;';
+                const sel = this.snipe.dates.includes(cell.dateStr);
+                if (sel) return 'background: #b08d3e; color: #0D0D0B; font-weight: 700;';
+                // Dim opposite-type dates when mode is locked
+                if (this.snipe.dates.length > 0) {
+                    const dateType = this.isReleasedDate(cell.dateStr) ? 'monitor' : 'snipe';
+                    if (dateType !== this.snipe.mode) return 'opacity: 0.15; cursor: default;';
+                }
+                if (cell.isReleased) return 'background: rgba(176,141,62,0.12); color: #fbbf24;';
+                if (cell.isUnreleased) return 'background: rgba(16,185,129,0.15); color: #34d399;';
+                return 'color: #94a3b8;';
+            },
+
+            snipeCellDisabled(cell) {
+                if (!cell.day || cell.isPast) return true;
+                if (this.snipe.dates.length > 0) {
+                    const dateType = this.isReleasedDate(cell.dateStr) ? 'monitor' : 'snipe';
+                    if (dateType !== this.snipe.mode) return true;
+                }
+                return false;
+            },
+
+            // ----- Time Pills -----
+            get snipeTimePills() {
+                const rd = this.snipe.restaurantData;
+                if (!rd) return [];
+                const hotStart = this.parseTime(rd.hot_start || '19:00');
+                const hotEnd = this.parseTime(rd.hot_end || '20:30');
+                const formatPill = (timeStr) => {
+                    const [h, m] = timeStr.split(':').map(Number);
+                    const mins = h * 60 + (m || 0);
+                    const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                    const ampm = h >= 12 ? 'pm' : 'am';
+                    return { time: timeStr, label: `${h12}:${String(m||0).padStart(2,'0')} ${ampm}`, isHot: mins >= hotStart && mins <= hotEnd };
+                };
+                if (rd.known_slots && Array.isArray(rd.known_slots) && rd.known_slots.length > 0) {
+                    return rd.known_slots.map(t => formatPill(t));
+                }
+                const start = this.parseTime(rd.service_start || '17:00');
+                const end = this.parseTime(rd.service_end || '22:00');
+                const interval = rd.slot_interval || 30;
+                const pills = []; let t = start;
+                while (t <= end) {
+                    const h = Math.floor(t/60), m = t%60;
+                    pills.push(formatPill(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`));
+                    t += interval;
+                }
+                return pills;
+            },
+
+            toggleSnipeTime(timeStr) {
+                const idx = this.snipe.time_preferences.findIndex(tp => tp.time === timeStr);
+                if (idx >= 0) {
+                    this.snipe.time_preferences.splice(idx, 1);
+                } else {
+                    this.snipe.time_preferences.push({ time: timeStr, seating_type: '' });
+                }
+            },
+
+            isSnipeTimeSelected(timeStr) {
+                return this.snipe.time_preferences.some(tp => tp.time === timeStr);
             },
 
             // ----- Fire Snipe -----
