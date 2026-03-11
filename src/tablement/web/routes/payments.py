@@ -56,19 +56,19 @@ stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
 # ─── Pricing (in cents) ──────────────────────────────────────────────────────
 
 # Per-reservation pricing (pay-as-you-go)
-SINGLE_BOOKING_CENTS = 1500           # $15 per booking
+SINGLE_BOOKING_CENTS = 1200           # $12 per booking
 
 # Subscription tiers
 PRO_MONTHLY_CENTS = 2900              # $29/mo
-PRO_INCLUDED_BOOKINGS = 4
-PRO_OVERAGE_CENTS = 800               # $8 per extra booking
+PRO_INCLUDED_BOOKINGS = 5
+PRO_OVERAGE_CENTS = 1000              # $10 per extra booking
 
-VIP_MONTHLY_CENTS = 5900              # $59/mo
+VIP_MONTHLY_CENTS = 4900              # $49/mo
 VIP_INCLUDED_BOOKINGS = 10
-VIP_OVERAGE_CENTS = 600               # $6 per extra booking
+VIP_OVERAGE_CENTS = 800               # $8 per extra booking
 
 # Legacy credit packs (kept for backwards compat)
-FIVE_PACK_CENTS = 5000                # $50
+FIVE_PACK_CENTS = 4800                # $48 (5 × $12 = $60 value, save $12)
 FIVE_PACK_CREDITS = 5
 
 # Old single price constant alias (used elsewhere)
