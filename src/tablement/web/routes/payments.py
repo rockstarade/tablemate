@@ -189,7 +189,27 @@ async def list_methods(user_id: str = Depends(get_user_id)):
 
 @router.delete("/methods/{pm_id}")
 async def delete_method(pm_id: str, user_id: str = Depends(get_user_id)):
-    """Remove a saved payment method."""
+    """Remove a saved payment method.
+
+    Blocked if the user has active/scheduled reservations and this is their
+    only card — we need it to charge on success.
+    """
+    # Check if this is their only card
+    all_methods = await db.list_payment_methods(user_id)
+    if len(all_methods) <= 1:
+        # Check for active reservations that haven't been charged yet
+        client = db.get_service_client()
+        active = await client.table("reservations").select("id").eq(
+            "user_id", user_id
+        ).in_(
+            "status", ["scheduled", "monitoring", "sniping"]
+        ).execute()
+        if active.data:
+            raise HTTPException(
+                400,
+                "You can't remove your last card while you have active reservations. "
+                "Cancel your reservations first, or add another card."
+            )
     await db.delete_payment_method(pm_id, user_id)
     return {"deleted": True}
 
@@ -537,8 +557,11 @@ async def stripe_webhook(request: Request):
 
     Events:
     - invoice.payment_succeeded → reset bookings counter, update period
+    - customer.subscription.created → log new subscription
+    - customer.subscription.updated → handle plan changes
     - customer.subscription.deleted → revert to free plan
     - invoice.payment_failed → log warning
+    - payment_intent.succeeded → log successful one-time charges
     """
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
@@ -571,10 +594,16 @@ async def stripe_webhook(request: Request):
 
     if event_type == "invoice.payment_succeeded":
         await _handle_invoice_paid(data)
+    elif event_type == "customer.subscription.created":
+        await _handle_subscription_created(data)
+    elif event_type == "customer.subscription.updated":
+        await _handle_subscription_updated(data)
     elif event_type == "customer.subscription.deleted":
         await _handle_subscription_deleted(data)
     elif event_type == "invoice.payment_failed":
         await _handle_invoice_failed(data)
+    elif event_type == "payment_intent.succeeded":
+        logger.info("Webhook: payment_intent succeeded — %s", data.get("id", "?"))
     else:
         logger.debug("Unhandled webhook event: %s", event_type)
 
@@ -674,6 +703,32 @@ async def _handle_invoice_failed(invoice: dict) -> None:
     )
 
 
+async def _handle_subscription_created(subscription: dict) -> None:
+    """Log when a new subscription is created."""
+    sub_id = subscription.get("id")
+    customer_id = subscription.get("customer")
+    plan_amount = subscription.get("plan", {}).get("amount", 0)
+    logger.info(
+        "Webhook: subscription %s created for customer %s ($%.2f)",
+        sub_id, customer_id, plan_amount / 100,
+    )
+
+
+async def _handle_subscription_updated(subscription: dict) -> None:
+    """Handle plan changes or subscription updates from Stripe."""
+    sub_id = subscription.get("id")
+    status = subscription.get("status")
+
+    # If subscription is past_due or unpaid, log it
+    if status in ("past_due", "unpaid"):
+        logger.warning("Webhook: subscription %s status changed to %s", sub_id, status)
+
+    # If cancelled at period end, log but don't revert yet (wait for deleted event)
+    cancel_at_end = subscription.get("cancel_at_period_end", False)
+    if cancel_at_end:
+        logger.info("Webhook: subscription %s set to cancel at period end", sub_id)
+
+
 # ---------------------------------------------------------------------------
 # Charge-on-success (called from snipe loop, not a route)
 # ---------------------------------------------------------------------------
@@ -684,11 +739,11 @@ async def charge_for_booking(user_id: str, reservation_id: str) -> dict:
 
     Plan-aware priority:
     1. beta plan → free, no charge
-    2. pro plan → included bookings free, then $8 overage
-    3. vip plan → included bookings free, then $6 overage
+    2. pro plan → 5 included free, then $10 overage
+    3. vip plan → 12 included free, then $8 overage
     4. credits > 0 → deduct 1 credit
-    5. referral_discount → charge $7.50 (50% of $15)
-    6. Default → charge $15 to saved card
+    5. referral_discount → charge $6 (50% of $12)
+    6. Default → charge $12 to saved card
     7. No card → log as UNPAID (don't fail reservation)
     """
     profile = await db.get_profile(user_id)
