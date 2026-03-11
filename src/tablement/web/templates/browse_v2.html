@@ -1871,7 +1871,18 @@
                 }
 
                 // Proactive token refresh — keep session alive
-                this._refreshTimer = setInterval(() => this._tryRefreshToken(), 50 * 60 * 1000);
+                // Refresh every 45 min, plus on tab visibility change (browser throttles timers in background tabs)
+                this._refreshTimer = setInterval(() => this._tryRefreshToken(), 45 * 60 * 1000);
+                this._lastRefresh = Date.now();
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && this.token) {
+                        // If more than 30 min since last refresh, do it now
+                        const elapsed = Date.now() - this._lastRefresh;
+                        if (elapsed > 30 * 60 * 1000) {
+                            this._tryRefreshToken();
+                        }
+                    }
+                });
 
                 // Capture user location for admin map — ping every 60s
                 this._sendLocation();
@@ -1907,6 +1918,7 @@
                         localStorage.setItem('tablement_token', data.access_token);
                         localStorage.setItem('tablement_refresh', data.refresh_token);
                         this.token = data.access_token;
+                        this._lastRefresh = Date.now();
                         return true;
                     }
                 } catch (e) { console.warn('Token refresh failed:', e); }
@@ -2343,7 +2355,7 @@
                 return map[status] || 'var(--bg-input)';
             },
             resStatusLabel(status) {
-                const map = { scheduled: 'Scheduled', monitoring: 'Awaiting', sniping: 'Booking', confirmed: 'Reserved', failed: 'Failed' };
+                const map = { scheduled: 'In Progress', monitoring: 'Watching', sniping: 'Booking', confirmed: 'Reserved', failed: 'Failed' };
                 return map[status] || status;
             },
 

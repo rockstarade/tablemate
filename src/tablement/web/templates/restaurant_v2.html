@@ -300,20 +300,20 @@
                         </button>
                     </div>
                     <!-- Legend (above calendar) -->
-                    <div class="flex flex-col items-end gap-1 mb-2">
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-1">
-                                <div class="w-2 h-2 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
-                                <span class="text-[9px] font-medium" style="color: var(--c4);">Released</span>
+                    <div class="flex flex-col items-end gap-1.5 sm:gap-1 mb-2">
+                        <div class="flex items-center gap-3 sm:gap-3">
+                            <div class="flex items-center gap-1.5 sm:gap-1">
+                                <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-available-bg); border: 1px solid var(--cal-available-border);"></div>
+                                <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Released (booked up)</span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <div class="w-2 h-2 rounded-sm" style="background: var(--cal-selected-bg);"></div>
-                                <span class="text-[9px] font-medium" style="color: var(--c4);">Selected</span>
+                            <div class="flex items-center gap-1.5 sm:gap-1">
+                                <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-selected-bg);"></div>
+                                <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Selected</span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
-                            <span class="text-[9px] font-medium" style="color: var(--c4);">Not yet released</span>
+                        <div class="flex items-center gap-1.5 sm:gap-1">
+                            <div class="w-3 h-3 sm:w-2 sm:h-2 rounded-sm" style="background: var(--cal-upcoming-bg); border: 1px solid var(--cal-upcoming-border);"></div>
+                            <span class="text-[11px] sm:text-[9px] font-medium" style="color: var(--c3);">Not yet released</span>
                         </div>
                     </div>
 
@@ -339,7 +339,7 @@
                         </template>
                     </div>
 
-                    <p class="text-[10px] mt-3 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = reservations opened (fully booked &mdash; we watch for cancellations). <strong style="color: var(--c3);">Not yet released</strong> = hasn't opened yet &mdash; we book the instant it drops.</p>
+                    <p class="text-[11px] sm:text-[10px] mt-3 leading-relaxed" style="color: var(--c4);"><strong style="color: var(--c3);">Released</strong> = fully booked, but we'll snag a cancellation the moment one opens. <strong style="color: var(--c3);">Not yet released</strong> = reservations haven't dropped yet &mdash; we'll book the instant they do.</p>
                 </div>
 
                 <!-- Info messages -->
@@ -367,17 +367,20 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <h2 class="text-base font-bold" style="color: var(--c1);">What time works?</h2>
-                                <p class="text-xs mt-0.5" style="color: var(--c3);">Pick up to 2 times &mdash; more options = better odds</p>
+                                <p class="text-xs mt-0.5" style="color: var(--c3);"
+                                    x-text="hasReleasedSelected
+                                        ? 'Pick at least 3 times \u2014 more options = better odds for cancellations'
+                                        : 'Pick up to 2 times \u2014 more options = better odds'"></p>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <template x-for="i in 2" :key="i">
+                                <template x-for="i in maxTimeSlots" :key="i">
                                     <span class="w-2 h-2 rounded-full transition-all duration-200"
                                         :style="i <= selectedTimes.length
                                             ? 'background: var(--accent); box-shadow: 0 0 4px var(--accent-soft);'
                                             : 'background: var(--border); opacity: 0.5;'"></span>
                                 </template>
                                 <span x-show="selectedTimes.length > 0" class="text-xs font-bold ml-1" style="color: var(--accent);"
-                                    x-text="selectedTimes.length + '/2'"></span>
+                                    x-text="selectedTimes.length + '/' + maxTimeSlots"></span>
                             </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -420,11 +423,14 @@
                                 </button>
                             </div>
                         </div>
-                        <div x-show="selectedTimes.length === 1" x-transition
+                        <div x-show="selectedTimes.length < minTimesNeeded" x-transition
                             class="mt-3 flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl"
                             style="background: var(--accent-soft); border: 1px solid var(--accent-border);">
                             <span class="text-xs mt-0.5">&#x1F4A1;</span>
-                            <p class="text-xs font-medium" style="color: var(--c2);">Selecting 2 times increases your chances of securing a table.</p>
+                            <p class="text-xs font-medium" style="color: var(--c2);"
+                                x-text="hasReleasedSelected
+                                    ? 'Select at least 3 times for cancellation sniping \u2014 more flexibility means better chances.'
+                                    : 'Selecting 2 times increases your chances of securing a table.'"></p>
                         </div>
                     </div>
                 </template>
@@ -818,7 +824,7 @@
 
             timeStyles(tp) {
                 const sel = this.selectedTimes.includes(tp.time);
-                const maxed = this.selectedTimes.length >= 2 && !sel;
+                const maxed = this.selectedTimes.length >= this.maxTimeSlots && !sel;
                 if (sel) return `background: var(--cal-selected-bg); color: var(--cal-selected-text); border: 1px solid var(--cal-selected-bg);`;
                 if (maxed) return `background: var(--bg-input); color: var(--c4); border: 1px solid var(--border); opacity: 0.4; cursor: default;`;
                 if (tp.isHot) return `background: var(--amber-soft); color: var(--c1); border: 1px solid var(--amber-border);`;
@@ -831,8 +837,7 @@
                     this.claimWarning = null;
                     return;
                 }
-                // Max 2 time slots
-                if (this.selectedTimes.length >= 2) return;
+                if (this.selectedTimes.length >= this.maxTimeSlots) return;
                 // Check if slot is claimed by other users
                 if (this.slotClaims[timeStr] > 0) {
                     this.showClaimWarning(timeStr);
@@ -880,13 +885,13 @@
                 this.claimWarning = { time: timeStr, alternatives, count: this.slotClaims[timeStr] };
             },
             selectAlternative(timeStr) {
-                if (this.selectedTimes.length >= 2) return;
+                if (this.selectedTimes.length >= this.maxTimeSlots) return;
                 this.selectedTimes.push(timeStr);
                 this.selectedTimes.sort();
                 this.claimWarning = null;
             },
             forceSelectClaimed() {
-                if (this.selectedTimes.length >= 2) return;
+                if (this.selectedTimes.length >= this.maxTimeSlots) return;
                 if (this.claimWarning) {
                     this.selectedTimes.push(this.claimWarning.time);
                     this.selectedTimes.sort();
@@ -898,7 +903,10 @@
             get releasedCount() { return this.selectedDates.filter(d => this.isReleasedDate(d)).length; },
             get hasReleasedSelected() { return this.releasedCount > 0; },
             get hasUnreleasedSelected() { return this.selectedDates.some(d => this.isUnreleasedDate(d)); },
-            get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length > 0 && !this.loading; },
+            // Cancellation sniping benefits from more time options (we already poll all times)
+            get maxTimeSlots() { return this.hasReleasedSelected ? 4 : 2; },
+            get minTimesNeeded() { return this.hasReleasedSelected ? 3 : 1; },
+            get canSubmit() { return this.selectedDates.length > 0 && this.selectedTimes.length >= this.minTimesNeeded && !this.loading; },
 
             // ═══ Submit ═══
             handleBookClick() {
