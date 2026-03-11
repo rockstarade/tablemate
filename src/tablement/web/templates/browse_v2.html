@@ -395,6 +395,26 @@
         </div>
     </div>
 
+    <!-- ═══════════════ WELCOME POPUP ═══════════════ -->
+    <div x-show="showWelcome" x-cloak class="fixed inset-0 z-[95] flex items-center justify-center pointer-events-none"
+        x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="pointer-events-auto w-full max-w-xs mx-4 text-center"
+            x-transition:enter="transition ease-out duration-500 delay-100" x-transition:enter-start="opacity-0 translate-y-4 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100">
+            <div class="rounded-2xl px-8 py-8 shadow-2xl modal-bg" style="border: 1px solid var(--border); backdrop-filter: blur(20px);">
+                <div class="text-4xl mb-3">🎉</div>
+                <h3 class="text-lg font-bold mb-1" style="color: var(--c1);">Welcome to TablePass<span x-show="welcomeName">,
+                    <span x-text="welcomeName" style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></span></span></h3>
+                <p class="text-sm mb-5" style="color: var(--c3);">We're thrilled to have you. Let's find your next table.</p>
+                <button @click="showWelcome = false"
+                    class="w-full py-3 rounded-xl text-sm font-bold transition-all"
+                    style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); color: var(--logo-text);">
+                    Let's go ✨
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════════ MAP OVERLAY ═══════════════ -->
     <div x-show="showMap" x-cloak
          x-transition:enter="transition ease-out duration-300"
@@ -1967,6 +1987,8 @@
             showNamePrompt: false,
             namePromptValue: '',
             namePromptSaving: false,
+            showWelcome: false,
+            welcomeName: '',
             referralCode: '',
             referralCopied: false,
             giftsRemaining: 0,
@@ -2825,7 +2847,10 @@
                     });
                     this.userName = name;
                     this.showNamePrompt = false;
-                    this.showToast('Welcome, ' + name + '!', '👋');
+                    // Show welcome popup
+                    this.welcomeName = name;
+                    this.$nextTick(() => { this.showWelcome = true; });
+                    setTimeout(() => { this.showWelcome = false; }, 3500);
                 } catch (e) {
                     console.error('Save name failed:', e);
                 } finally {
