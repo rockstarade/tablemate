@@ -201,6 +201,7 @@ async def verify_otp(request: Request, body: OtpVerifyRequest):
         access_token=resp.session.access_token,
         refresh_token=resp.session.refresh_token,
         user_id=user_id,
+        is_new_user=is_new_user,
     )
 
 
@@ -436,6 +437,7 @@ async def me(user_id: str = Depends(get_user_id)):
 
     return UserProfileResponse(
         user_id=user_id,
+        first_name=profile.get("first_name"),
         resy_linked=bool(profile.get("resy_email")),
         resy_email=profile.get("resy_email"),
         opentable_linked=bool(profile.get("opentable_linked")),
@@ -448,6 +450,24 @@ async def me(user_id: str = Depends(get_user_id)):
         plan_bookings_used=profile.get("plan_bookings_used", 0),
         plan_period_end=profile.get("plan_period_end"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Profile — set first name
+# ---------------------------------------------------------------------------
+
+
+@router.post("/set-name")
+async def set_name(body: dict, user_id: str = Depends(get_user_id)):
+    """Save the user's first name (shown after initial login)."""
+    name = (body.get("first_name") or "").strip()
+    if not name:
+        raise HTTPException(400, "first_name is required")
+    if len(name) > 50:
+        name = name[:50]
+    await db.upsert_profile(user_id, first_name=name)
+    logger.info("User %s set first_name to %r", user_id, name)
+    return {"ok": True, "first_name": name}
 
 
 # ---------------------------------------------------------------------------

@@ -29,6 +29,7 @@ class OtpVerifyResponse(BaseModel):
     access_token: str
     refresh_token: str
     user_id: str
+    is_new_user: bool = False
 
 
 class LinkResyRequest(BaseModel):
@@ -44,6 +45,7 @@ class LinkResyResponse(BaseModel):
 
 class UserProfileResponse(BaseModel):
     user_id: str
+    first_name: str | None = None
     resy_linked: bool = False
     resy_email: str | None = None
     opentable_linked: bool = False

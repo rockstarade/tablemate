@@ -363,6 +363,38 @@
         </div>
     </div>
 
+    <!-- ═══════════════ NAME PROMPT (first-time users) ═══════════════ -->
+    <div x-show="showNamePrompt" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="absolute inset-0 backdrop-blur-sm" style="background: rgba(0,0,0,0.5);" @click="showNamePrompt = false"></div>
+        <div class="relative w-full max-w-sm mx-4 rounded-2xl overflow-hidden shadow-2xl modal-bg" style="border: 1px solid var(--border);"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <div class="px-8 pt-8 pb-2 text-center">
+                <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl"
+                    style="background: linear-gradient(135deg, var(--logo-from), var(--logo-to));">👋</div>
+                <h3 class="text-xl font-bold mb-1" style="color: var(--c1);">Welcome to TablePass</h3>
+                <p class="text-sm" style="color: var(--c3);">What should we call you?</p>
+            </div>
+            <div class="px-8 py-5">
+                <input type="text" x-model="namePromptValue" placeholder="Your first name"
+                    maxlength="50" autocomplete="given-name" autofocus
+                    class="w-full px-4 py-3 rounded-xl text-base font-medium text-center"
+                    style="background: var(--bg-input); border: 1px solid var(--border); color: var(--c1);"
+                    @keydown.enter="saveNamePrompt()">
+            </div>
+            <div class="px-8 pb-8 flex gap-3">
+                <button @click="showNamePrompt = false"
+                    class="flex-1 py-3 rounded-xl text-sm font-medium transition-colors"
+                    style="background: var(--bg-input); color: var(--c3); border: 1px solid var(--border);">Skip</button>
+                <button @click="saveNamePrompt()" :disabled="namePromptSaving || !namePromptValue.trim()"
+                    class="flex-1 py-3 rounded-xl text-sm font-bold transition-all"
+                    :style="namePromptValue.trim() ? 'background: linear-gradient(135deg, var(--logo-from), var(--logo-to)); color: var(--logo-text);' : 'background: var(--bg-input); color: var(--c4); border: 1px solid var(--border);'"
+                    x-text="namePromptSaving ? 'Saving...' : 'Continue'"></button>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════════ MAP OVERLAY ═══════════════ -->
     <div x-show="showMap" x-cloak
          x-transition:enter="transition ease-out duration-300"
@@ -1932,6 +1964,9 @@
             userEmail: '',
             editingName: false,
             editNameValue: '',
+            showNamePrompt: false,
+            namePromptValue: '',
+            namePromptSaving: false,
             referralCode: '',
             referralCopied: false,
             giftsRemaining: 0,
@@ -2128,10 +2163,20 @@
                         const data = await resp.json();
                         this.resyLinked = data.resy_linked || false;
                         this.otLinked = data.opentable_linked || false;
-                        if (data.resy_email) {
-                            this.userEmail = data.resy_email;
+                        // Use first_name from DB if available, fall back to email prefix
+                        if (data.first_name) {
+                            this.userName = data.first_name;
+                        } else if (data.resy_email) {
                             this.userName = data.resy_email.split('@')[0];
                             this.userName = this.userName.charAt(0).toUpperCase() + this.userName.slice(1);
+                        }
+                        if (data.resy_email) {
+                            this.userEmail = data.resy_email;
+                        }
+                        // Show name prompt for new users who haven't set a first name
+                        if (!data.first_name && localStorage.getItem('tablement_new_user')) {
+                            localStorage.removeItem('tablement_new_user');
+                            this.$nextTick(() => { this.showNamePrompt = true; });
                         }
                         // Load referral data from profile
                         if (data.referral_code) {
@@ -2142,8 +2187,8 @@
                         this.plan = data.plan || 'free';
                         this.planBookingsUsed = data.plan_bookings_used || 0;
                         this.planPeriodEnd = data.plan_period_end || null;
-                        if (this.plan === 'pro') this.planBookingsIncluded = 4;
-                        else if (this.plan === 'vip') this.planBookingsIncluded = 10;
+                        if (this.plan === 'pro') this.planBookingsIncluded = 5;
+                        else if (this.plan === 'vip') this.planBookingsIncluded = 12;
                         else this.planBookingsIncluded = 0;
                     }
                 } catch (e) { console.error('Profile load failed:', e); }
@@ -2755,10 +2800,37 @@
             // ── Profile ──
             async saveName() {
                 if (!this.editNameValue.trim()) return;
-                this.userName = this.editNameValue.trim();
+                const name = this.editNameValue.trim();
+                try {
+                    await this.authFetch('/api/auth/set-name', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ first_name: name }),
+                    });
+                } catch (e) { console.error('Save name failed:', e); }
+                this.userName = name;
                 this.editingName = false;
                 this.showToast('Name updated', '✓');
-                // Note: persists client-side only for now
+            },
+
+            async saveNamePrompt() {
+                if (!this.namePromptValue.trim()) return;
+                this.namePromptSaving = true;
+                const name = this.namePromptValue.trim();
+                try {
+                    await this.authFetch('/api/auth/set-name', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ first_name: name }),
+                    });
+                    this.userName = name;
+                    this.showNamePrompt = false;
+                    this.showToast('Welcome, ' + name + '!', '👋');
+                } catch (e) {
+                    console.error('Save name failed:', e);
+                } finally {
+                    this.namePromptSaving = false;
+                }
             },
 
             // ── Referral ──

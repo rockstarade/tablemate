@@ -789,6 +789,7 @@
                     if (!resp.ok) throw new Error(data.detail || 'Invalid code');
                     localStorage.setItem('tablement_token', data.access_token);
                     localStorage.setItem('tablement_refresh', data.refresh_token);
+                    if (data.is_new_user) localStorage.setItem('tablement_new_user', '1');
                     window.location.href = '/browse';
                 } catch (e) {
                     this.error = e.message;

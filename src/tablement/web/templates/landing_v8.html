@@ -1186,6 +1186,7 @@
                     if (!resp.ok) throw new Error(data.detail || 'Invalid code');
                     localStorage.setItem('tablement_token', data.access_token);
                     localStorage.setItem('tablement_refresh', data.refresh_token);
+                    if (data.is_new_user) localStorage.setItem('tablement_new_user', '1');
                     if (this.selectedPlan) {
                         localStorage.setItem('tablement_selected_plan', this.selectedPlan);
                     }
