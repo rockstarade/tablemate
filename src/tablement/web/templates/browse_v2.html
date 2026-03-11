@@ -27,6 +27,8 @@
             }
         }
     </script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script>window.__STRIPE_PK__ = "{{ stripe_pk }}";</script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -324,6 +326,29 @@
             opacity: 0;
             animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
+
+        /* ═══════ MAP POPUP ═══════ */
+        .map-popup-dark .leaflet-popup-content-wrapper {
+            background: rgba(20, 20, 20, 0.92);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            color: #f5f0e8;
+        }
+        .map-popup-dark .leaflet-popup-tip {
+            background: rgba(20, 20, 20, 0.92);
+            border: none;
+        }
+        .leaflet-control-zoom a {
+            background: rgba(20,20,20,0.85) !important;
+            color: #a0977e !important;
+            border-color: rgba(255,255,255,0.08) !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background: rgba(30,30,28,0.95) !important;
+            color: #d4b978 !important;
+        }
     </style>
 </head>
 <body class="antialiased" style="color: var(--c1);" x-data="browseApp()" x-init="init()">
@@ -335,6 +360,39 @@
         <div class="rounded-2xl px-5 py-3.5 flex items-center gap-3 shadow-2xl modal-bg" style="border: 1px solid var(--border);">
             <span class="text-lg" x-text="toast.icon"></span>
             <p class="text-sm font-medium" style="color: var(--c1);" x-text="toast.message"></p>
+        </div>
+    </div>
+
+    <!-- ═══════════════ MAP OVERLAY ═══════════════ -->
+    <div x-show="showMap" x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         x-effect="if(showMap && !mapInstance) $nextTick(() => initMap())"
+         @keydown.escape.window="closeMap()"
+         class="fixed inset-0 z-[80]"
+         style="background: #0a0a0a;">
+        <div id="restaurant-map" class="w-full h-full"></div>
+
+        <!-- Floating controls -->
+        <div class="absolute top-4 right-4 flex flex-col gap-2 z-[81]">
+            <button @click="closeMap()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-colors"
+                    style="background: rgba(20,20,20,0.85); border: 1px solid rgba(255,255,255,0.08); color: #9E9789;">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <button @click="findMyLocation()"
+                    class="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-colors"
+                    style="background: rgba(20,20,20,0.85); border: 1px solid rgba(255,255,255,0.08); color: #9E9789;"
+                    title="Find my location">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -590,15 +648,14 @@
                 <span class="font-bold text-base" style="color: var(--accent);" x-text="giftsRemaining"></span>
             </button>
 
-            <!-- Theme toggle -->
-            <button @click="toggleTheme()" class="theme-toggle flex items-center justify-center w-10 h-10 rounded-xl transition-all"
-                style="background: var(--bg-hover); border: 1px solid var(--border);"
-                :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
-                <svg x-show="theme === 'dark'" class="w-[18px] h-[18px]" style="color: #fbbf24;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="5"/><path stroke-linecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                </svg>
-                <svg x-show="theme === 'light'" x-cloak class="w-[18px] h-[18px]" style="color: #475569;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            <!-- Map button -->
+            <button @click="showMap = true" class="flex items-center justify-center w-10 h-10 rounded-xl transition-all"
+                style="background: var(--bg-hover); border: 1px solid var(--border); color: var(--c3);"
+                title="Map"
+                onmouseover="this.style.color='var(--accent)';"
+                onmouseout="this.style.color='var(--c3)';">
+                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
                 </svg>
             </button>
 
@@ -1785,6 +1842,59 @@
 
     <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
     <script>
+    const NEIGHBORHOOD_COORDS = {
+        'SoHo': [40.7233, -73.9985],
+        'Tribeca': [40.7163, -74.0086],
+        'West Village': [40.7358, -74.0036],
+        'East Village': [40.7265, -73.9815],
+        'Greenwich Village': [40.7336, -73.9974],
+        'Lower East Side': [40.7185, -73.9868],
+        'Chinatown': [40.7158, -73.9970],
+        'Little Italy': [40.7191, -73.9973],
+        'NoHo': [40.7264, -73.9927],
+        'Nolita': [40.7233, -73.9948],
+        'Chelsea': [40.7465, -74.0014],
+        'Flatiron': [40.7411, -73.9897],
+        'Gramercy': [40.7382, -73.9826],
+        'Murray Hill': [40.7488, -73.9757],
+        'Midtown': [40.7549, -73.9840],
+        'Midtown East': [40.7557, -73.9685],
+        'Midtown West': [40.7592, -73.9888],
+        "Hell's Kitchen": [40.7638, -73.9918],
+        'Upper East Side': [40.7736, -73.9566],
+        'Upper West Side': [40.7870, -73.9754],
+        'Harlem': [40.8116, -73.9465],
+        'Washington Heights': [40.8417, -73.9394],
+        'Financial District': [40.7075, -74.0089],
+        'Battery Park City': [40.7117, -74.0154],
+        'NoMad': [40.7454, -73.9879],
+        'Kips Bay': [40.7424, -73.9801],
+        'Williamsburg': [40.7081, -73.9571],
+        'Bushwick': [40.6943, -73.9215],
+        'DUMBO': [40.7033, -73.9893],
+        'Park Slope': [40.6710, -73.9777],
+        'Brooklyn Heights': [40.6960, -73.9936],
+        'Greenpoint': [40.7274, -73.9514],
+        'Fort Greene': [40.6886, -73.9762],
+        'Cobble Hill': [40.6860, -73.9957],
+        'Boerum Hill': [40.6848, -73.9844],
+        'Carroll Gardens': [40.6795, -73.9991],
+        'Red Hook': [40.6734, -74.0083],
+        'Crown Heights': [40.6694, -73.9422],
+        'Prospect Heights': [40.6775, -73.9692],
+        'Long Island City': [40.7447, -73.9485],
+        'Astoria': [40.7644, -73.9235],
+        'Meatpacking District': [40.7401, -74.0079],
+        'Hudson Yards': [40.7542, -74.0005],
+    };
+
+    function offsetCoords(baseLat, baseLng, index, total) {
+        if (total <= 1) return [baseLat, baseLng];
+        const angle = index * 137.508 * (Math.PI / 180);
+        const radius = 0.0012 * Math.sqrt(index + 1);
+        return [baseLat + radius * Math.cos(angle), baseLng + radius * Math.sin(angle)];
+    }
+
     function browseApp() {
         return {
             // Core
@@ -1876,6 +1986,10 @@
             _stripeElements: null,
             _cardElement: null,
             _setupClientSecret: null,
+
+            // Map
+            showMap: false,
+            mapInstance: null,
 
             // Toast
             toast: { show: false, message: '', icon: '', exiting: false },
@@ -2859,6 +2973,103 @@
                     this.showToast('OpenTable account linked!' + (data.diner_name ? ' (' + data.diner_name + ')' : ''));
                 } catch (e) { this.otError = e.message; }
                 finally { this.otLoading = false; }
+            },
+
+            // ── Map ──
+            initMap() {
+                const mapEl = document.getElementById('restaurant-map');
+                if (!mapEl || this.mapInstance) return;
+
+                const map = L.map('restaurant-map', {
+                    center: [40.7328, -73.9900],
+                    zoom: 12,
+                    maxBounds: [[40.45, -74.30], [40.95, -73.65]],
+                    maxBoundsViscosity: 1.0,
+                    minZoom: 11,
+                    maxZoom: 17,
+                    zoomControl: false,
+                });
+
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap &copy; CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19,
+                }).addTo(map);
+
+                L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+                // Group restaurants by neighborhood
+                const byHood = {};
+                this.restaurants.forEach(r => {
+                    const hood = r.neighborhood || '';
+                    if (!byHood[hood]) byHood[hood] = [];
+                    byHood[hood].push(r);
+                });
+
+                // Add gold markers
+                Object.entries(byHood).forEach(([hood, rests]) => {
+                    const base = NEIGHBORHOOD_COORDS[hood];
+                    if (!base) return;
+                    rests.forEach((r, i) => {
+                        const [lat, lng] = offsetCoords(base[0], base[1], i, rests.length);
+                        const isHot = r.is_hot;
+                        const marker = L.circleMarker([lat, lng], {
+                            radius: isHot ? 7 : 5,
+                            fillColor: '#b08d3e',
+                            fillOpacity: isHot ? 1 : 0.85,
+                            color: isHot ? '#d4a843' : 'rgba(176,141,62,0.4)',
+                            weight: isHot ? 2 : 1,
+                        }).addTo(map);
+
+                        const price = r.price_level ? '$'.repeat(r.price_level) : '';
+                        const popupHtml = `
+                            <div style="font-family: 'Inter', system-ui, sans-serif; min-width: 180px;">
+                                <div style="font-weight: 600; font-size: 14px; color: #f5f0e8; margin-bottom: 4px;">${r.name}</div>
+                                <div style="font-size: 12px; color: #a0977e; margin-bottom: 8px;">
+                                    ${r.cuisine || ''}${price ? ' · ' + price : ''}${hood ? ' · ' + hood : ''}
+                                </div>
+                                <a href="/restaurant/${r.venue_id}"
+                                   style="font-size: 12px; color: #b08d3e; text-decoration: none; font-weight: 600;"
+                                   >View Restaurant →</a>
+                            </div>
+                        `;
+                        marker.bindPopup(popupHtml, {
+                            className: 'map-popup-dark',
+                            closeButton: false,
+                            offset: [0, -4],
+                        });
+                    });
+                });
+
+                this.mapInstance = map;
+                setTimeout(() => map.invalidateSize(), 100);
+            },
+
+            findMyLocation() {
+                if (!this.mapInstance || !navigator.geolocation) {
+                    this.showToast('Location not available', '📍');
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const { latitude, longitude } = pos.coords;
+                    this.mapInstance.setView([latitude, longitude], 15);
+                    L.circleMarker([latitude, longitude], {
+                        radius: 8, fillColor: '#3b82f6', fillOpacity: 1,
+                        color: '#fff', weight: 2,
+                    }).addTo(this.mapInstance).bindPopup('<span style="color: #f5f0e8; font-family: Inter, sans-serif; font-size: 13px;">You are here</span>', {
+                        className: 'map-popup-dark', closeButton: false,
+                    }).openPopup();
+                }, () => {
+                    this.showToast('Could not get your location', '📍');
+                });
+            },
+
+            closeMap() {
+                this.showMap = false;
+                if (this.mapInstance) {
+                    this.mapInstance.remove();
+                    this.mapInstance = null;
+                }
             },
 
             // ── Toast ──
