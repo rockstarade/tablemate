@@ -6,6 +6,7 @@ Secured by ADMIN_PASSWORD env var + rate limiting.
 from __future__ import annotations
 
 import asyncio
+import hmac as _hmac_mod
 import json
 import logging
 import os
@@ -36,8 +37,8 @@ async def _require_admin(token: str | None = Depends(_admin_key_header)):
     expected = os.environ.get("ADMIN_PASSWORD", "")
     if not expected:
         raise HTTPException(503, "Admin panel not configured (set ADMIN_PASSWORD)")
-    if token != expected:
-        raise HTTPException(401, "Invalid admin token")
+    if not token or not _hmac_mod.compare_digest(token, expected):
+        raise HTTPException(401, "Unauthorized")
 
 
 # ---------------------------------------------------------------------------

@@ -513,12 +513,16 @@ async def refresh_session(request: Request, body: dict):
 @router.get("/dev-mode")
 async def dev_mode_check():
     """Check if beta access is available."""
+    if os.environ.get("DEV_MODE", "").lower() != "true":
+        return {"dev": False}
     return {"dev": True}
 
 
 @router.post("/dev-skip")
 async def dev_skip():
     """Create a beta access session token without phone verification."""
+    if os.environ.get("DEV_MODE", "").lower() != "true":
+        raise HTTPException(403, "Not available")
 
     # Generate a deterministic dev user ID (same across restarts for convenience)
     # Must be a valid UUID since profiles.id is a uuid column

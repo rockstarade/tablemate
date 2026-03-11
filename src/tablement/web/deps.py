@@ -43,8 +43,8 @@ async def get_current_user(
 
     token = creds.credentials
 
-    # Beta access token check — skip Supabase validation for beta tokens
-    if token.startswith("dev-token-"):
+    # Dev token check — ONLY works when DEV_MODE is explicitly enabled
+    if token.startswith("dev-token-") and os.environ.get("DEV_MODE", "").lower() == "true":
         from tablement.web.routes.auth import _dev_tokens
         dev_user_id = _dev_tokens.get(token)
         if dev_user_id:

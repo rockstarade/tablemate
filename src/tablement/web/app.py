@@ -119,7 +119,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdn.tailwindcss.com https://unpkg.com https://js.stripe.com; "
@@ -223,7 +224,7 @@ def create_app() -> FastAPI:
 
     @app.get("/royce")
     async def royce_gate(request: Request):
-        return templates.TemplateResponse("404_decoy.html", {"request": request})
+        return templates.TemplateResponse("e.html", {"request": request})
 
     @app.get("/royce/panel")
     async def royce_panel(request: Request):
