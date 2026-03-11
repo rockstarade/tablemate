@@ -150,7 +150,7 @@ def create_app() -> FastAPI:
         allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "X-Admin-Token"],
+        allow_headers=["Authorization", "Content-Type", "X-R-Key"],
     )
 
     # Security headers on every response

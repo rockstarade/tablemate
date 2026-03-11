@@ -461,7 +461,7 @@
             _refreshInterval: null,
 
             headers() {
-                return { 'Content-Type': 'application/json', 'X-Admin-Token': this.adminToken };
+                return { 'Content-Type': 'application/json', 'X-R-Key': this.adminToken };
             },
 
             toggleTheme() {

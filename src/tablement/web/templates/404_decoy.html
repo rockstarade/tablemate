@@ -139,7 +139,7 @@ body {
             return;
         }
         document.getElementById('err').textContent='';
-        fetch('/api/r/stats',{headers:{'Content-Type':'application/json','X-Admin-Token':p}})
+        fetch('/api/r/stats',{headers:{'Content-Type':'application/json','X-R-Key':p}})
         .then(function(r){
             if(r.ok){
                 localStorage.setItem('t_k',p);

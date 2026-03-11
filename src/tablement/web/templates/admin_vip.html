@@ -2111,7 +2111,7 @@
             slotConflicts: { conflicts: [], checking: false, checked: false },
 
             headers() {
-                return { 'Content-Type': 'application/json', 'X-Admin-Token': this.adminToken };
+                return { 'Content-Type': 'application/json', 'X-R-Key': this.adminToken };
             },
 
             formatDropTime(hour, minute) {

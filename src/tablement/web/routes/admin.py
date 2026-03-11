@@ -28,7 +28,7 @@ from tablement.web.state import JobState, SnipePhase
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-_admin_key_header = APIKeyHeader(name="X-Admin-Token", auto_error=False)
+_admin_key_header = APIKeyHeader(name="X-R-Key", auto_error=False)
 
 
 async def _require_admin(token: str | None = Depends(_admin_key_header)):
