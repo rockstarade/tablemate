@@ -718,6 +718,19 @@ async def delete_scout_campaign(venue_id: int, campaign_type: str | None = None)
     await q.execute()
 
 
+async def destroy_scout_campaign(venue_id: int, campaign_type: str | None = None) -> None:
+    """Permanently delete a scout campaign row from the database."""
+    q = (
+        get_service_client()
+        .table("scout_campaigns")
+        .delete()
+        .eq("venue_id", venue_id)
+    )
+    if campaign_type:
+        q = q.eq("type", campaign_type)
+    await q.execute()
+
+
 async def update_scout_campaign_stats(venue_id: int, **fields) -> None:
     """Update stats on a scout campaign (total_polls, last_poll_at, etc.)."""
     await (

@@ -1767,6 +1767,25 @@ async def stop_scout(
     return {"ok": True, "venue_id": venue_id, "type": campaign_type}
 
 
+@router.delete("/vip/scouts/campaign")
+async def delete_scout_campaign(
+    request: Request,
+    body: dict,
+    token: str = Depends(_require_admin),
+):
+    """Permanently delete a scout campaign (stop + remove from DB)."""
+    scout = _get_scout(request)
+    venue_id = body.get("venue_id")
+    if not venue_id:
+        raise HTTPException(400, "venue_id is required")
+    campaign_type = body.get("type")
+    # Stop running scout first
+    await scout.stop_scout(int(venue_id), campaign_type)
+    # Then permanently delete the campaign row
+    await db.destroy_scout_campaign(int(venue_id), campaign_type)
+    return {"ok": True, "venue_id": venue_id, "type": campaign_type, "deleted": True}
+
+
 @router.post("/vip/scouts/stop-all")
 async def stop_all_scouts(
     request: Request,

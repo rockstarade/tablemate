@@ -2881,8 +2881,8 @@
             async deleteScout(venueId, type, venueName) {
                 if (!confirm(`Delete ${venueName || 'Venue ' + venueId} (${type}) scout permanently?`)) return;
                 try {
-                    await fetch('/api/r/vip/scouts/stop', {
-                        method: 'POST', headers: this.headers(),
+                    await fetch('/api/r/vip/scouts/campaign', {
+                        method: 'DELETE', headers: this.headers(),
                         body: JSON.stringify({ venue_id: venueId, type: type }),
                     });
                     await this.loadScouts();

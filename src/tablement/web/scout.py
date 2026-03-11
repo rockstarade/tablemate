@@ -635,8 +635,8 @@ class ScoutOrchestrator:
                     if not target_dates:
                         target_dates = self._get_target_dates(days_ahead)
 
-                    poll_min_ms = settings.get("drop_poll_min_ms", 20)
-                    poll_max_ms = settings.get("drop_poll_max_ms", 50)
+                    poll_min_ms = settings.get("drop_poll_min_ms", 30)
+                    poll_max_ms = settings.get("drop_poll_max_ms", 60)
                     timeout = compensated_drop + timedelta(minutes=timeout_minutes)
                     poll_count = 0
                     party_size = settings.get("default_party_size", DEFAULT_PARTY_SIZE)
@@ -775,8 +775,8 @@ class ScoutOrchestrator:
                     if not target_dates:
                         target_dates = self._get_target_dates(days_ahead)
 
-                    poll_min_ms = settings.get("drop_poll_min_ms", 20)
-                    poll_max_ms = settings.get("drop_poll_max_ms", 50)
+                    poll_min_ms = settings.get("drop_poll_min_ms", 30)
+                    poll_max_ms = settings.get("drop_poll_max_ms", 60)
                     timeout = drop_time + timedelta(minutes=timeout_minutes)
                     poll_count = 0
                     party_size = settings.get("default_party_size", DEFAULT_PARTY_SIZE)

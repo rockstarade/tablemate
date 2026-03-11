@@ -1282,7 +1282,7 @@
                                 <p class="text-base font-semibold" style="color: var(--c1);"
                                     x-text="plan === 'pro' ? 'Pro Plan' : plan === 'vip' ? 'VIP Plan' : plan === 'beta' ? 'Beta Access' : plan === 'single' ? 'Pay Per Use' : 'Free'"></p>
                                 <p class="text-sm" :style="['pro','vip','beta'].includes(plan) ? 'color: var(--status-confirmed);' : 'color: var(--c3);'"
-                                    x-text="['pro','vip'].includes(plan) ? planBookingsUsed + ' of ' + planBookingsIncluded + ' bookings used' : plan === 'beta' ? 'Free access' : '$15 per booking'"></p>
+                                    x-text="['pro','vip'].includes(plan) ? planBookingsUsed + ' of ' + planBookingsIncluded + ' bookings used' : plan === 'beta' ? 'Free access' : '$12 per booking'"></p>
                             </div>
                             <div class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
                                 :style="['pro','vip','beta'].includes(plan) ? 'background: var(--status-confirmed-bg); color: var(--status-confirmed);' : 'background: var(--accent-bg); color: var(--accent);'"
@@ -1295,7 +1295,7 @@
                             <div class="mb-3">
                                 <p class="text-xs" style="color: var(--c4);">
                                     Renews <span x-text="new Date(planPeriodEnd).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})"></span>
-                                    &mdash; <span x-text="plan === 'pro' ? '$29/mo' : '$59/mo'"></span>
+                                    &mdash; <span x-text="plan === 'pro' ? '$29/mo' : '$69/mo'"></span>
                                 </p>
                             </div>
                         </template>
@@ -1312,7 +1312,7 @@
                                 <button @click="subscribeToPlan('vip')" :disabled="subscribing"
                                     class="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
                                     style="color: var(--accent); border: 1px solid var(--accent-border); background: var(--accent-bg);">
-                                    <span x-show="!subscribing">VIP $59/mo</span>
+                                    <span x-show="!subscribing">VIP $69/mo</span>
                                     <span x-show="subscribing">...</span>
                                 </button>
                             </div>
@@ -1475,21 +1475,37 @@
                                 </div>
                                 <span class="text-xl font-bold" style="color: var(--accent);" x-text="credits"></span>
                             </div>
-                            <div class="flex gap-2">
-                                <button @click="buyCredits('single')" :disabled="!cardBrand || buyingCredits"
-                                    class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
-                                    :style="cardBrand ? 'color: var(--c1); border: 1px solid var(--border);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
-                                    1 for $15
-                                </button>
-                                <button @click="buyCredits('five_pack')" :disabled="!cardBrand || buyingCredits"
-                                    class="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
-                                    :style="cardBrand ? 'color: var(--accent); border: 1px solid var(--accent-border); background: var(--accent-bg);' : 'color: var(--c4); border: 1px solid var(--border-subtle); cursor: not-allowed;'">
-                                    5 for $50
-                                </button>
-                            </div>
-                            <p class="text-xs mt-2" style="color: var(--c4);"
-                                x-text="['pro','vip'].includes(plan) ? 'Credits applied before overage charges.' : plan === 'beta' ? 'Beta access — bookings are free.' : 'No credits? $15 charged per successful booking.'"></p>
+                            <p class="text-xs mt-1" style="color: var(--c4);"
+                                x-text="['pro','vip'].includes(plan) ? 'Credits applied before overage charges.' : plan === 'beta' ? 'Beta access — bookings are free.' : credits > 0 ? 'Credits used first, then $12 per booking.' : 'No credits. $12 per successful booking.'"></p>
                         </div>
+
+                        <!-- Plan pricing summary -->
+                        <template x-if="!['pro','vip','beta'].includes(plan)">
+                            <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                                <p class="text-xs font-semibold mb-2" style="color: var(--c2);">Save with a plan</p>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="rounded-lg p-2.5 text-center" style="border: 2px solid var(--border);">
+                                        <p class="text-sm font-bold" style="color: var(--c1);">$12</p>
+                                        <p class="text-[10px]" style="color: var(--c3);">per booking</p>
+                                        <p class="text-[9px] mt-1 font-medium" style="color: var(--c4);">Current</p>
+                                    </div>
+                                    <button @click="subscribeToPlan('pro')" :disabled="subscribing || !cardBrand"
+                                        class="rounded-lg p-2.5 text-center transition-all"
+                                        style="border: 2px solid var(--accent-border); background: var(--accent-bg);">
+                                        <p class="text-sm font-bold" style="color: var(--c1);">$29</p>
+                                        <p class="text-[10px]" style="color: var(--c3);">5 bookings</p>
+                                        <p class="text-[9px] mt-1 font-semibold" style="color: var(--accent);">$5.80/ea</p>
+                                    </button>
+                                    <button @click="subscribeToPlan('vip')" :disabled="subscribing || !cardBrand"
+                                        class="rounded-lg p-2.5 text-center transition-all"
+                                        style="border: 2px solid var(--accent); background: var(--accent-bg);">
+                                        <p class="text-sm font-bold" style="color: var(--c1);">$69</p>
+                                        <p class="text-[10px]" style="color: var(--c3);">12 bookings</p>
+                                        <p class="text-[9px] mt-1 font-semibold" style="color: var(--accent);">$5.75/ea</p>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
 

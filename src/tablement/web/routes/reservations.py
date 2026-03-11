@@ -77,8 +77,8 @@ async def _cleanup_claims(reservation_id: str, terminal_status: str) -> None:
 PRE_DROP_POLL_MIN_SECONDS = 0.8
 PRE_DROP_POLL_MAX_SECONDS = 1.2
 # Polling interval range (jittered to avoid detection)
-PRE_DROP_POLL_MIN_MS = 40   # ~25 req/s at fastest
-PRE_DROP_POLL_MAX_MS = 75   # ~13 req/s at slowest, avg ~17 req/s
+PRE_DROP_POLL_MIN_MS = 50   # ~20 req/s at fastest
+PRE_DROP_POLL_MAX_MS = 85   # ~12 req/s at slowest, avg ~15 req/s
 
 # Legacy pre-fire offset (still used for busy-wait precision entry)
 PRE_FIRE_MS = 200
@@ -2023,6 +2023,7 @@ async def _snipe_loop(
     total_interval_ms = 0.0  # Track polling intervals for intel
     drop_detected_at = None  # When slots first appeared
     backoff_seconds = 0.0  # Per-user 429 backoff
+    eip_block_count = 0    # Track 429/403 hits — fall back to residential after 2
 
     # --- LEAD SNIPE SHARING ---
     # When multiple users snipe the same restaurant+date, only the lead
@@ -2339,11 +2340,36 @@ async def _snipe_loop(
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code in (429, 403):
+                eip_block_count += 1
                 if local_ip:
                     ip_pool.record_block(local_ip)
-                backoff_seconds = min(max(backoff_seconds * 2, 1.0), 30.0)
-                logger.warning("Attempt %d: %d rate limited — backing off %.1fs", attempt, e.response.status_code, backoff_seconds)
-                await asyncio.sleep(backoff_seconds)
+                # After 2 blocks on EIP, fall back to residential proxy
+                if eip_block_count >= 2 and local_ip:
+                    logger.warning(
+                        "Attempt %d: %d blocked %d times on EIP %s — falling back to residential proxy",
+                        attempt, e.response.status_code, eip_block_count, local_ip,
+                    )
+                    try:
+                        await client.aclose()
+                    except Exception:
+                        pass
+                    new_client = ResyApiClient(
+                        user_id=getattr(client, '_user_id', None),
+                        fingerprint=getattr(client, '_fingerprint', None),
+                        # No local_address → routes through residential proxy
+                    )
+                    await new_client.__aenter__()
+                    if hasattr(client, '_auth_token') and client._auth_token:
+                        new_client.set_auth_token(client._auth_token)
+                    if hasattr(client, '_book_template'):
+                        new_client._book_template = client._book_template
+                    new_client.set_snipe_mode(True)
+                    client = new_client
+                    local_ip = None  # Mark as on proxy now
+                else:
+                    backoff_seconds = min(max(backoff_seconds * 2, 1.0), 30.0)
+                    logger.warning("Attempt %d: %d rate limited — backing off %.1fs", attempt, e.response.status_code, backoff_seconds)
+                    await asyncio.sleep(backoff_seconds)
             else:
                 logger.warning("Attempt %d: HTTP %d", attempt, e.response.status_code)
                 if pre_drop_poll:
